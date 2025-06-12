@@ -220,15 +220,40 @@ const deepClone = (obj) => {
  */
 const removeEmptyValues = (obj) => {
   const cleaned = {};
-  
+
   Object.entries(obj).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
       cleaned[key] = value;
     }
   });
-  
+
   return cleaned;
 };
+
+/**
+ * Async error handler wrapper
+ * @param {Function} fn - Async function to wrap
+ * @returns {Function} Wrapped function with error handling
+ */
+const catchAsync = (fn) => {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+};
+
+/**
+ * Custom error class
+ */
+class AppError extends Error {
+  constructor(message, statusCode) {
+    super(message);
+    this.statusCode = statusCode;
+    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.isOperational = true;
+
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
 
 module.exports = {
   buildImageUrl,
@@ -242,5 +267,7 @@ module.exports = {
   isValidImageType,
   calculateStats,
   deepClone,
-  removeEmptyValues
+  removeEmptyValues,
+  catchAsync,
+  AppError
 };

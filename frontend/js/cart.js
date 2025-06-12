@@ -37,7 +37,7 @@ class CartManager {
                 this.closeCartModal();
                 // Navigate to menu page if not already there
                 if (!window.location.pathname.includes('Menu')) {
-                    window.location.href = 'Menu.html';
+                    window.location.href = 'Menu-new.html';
                 }
             }
         });

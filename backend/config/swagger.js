@@ -16,6 +16,8 @@ const swaggerDefinition = {
       - Quản lý thông tin món ăn
       - Upload và quản lý hình ảnh
       - Tích hợp AI để tạo mô tả món ăn
+      - Chatbot AI hỗ trợ khách hàng
+      - Tích hợp Gemini AI và Groq AI
       
       ## Xác thực:
       API sử dụng JWT tokens để xác thực. Thêm token vào header:

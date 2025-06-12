@@ -1,5 +1,47 @@
 /* Components CSS - Styles cho các component */
 
+/* Cart Button Styles */
+#cartBtn {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+#cartBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#cartCounter {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+#cartBtn .fa-shopping-cart {
+    transition: all 0.3s ease;
+}
+
+#cartBtn:hover .fa-shopping-cart {
+    transform: scale(1.1);
+}
+
+/* Mobile Cart Button */
+#mobileCartBtn {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    transition: all 0.3s ease;
+}
+
+#mobileCartBtn:hover {
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
 /* Chatbot Styles */
 .chatbot-container {
     position: fixed;

@@ -271,6 +271,23 @@ class FormValidator {
     }
 }
 
+// Show cart button only on menu page
+function showCartOnMenuPage() {
+    const currentPage = window.location.pathname;
+    const isMenuPage = currentPage.includes('Menu') || currentPage.includes('menu');
+
+    const cartBtn = document.getElementById('cartBtn');
+    const mobileCartContainer = document.getElementById('mobileCartContainer');
+
+    if (isMenuPage) {
+        if (cartBtn) cartBtn.classList.remove('hidden');
+        if (mobileCartContainer) mobileCartContainer.classList.remove('hidden');
+    } else {
+        if (cartBtn) cartBtn.classList.add('hidden');
+        if (mobileCartContainer) mobileCartContainer.classList.add('hidden');
+    }
+}
+
 // Initialize all components when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Load components first
@@ -284,6 +301,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Setup login modal after components are loaded
             setupLoginModalEvents();
+
+            // Show/hide cart button based on current page
+            showCartOnMenuPage();
 
             // Setup cart manager only for Menu page
             if (window.location.pathname.includes('Menu') || document.getElementById('cartBtn')) {

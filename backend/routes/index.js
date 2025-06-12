@@ -5,6 +5,7 @@ const router = express.Router();
 // Import route modules
 const categoryRoutes = require('./categoryRoutes');
 const foodRoutes = require('./foodRoutes');
+const chatRoutes = require('./chatRoutes');
 
 /**
  * @swagger
@@ -159,5 +160,6 @@ router.get('/docs', (req, res) => {
 // Mount route modules
 router.use('/categories', categoryRoutes);
 router.use('/foods', foodRoutes);
+router.use('/chat', chatRoutes);
 
 module.exports = router;
