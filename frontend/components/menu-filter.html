@@ -1,0 +1,46 @@
+<!-- Menu Filter Component -->
+<div class="menu-filter-container slide-in-left">
+    <!-- Search Bar -->
+    <div class="search-container mb-6">
+        <div class="relative">
+            <input 
+                type="text" 
+                id="searchInput"
+                class="w-full px-6 py-4 border-2 border-white rounded-full focus:outline-none focus:ring-4 focus:ring-yellow-300 text-lg shadow-lg"
+                placeholder="🔍 Tìm kiếm món ăn yêu thích..."
+            >
+            <button 
+                id="searchButton"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-primary text-white px-4 py-2 rounded-full hover:bg-red-700 transition duration-300"
+                type="button"
+            >
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Menu Categories -->
+    <div class="flex flex-wrap justify-center gap-3" id="menuFilter">
+        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="all">
+            <i class="fas fa-utensils mr-2"></i>Tất Cả
+        </button>
+        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="appetizers">
+            <i class="fas fa-leaf mr-2"></i>Khai Vị
+        </button>
+        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="maindishes">
+            <i class="fas fa-drumstick-bite mr-2"></i>Món Chính
+        </button>
+        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="rice">
+            <i class="fas fa-bowl-rice mr-2"></i>Cơm & Bún
+        </button>
+        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="hotpot">
+            <i class="fas fa-fire mr-2"></i>Canh & Lẩu
+        </button>
+        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="desserts">
+            <i class="fas fa-ice-cream mr-2"></i>Tráng Miệng
+        </button>
+        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="drinks">
+            <i class="fas fa-glass-water mr-2"></i>Đồ Uống
+        </button>
+    </div>
+</div>

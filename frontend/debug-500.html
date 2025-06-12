@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug 500 Error</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .test-card { background: white; margin: 10px 0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { border-left: 4px solid #10b981; background: #f0fdf4; }
+        .error { border-left: 4px solid #ef4444; background: #fef2f2; }
+        .warning { border-left: 4px solid #f59e0b; background: #fffbeb; }
+        .info { border-left: 4px solid #3b82f6; background: #eff6ff; }
+        button { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #2563eb; }
+        .status { font-weight: bold; margin-bottom: 10px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; max-height: 300px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐛 Debug 500 Internal Server Error</h1>
+        
+        <div class="test-card info">
+            <div class="status">Debug Information</div>
+            <p><strong>Current Origin:</strong> <span id="currentOrigin"></span></p>
+            <p><strong>Backend URL:</strong> http://localhost:3000/api</p>
+            <p><strong>Test Time:</strong> <span id="testTime"></span></p>
+            <button onclick="runDebugTests()">🔍 Run Debug Tests</button>
+            <button onclick="clearResults()">🗑️ Clear Results</button>
+        </div>
+        
+        <div id="results" class="grid">
+            <!-- Test results will appear here -->
+        </div>
+    </div>
+
+    <script>
+        // Initialize page
+        document.getElementById('currentOrigin').textContent = window.location.origin || 'null (file://)';
+        document.getElementById('testTime').textContent = new Date().toLocaleString();
+        
+        function addResult(title, status, message, data = null) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-card ${status}`;
+            
+            let dataHtml = '';
+            if (data) {
+                dataHtml = `<details><summary>View Details</summary><pre>${JSON.stringify(data, null, 2)}</pre></details>`;
+            }
+            
+            div.innerHTML = `
+                <div class="status">${title}</div>
+                <p>${message}</p>
+                ${dataHtml}
+                <small>⏰ ${new Date().toLocaleTimeString()}</small>
+            `;
+            
+            results.appendChild(div);
+            console.log(`${title}: ${message}`);
+        }
+        
+        async function testEndpoint(url, title) {
+            try {
+                addResult(title, 'info', `Testing ${url}...`);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const responseText = await response.text();
+                let data;
+                
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    data = { raw_response: responseText };
+                }
+                
+                if (response.ok) {
+                    addResult(`✅ ${title}`, 'success', `Success! Status: ${response.status}`, data);
+                    return true;
+                } else {
+                    addResult(`❌ ${title}`, 'error', `Failed! Status: ${response.status} - ${response.statusText}`, {
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: Object.fromEntries(response.headers.entries()),
+                        response: data
+                    });
+                    return false;
+                }
+                
+            } catch (error) {
+                addResult(`💥 ${title}`, 'error', `Network Error: ${error.message}`, {
+                    error: error.message,
+                    stack: error.stack
+                });
+                return false;
+            }
+        }
+        
+        async function runDebugTests() {
+            clearResults();
+            addResult('🚀 Debug Suite', 'info', 'Starting comprehensive debug tests...');
+            
+            const tests = [
+                { url: 'http://localhost:3000/api/health', title: 'Health Check' },
+                { url: 'http://localhost:3000/api/test', title: 'Test Endpoint' },
+                { url: 'http://localhost:3000/api/simple-test', title: 'Simple Test' },
+                { url: 'http://localhost:3000/api/docs', title: 'Documentation' },
+                { url: 'http://localhost:3000/api/foods', title: 'Foods API (Main Issue)' },
+                { url: 'http://localhost:3000/api/foods?limit=1', title: 'Foods API with Limit' },
+                { url: 'http://localhost:3000/api/foods/search?q=test', title: 'Search API' },
+                { url: 'http://localhost:3000/api/categories', title: 'Categories API' }
+            ];
+            
+            let passed = 0;
+            let total = tests.length;
+            
+            for (const test of tests) {
+                const result = await test.fn ? await test.fn() : await testEndpoint(test.url, test.title);
+                if (result) passed++;
+                
+                // Small delay between tests
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            const status = passed === total ? 'success' : passed > 0 ? 'warning' : 'error';
+            const percentage = Math.round((passed / total) * 100);
+            
+            addResult('📊 Debug Results', status, 
+                `Debug Complete: ${passed}/${total} tests passed (${percentage}%)`);
+            
+            if (passed < total) {
+                addResult('🔍 Analysis', 'warning', 
+                    'Some endpoints failed. Check the error details above to identify the root cause.');
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(runDebugTests, 1000);
+        });
+    </script>
+</body>
+</html>

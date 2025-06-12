@@ -1,0 +1,106 @@
+/* Main CSS - Biến CSS và styles cơ bản */
+:root {
+    --primary-color: #e53e3e;
+    --secondary-color: #f6ad55;
+    --accent-color: #718096;
+    --text-color: #2d3748;
+    --light-color: #f7fafc;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    color: var(--text-color);
+    overflow-x: hidden;
+}
+
+.font-cursive {
+    font-family: 'Dancing Script', cursive;
+}
+
+.bg-primary {
+    background-color: var(--primary-color);
+}
+
+.text-primary {
+    color: var(--primary-color);
+}
+
+.bg-secondary {
+    background-color: var(--secondary-color);
+}
+
+.text-secondary {
+    color: var(--secondary-color);
+}
+
+/* Menu item hover effects */
+.menu-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Banner styles */
+.banner {
+    background-image: url('https://cdn.jsdelivr.net/gh/codediodeio/code-snippets/nba-trader/wood.jpg');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.banner::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Navigation styles */
+.nav-link {
+    position: relative;
+    padding-bottom: 5px;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+.nav-link.active::after,
+.nav-link:hover::after {
+    width: 100%;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .chatbot-panel {
+        width: 300px;
+        right: -10px;
+    }
+}

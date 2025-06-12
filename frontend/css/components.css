@@ -1,0 +1,163 @@
+/* Components CSS - Styles cho các component */
+
+/* Chatbot Styles */
+.chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.chatbot-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.chatbot-panel {
+    display: none;
+    width: 350px;
+    height: 450px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    position: absolute;
+    bottom: 70px;
+    right: 0;
+}
+
+.chatbot-header {
+    padding: 15px;
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.chatbot-messages {
+    height: 330px;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.chatbot-messages .mb-4 {
+    margin-bottom: 1rem;
+}
+
+.chatbot-messages .bg-primary {
+    background-color: var(--primary-color);
+    color: white;
+    align-self: flex-end;
+}
+
+.chatbot-messages .bg-gray-200 {
+    background-color: #e2e8f0;
+    color: #2d3748;
+    align-self: flex-start;
+}
+
+.chatbot-messages .inline-block {
+    display: inline-block;
+    max-width: 80%;
+    word-break: break-word;
+}
+
+.chatbot-input {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.chatbot-messages .streaming p {
+    font-style: italic;
+    color: #718096;
+}
+
+/* Ad Banner Styles */
+.ad-banner {
+    background-color: #feebc8;
+    overflow: hidden;
+    position: relative;
+}
+
+.scroll-container {
+    display: flex;
+    animation: scroll 20s linear infinite;
+}
+
+@keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+
+/* Menu Filter Styles */
+.menu-category-btn {
+    transition: all 0.3s ease;
+}
+
+.menu-category-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Cart Button Styles */
+#cartBtn {
+    transition: all 0.3s ease;
+}
+
+#cartBtn:hover {
+    transform: scale(1.1);
+}
+
+/* Mobile Navigation Styles */
+#mobileNav {
+    transition: all 0.3s ease;
+}
+
+#mobileNav.show {
+    display: block;
+}
+
+/* Login Modal Tab Styles */
+.tabs button.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.tabs button:not(.active) {
+    color: #718096;
+    border-bottom-color: transparent;
+}
+
+/* Form Input Focus Styles */
+input:focus, textarea:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: var(--primary-color);
+}
+
+/* Button Hover Effects */
+button {
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+}
+
+/* Social Media Icons */
+.social-icons a {
+    transition: all 0.3s ease;
+}
+
+.social-icons a:hover {
+    transform: scale(1.2);
+    color: var(--primary-color);
+}

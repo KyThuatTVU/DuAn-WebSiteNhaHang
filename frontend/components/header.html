@@ -1,0 +1,52 @@
+<!-- Header Component -->
+<header class="bg-white shadow-md">
+    <div class="container mx-auto px-4 py-2">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center">
+                <div class="text-2xl font-bold text-primary mr-2">
+                    <span class="font-cursive">Phương Nam</span>
+                </div>
+                <div class="text-sm">
+                    <div>Ẩm Thực</div>
+                </div>
+            </div>
+
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex space-x-8">
+                <a href="Index-new.html" class="nav-link" data-page="Index">Trang Chủ</a>
+                <a href="gioithieu-new.html" class="nav-link" data-page="gioithieu">Giới Thiệu</a>
+                <a href="Menu-new.html" class="nav-link" data-page="Menu">Thực Đơn</a>
+                <a href="lienhe&datban-new.html" class="nav-link" data-page="lienhe&datban">Đặt Bàn & Liên Hệ</a>
+            </nav>
+
+            <div class="flex items-center">
+                <div id="userDisplay" class="hidden mr-4">
+                    <span class="text-gray-700 mr-2">Xin chào,</span>
+                    <span id="userName" class="font-semibold text-primary"></span>
+                </div>
+                <button id="loginBtn" class="md:block bg-white text-primary px-4 py-2 rounded-lg border border-primary hover:bg-primary hover:text-white transition duration-300 mr-3">
+                    Đăng Nhập
+                </button>
+                <button id="logoutBtn" class="hidden bg-white text-primary px-4 py-2 rounded-lg border border-primary hover:bg-primary hover:text-white transition duration-300 mr-3">
+                    Đăng Xuất
+                </button>
+
+                
+                <button id="menuToggle" class="md:hidden ml-4 focus:outline-none">
+                    <i class="fas fa-bars text-2xl text-gray-600"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <nav id="mobileNav" class="md:hidden hidden mt-4 pb-4">
+            <div class="flex flex-col space-y-3">
+                <a href="Index.html" class="mobile-nav-link py-2 px-4 rounded hover:bg-gray-100" data-page="Index">Trang Chủ</a>
+                <a href="gioithieu.html" class="mobile-nav-link py-2 px-4 rounded hover:bg-gray-100" data-page="gioithieu">Giới Thiệu</a>
+                <a href="Menu.html" class="mobile-nav-link py-2 px-4 rounded hover:bg-gray-100" data-page="Menu">Thực Đơn</a>
+                <a href="lienhe&datban.html" class="mobile-nav-link py-2 px-4 rounded hover:bg-gray-100" data-page="lienhe&datban">Đặt Bàn & Liên Hệ</a>
+                <button id="mobileLoginBtn" class="text-left py-2 px-4 rounded hover:bg-gray-100">Đăng Nhập</button>
+            </div>
+        </nav>
+    </div>
+</header>

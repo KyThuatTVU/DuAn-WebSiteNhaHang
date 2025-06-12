@@ -1,0 +1,53 @@
+<!-- Chatbot Component -->
+<!-- CHATBOT BUTTON -->
+<button id="chatbotButton"
+  class="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full shadow-2xl flex items-center justify-center text-white text-3xl hover:scale-110 transition-transform duration-300">
+  <i class="fas fa-robot animate-bounce"></i>
+</button>
+
+<!-- CHAT PANEL -->
+<div id="chatbotPanel"
+  class="fixed bottom-24 right-6 z-50 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden 
+         transform opacity-0 scale-90 pointer-events-none transition-all duration-300">
+  <!-- Header -->
+  <div class="bg-gradient-to-r from-green-500 to-blue-600 p-4 flex items-center justify-between">
+    <div class="flex items-center">
+      <i class="fas fa-robot text-2xl text-white mr-2"></i>
+      <div>
+        <h3 class="text-white font-bold">Phương Nam Bot</h3>
+        <p class="text-gray-200 text-xs">Trực tuyến 24/7</p>
+      </div>
+    </div>
+    <button id="closeChatbot" class="text-white text-xl hover:text-gray-200 transition-colors">&times;</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="chatbotMessages" class="p-4 space-y-3 max-h-64 overflow-y-auto bg-gray-50">
+    <!-- Tin chào -->
+    <div class="flex">
+      <div class="bg-white p-3 rounded-2xl shadow-md inline-block max-w-[80%]">
+        <p>Xin chào! Tôi là trợ lý ảo Nhà hàng Phương Nam. Mình giúp gì cho bạn?</p>
+      </div>
+    </div>
+    <!-- Gợi ý -->
+    <div id="suggestionBox" class="flex justify-start">
+      <div
+        class="bg-yellow-100 text-yellow-800 px-3 py-2 rounded-full opacity-50 hover:opacity-100 transition-opacity duration-200 cursor-pointer">
+        Hôm nay bạn muốn ăn gì?
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="p-4 bg-white border-t">
+    <div class="flex items-end space-x-2">
+      <textarea id="chatbotInput"
+        class="flex-1 h-8 resize-none border border-gray-300 rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all duration-200"
+        placeholder="Gõ tin nhắn..." rows="1"></textarea>
+      <button id="sendMessage"
+        class="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform duration-200">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+</div>

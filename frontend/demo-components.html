@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Components - Nhà Hàng Ẩm Thực Phương Nam</title>
+    
+    <!-- External CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="css/main.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/animations.css" rel="stylesheet">
+    
+    <!-- External JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Header Placeholder -->
+    <div id="header-placeholder"></div>
+
+    <!-- Ad Banner Placeholder -->
+    <div id="ad-banner-placeholder"></div>
+
+    <!-- Main Content -->
+    <main>
+        <section class="py-12">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h1 class="text-4xl font-bold mb-4 fade-in">Demo Components</h1>
+                    <p class="text-gray-600 slide-in-left">Trang demo để test các component tái sử dụng</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Sample Menu Item -->
+                    <div class="menu-item bg-white rounded-lg overflow-hidden shadow-md transition duration-300 hover-lift">
+                        <div class="h-64 bg-cover bg-center relative" style="background-image: url('img/banhxeo.jpg');">
+                            <div class="absolute inset-0 bg-black bg-opacity-20 hover:bg-opacity-10 transition duration-300"></div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-xl">Bánh Xèo Demo</h3>
+                                <span class="text-primary font-bold">95.000đ</span>
+                            </div>
+                            <p class="text-gray-600 mb-4">Đây là component menu item demo với các hiệu ứng hover và animation.</p>
+                            <button class="add-to-cart bg-primary hover:bg-red-700 text-white py-2 px-4 rounded-md transition duration-300 w-full hover-lift">
+                                Thêm vào giỏ
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Animation Demo -->
+                    <div class="bg-white p-6 rounded-lg shadow-md scale-in">
+                        <h3 class="text-xl font-bold mb-4">Animation Demo</h3>
+                        <div class="space-y-4">
+                            <button class="bg-blue-500 text-white px-4 py-2 rounded hover-lift">Hover Lift</button>
+                            <button class="bg-green-500 text-white px-4 py-2 rounded hover-scale">Hover Scale</button>
+                            <div class="bg-yellow-100 p-3 rounded pulse">Pulse Animation</div>
+                            <div class="bg-red-100 p-3 rounded bounce">Bounce Animation</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stagger Animation Demo -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold mb-4">Stagger Animation</h3>
+                        <div class="space-y-2">
+                            <div class="stagger-item bg-gray-100 p-2 rounded">Item 1</div>
+                            <div class="stagger-item bg-gray-100 p-2 rounded">Item 2</div>
+                            <div class="stagger-item bg-gray-100 p-2 rounded">Item 3</div>
+                            <div class="stagger-item bg-gray-100 p-2 rounded">Item 4</div>
+                            <div class="stagger-item bg-gray-100 p-2 rounded">Item 5</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Component Status -->
+                <div class="mt-12 bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4">Trạng Thái Components</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-green-100 p-4 rounded">
+                            <h4 class="font-bold text-green-800">✅ Header Component</h4>
+                            <p class="text-green-600">Đã tạo và hoạt động</p>
+                        </div>
+                        <div class="bg-green-100 p-4 rounded">
+                            <h4 class="font-bold text-green-800">✅ Footer Component</h4>
+                            <p class="text-green-600">Đã tạo và hoạt động</p>
+                        </div>
+                        <div class="bg-green-100 p-4 rounded">
+                            <h4 class="font-bold text-green-800">✅ Ad Banner Component</h4>
+                            <p class="text-green-600">Đã tạo và hoạt động</p>
+                        </div>
+                        <div class="bg-green-100 p-4 rounded">
+                            <h4 class="font-bold text-green-800">✅ Chatbot Component</h4>
+                            <p class="text-green-600">Đã tạo và hoạt động</p>
+                        </div>
+                        <div class="bg-green-100 p-4 rounded">
+                            <h4 class="font-bold text-green-800">✅ Login Modal Component</h4>
+                            <p class="text-green-600">Đã tạo và hoạt động</p>
+                        </div>
+                        <div class="bg-blue-100 p-4 rounded">
+                            <h4 class="font-bold text-blue-800">📁 CSS Files</h4>
+                            <p class="text-blue-600">main.css, components.css, animations.css</p>
+                        </div>
+                        <div class="bg-blue-100 p-4 rounded">
+                            <h4 class="font-bold text-blue-800">📁 JS Files</h4>
+                            <p class="text-blue-600">main.js, components.js, chatbot.js</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Usage Instructions -->
+                <div class="mt-8 bg-yellow-50 p-6 rounded-lg border-l-4 border-yellow-400">
+                    <h3 class="text-lg font-bold mb-2">🔧 Hướng Dẫn Sử Dụng</h3>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                        <li>Thêm các placeholder div vào HTML: <code class="bg-gray-200 px-2 py-1 rounded">&lt;div id="header-placeholder"&gt;&lt;/div&gt;</code></li>
+                        <li>Include các file CSS: main.css, components.css, animations.css</li>
+                        <li>Include các file JS: auth.js, components.js, main.js, chatbot.js</li>
+                        <li>Components sẽ tự động load khi trang được tải</li>
+                        <li>Sử dụng các class animation: fade-in, slide-in-left, hover-lift, etc.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Placeholder -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Chatbot Placeholder -->
+    <div id="chatbot-placeholder"></div>
+
+    <!-- Login Modal Placeholder -->
+    <div id="login-modal-placeholder"></div>
+
+    <!-- JavaScript -->
+    <script src="js/auth.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/chatbot.js"></script>
+
+    <!-- Demo Script -->
+    <script>
+        // Demo functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎉 Demo Components Page Loaded!');
+            console.log('📦 Components được tải từ thư mục components/');
+            console.log('🎨 CSS được tải từ thư mục css/');
+            console.log('⚡ JavaScript được tải từ thư mục js/');
+            
+            // Test notification
+            setTimeout(() => {
+                if (window.showNotification) {
+                    showNotification('Components đã được tải thành công!', 'success');
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

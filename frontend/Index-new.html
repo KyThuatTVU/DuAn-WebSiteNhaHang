@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhà Hàng Ẩm Thực Phương Nam - Hương Vị Đặc Trưng</title>
+    
+    <!-- External CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="css/main.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/animations.css" rel="stylesheet">
+    
+    <!-- External JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <!-- Additional CSS for modal fix -->
+    <style>
+        /* Ensure modal works properly */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        /* Navigation active state */
+        .nav-link {
+            position: relative;
+            padding-bottom: 5px;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link.active::after,
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Mobile nav active state */
+        .mobile-nav-link.active {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header Placeholder -->
+    <div id="header-placeholder"></div>
+
+    <!-- Ad Banner Placeholder -->
+    <div id="ad-banner-placeholder"></div>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Banner -->
+        <div class="banner h-96 md:h-[500px] relative bg-cover bg-center bg-gray-900 fade-in" style="background-image: url('img/LOGO2.jpg');" id="heroBanner">
+            <div class="container mx-auto px-4 h-full flex items-center relative z-10">
+                <div class="max-w-2xl text-white bg-black bg-opacity-50 p-6 rounded-lg">
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-cursive mb-4">Hương Vị Phương Nam</h1>
+                    <p class="text-lg md:text-xl mb-8">Đắm chìm trong không gian ẩm thực truyền thống Nam Bộ với những món ăn độc đáo, hương vị đậm đà không thể nào quên.</p>
+                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                        <a href="lienhe&datban.html" class="bg-primary hover:bg-red-700 text-white py-3 px-6 rounded-lg text-center transition duration-300 flex-1 sm:flex-none hover-lift">Đặt Bàn Ngay</a>
+                        <a href="Menu.html" class="bg-white hover:bg-gray-100 text-primary py-3 px-6 rounded-lg text-center transition duration-300 flex-1 sm:flex-none hover-lift">Xem Thực Đơn</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Menu -->
+        <div class="container mx-auto px-4 py-12 bg-amber-50" id="featuredMenu">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-2 slide-in-left">Món Ăn Đặc Sắc</h2>
+                <p class="text-gray-600 slide-in-right">Khám phá những món ăn được yêu thích nhất tại Phương Nam</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Featured Item 1 -->
+                <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition duration-300 stagger-item">
+                    <div class="h-64 bg-cover bg-center relative" style="background-image: url('img/calocnuongtrui.jpg');">
+                        <div class="absolute inset-0 bg-black bg-opacity-20 hover:bg-opacity-10 transition duration-300"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-xl">Cá Lóc Nướng Trui</h3>
+                            <span class="text-primary font-bold">185.000đ</span>
+                        </div>
+                        <p class="text-gray-600 mb-4">Cá lóc tươi nướng trui trên than hoa, phết mỡ hành và ăn kèm với các loại rau thơm đặc trưng miền Nam.</p>
+                        <a href="Menu.html" class="bg-primary hover:bg-red-700 text-white py-2 px-4 rounded-md transition duration-300 w-full hover-lift inline-block text-center">
+                            <i class="fas fa-utensils mr-2"></i>Xem Chi Tiết
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Featured Item 2 -->
+                <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition duration-300 stagger-item">
+                    <div class="h-64 bg-cover bg-center relative" style="background-image: url('img/laumam.webp');">
+                        <div class="absolute inset-0 bg-black bg-opacity-20 hover:bg-opacity-10 transition duration-300"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-xl">Lẩu Mắm</h3>
+                            <span class="text-primary font-bold">250.000đ</span>
+                        </div>
+                        <p class="text-gray-600 mb-4">Nước lẩu được nấu từ mắm cá linh, thêm các loại rau đồng và hải sản tươi ngon, tạo nên hương vị đậm đà khó quên.</p>
+                        <a href="Menu.html" class="bg-primary hover:bg-red-700 text-white py-2 px-4 rounded-md transition duration-300 w-full hover-lift inline-block text-center">
+                            <i class="fas fa-utensils mr-2"></i>Xem Chi Tiết
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Featured Item 3 -->
+                <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition duration-300 stagger-item">
+                    <div class="h-64 bg-cover bg-center relative" style="background-image: url('img/banhxeo.jpg');">
+                        <div class="absolute inset-0 bg-black bg-opacity-20 hover:bg-opacity-10 transition duration-300"></div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-xl">Bánh Xèo Miền Tây</h3>
+                            <span class="text-primary font-bold">95.000đ</span>
+                        </div>
+                        <p class="text-gray-600 mb-4">Bánh xèo giòn tan với nhân tôm, thịt, giá và đậu xanh, ăn kèm với rau sống và nước mắm chua ngọt.</p>
+                        <a href="Menu.html" class="bg-primary hover:bg-red-700 text-white py-2 px-4 rounded-md transition duration-300 w-full hover-lift inline-block text-center">
+                            <i class="fas fa-utensils mr-2"></i>Xem Chi Tiết
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-8">
+                <a href="Menu.html" class="inline-block border-2 border-primary text-primary hover:bg-primary hover:text-white py-2 px-6 rounded-lg transition duration-300 hover-lift">Xem Toàn Bộ Thực Đơn</a>
+            </div>
+        </div>
+
+        <!-- Testimonials -->
+        <div class="bg-rose-50 py-12" id="testimonials">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold mb-2 fade-in">Khách Hàng Nói Gì</h2>
+                    <p class="text-gray-600 fade-in">Những đánh giá chân thực từ thực khách</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                   <!-- Testimonial 1 -->
+                    <div class="bg-white p-6 rounded-lg shadow-md scale-in">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 rounded-full overflow-hidden mr-4">
+                                <img src="img/thuat.jpg" alt="Nguyễn Huỳnh Kỹ Thuật" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Nguyễn Huỳnh Kỹ Thuật</h4>
+                                <div class="flex text-yellow-400">
+                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-gray-600">"Tôi đã thử nhiều nhà hàng miền Nam, nhưng Phương Nam thực sự mang đến hương vị đúng điệu và chuẩn mực nhất. Đặc biệt là món cá lóc nướng trui, tuyệt vời!"</p>
+                    </div>
+
+                    <!-- Testimonial 2 -->
+                    <div class="bg-white p-6 rounded-lg shadow-md scale-in">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 rounded-full overflow-hidden mr-4">
+                                <img src="img/vy.jpg" alt="Hứa Thị Thảo Vy" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Hứa Thị Thảo Vy</h4>
+                                <div class="flex text-yellow-400">
+                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-gray-600">"Không gian nhà hàng rất ấm cúng và sang trọng. Nhân viên phục vụ nhiệt tình, chu đáo. Các món ăn đều rất ngon và được trình bày đẹp mắt."</p>
+                    </div>
+
+                    <!-- Testimonial 3 -->
+                    <div class="bg-white p-6 rounded-lg shadow-md scale-in">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 rounded-full overflow-hidden mr-4">
+                                <img src="img/truong.jpg" alt="Nguyễn Nhật Trường" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Nguyễn Nhật Trường</h4>
+                                <div class="flex text-yellow-400">
+                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-gray-600">"Ẩm thực đậm chất miền Tây, mỗi món ăn như kể lại một câu chuyện. Lẩu mắm ở đây là số một! Hương vị đậm đà, nước lẩu đặc trưng và thơm ngon."</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Promotion -->
+        <div class="bg-emerald-50 py-12" id="promotion">
+            <div class="container mx-auto px-4">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden hover-lift">
+                    <div class="md:flex">
+                        <div class="md:w-1/2 bg-gray-300 h-64 md:h-auto flex items-center justify-center">
+                            <img src="img/ẩm thực phương nam.png" alt="Khuyến mãi đặc biệt" class="max-h-full object-cover" />
+                        </div>
+
+                        <div class="md:w-1/2 p-8">
+                            <div class="flex items-center mb-4">
+                                <div class="text-primary text-4xl mr-3 pulse">
+                                    <i class="fas fa-gift"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold">Ưu Đãi Đặc Biệt</h3>
+                            </div>
+                            <p class="text-gray-600 mb-6">Đặt bàn online thông qua website và nhận ngay <span class="font-bold text-primary">giảm 10%</span> tổng hóa đơn cho lần đầu tiên.</p>
+                            <p class="text-gray-600 mb-6">Đặc biệt, đăng ký thành viên để tích điểm và nhận nhiều ưu đãi hấp dẫn khác!</p>
+                            <a href="lienhe&datban.html" class="inline-block bg-primary hover:bg-red-700 text-white py-2 px-6 rounded-lg transition duration-300 hover-lift">Đặt Bàn Ngay</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer Placeholder -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Chatbot Placeholder -->
+    <div id="chatbot-placeholder"></div>
+
+    <!-- Login Modal Placeholder -->
+    <div id="login-modal-placeholder"></div>
+
+    <!-- JavaScript -->
+    <script src="js/auth.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/chatbot.js"></script>
+
+    <!-- Initialize app after all scripts loaded -->
+    <script>
+        // Ensure proper initialization order
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Index-new.html loaded successfully!');
+
+            // Add click handler for modal backdrop
+            document.addEventListener('click', function(e) {
+                const loginModal = document.getElementById('loginModal');
+                if (loginModal && e.target === loginModal) {
+                    loginModal.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
