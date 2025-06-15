@@ -1,6 +1,6 @@
 <!-- Cart Modal Component -->
 <div class="modal" id="cartModal">
-    <div class="modal-content bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
+    <div class="modal-content bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 h-[90vh] max-h-[600px] overflow-hidden flex flex-col">
         <!-- Cart Header -->
         <div class="cart-header bg-gradient-to-r from-primary to-red-600 text-white p-6">
             <div class="flex justify-between items-center">
@@ -17,8 +17,14 @@
 
         <!-- Cart Content -->
         <div class="cart-content flex flex-col h-full max-h-[calc(90vh-140px)]">
+            <!-- Cart Loading State -->
+            <div id="cartLoadingState" class="hidden text-center py-8">
+                <div class="inline-block w-8 h-8 border-4 border-gray-300 border-t-primary rounded-full animate-spin mb-4"></div>
+                <p class="text-gray-600">Đang tải giỏ hàng...</p>
+            </div>
+
             <!-- Cart Items -->
-            <div class="cart-items flex-1 overflow-y-auto p-6">
+            <div class="cart-items flex-1 overflow-y-scroll p-6 scroll-smooth relative min-h-0 max-h-[400px]">
                 <!-- Empty Cart State -->
                 <div id="emptyCartState" class="text-center py-12">
                     <div class="text-gray-400 mb-4">
@@ -35,10 +41,20 @@
                 <div id="cartItemsList" class="space-y-4 hidden">
                     <!-- Cart items will be dynamically inserted here -->
                 </div>
+
+                <!-- Quick Actions -->
+                <div id="cartQuickActions" class="hidden border-t pt-4 mt-4">
+                    <div class="flex justify-between items-center text-sm text-gray-600 mb-2">
+                        <span>Thao tác nhanh:</span>
+                        <button id="toggleCartDetails" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-eye mr-1"></i>Xem chi tiết
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Cart Summary -->
-            <div id="cartSummary" class="cart-summary border-t bg-gray-50 p-6 hidden">
+            <div id="cartSummary" class="cart-summary border-t bg-gray-50 p-6 hidden flex-shrink-0">
                 <div class="space-y-3 mb-6">
                     <div class="flex justify-between text-gray-600">
                         <span>Tạm tính:</span>
@@ -97,12 +113,12 @@
 
                 <!-- Quantity Controls -->
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3 bg-gray-50 rounded-lg p-1">
-                        <button class="quantity-decrease bg-white hover:bg-gray-100 text-gray-700 w-8 h-8 rounded-md flex items-center justify-center transition duration-300 shadow-sm">
+                    <div class="flex items-center space-x-3 bg-gray-50 rounded-lg p-1 quantity-controls">
+                        <button class="quantity-decrease bg-white hover:bg-gray-100 text-gray-700 w-8 h-8 rounded-md flex items-center justify-center transition duration-300 shadow-sm" title="Giảm số lượng">
                             <i class="fas fa-minus text-xs"></i>
                         </button>
                         <span class="item-quantity font-semibold text-gray-800 min-w-[2rem] text-center">1</span>
-                        <button class="quantity-increase bg-primary hover:bg-red-700 text-white w-8 h-8 rounded-md flex items-center justify-center transition duration-300 shadow-sm">
+                        <button class="quantity-increase bg-primary hover:bg-red-700 text-white w-8 h-8 rounded-md flex items-center justify-center transition duration-300 shadow-sm" title="Tăng số lượng">
                             <i class="fas fa-plus text-xs"></i>
                         </button>
                     </div>
@@ -111,6 +127,20 @@
                     <div class="text-right">
                         <div class="text-xs text-gray-500 mb-1">Thành tiền</div>
                         <div class="item-total font-bold text-gray-800 text-lg"></div>
+                    </div>
+                </div>
+
+                <!-- Item Details (Hidden by default) -->
+                <div class="item-details hidden mt-3 pt-3 border-t border-gray-100">
+                    <div class="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                        <div>
+                            <span class="font-medium">Danh mục:</span>
+                            <span class="item-category">Món ăn</span>
+                        </div>
+                        <div>
+                            <span class="font-medium">Tồn kho:</span>
+                            <span class="item-stock">Còn hàng</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -151,8 +181,24 @@
 
 <style>
 /* Cart Modal Specific Styles */
-.cart-modal .modal-content {
+.modal-content {
     animation: slideInRight 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+    max-height: 600px;
+}
+
+.cart-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.cart-items {
+    flex: 1;
+    min-height: 0;
 }
 
 @keyframes slideInRight {
@@ -258,23 +304,195 @@
     transform: scale(1.1);
 }
 
-/* Scrollbar styling for cart items */
+/* Enhanced Scrollbar styling for cart items */
+.cart-items {
+    scrollbar-width: thin;
+    scrollbar-color: #e53e3e #f1f5f9;
+    overflow-y: scroll !important;
+    overflow-x: hidden;
+    height: 100%;
+    max-height: 400px;
+}
+
 .cart-items::-webkit-scrollbar {
-    width: 8px;
+    width: 14px;
+    background: transparent;
 }
 
 .cart-items::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+    margin: 4px;
 }
 
 .cart-items::-webkit-scrollbar-thumb {
-    background: linear-gradient(145deg, #c1c1c1, #a1a1a1);
-    border-radius: 4px;
+    background: linear-gradient(180deg, #e53e3e 0%, #dc2626 50%, #b91c1c 100%);
+    border-radius: 12px;
+    border: 2px solid #f8fafc;
+    box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
+    transition: all 0.3s ease;
+    min-height: 40px;
 }
 
 .cart-items::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(145deg, #a1a1a1, #888);
+    background: linear-gradient(180deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.5);
+    border: 1px solid #f8fafc;
+}
+
+.cart-items::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, #b91c1c 0%, #991b1b 50%, #7f1d1d 100%);
+    box-shadow: 0 2px 6px rgba(229, 62, 62, 0.6);
+}
+
+/* Scrollbar corner */
+.cart-items::-webkit-scrollbar-corner {
+    background: #f8fafc;
+    border-radius: 4px;
+}
+
+/* Smooth scrolling and enhanced cart container */
+.cart-items {
+    scroll-behavior: smooth;
+    position: relative;
+}
+
+/* Gradient fade effects for better visual indication */
+.cart-items::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cart-items::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(0deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cart-items.scrollable::before,
+.cart-items.scrollable::after {
+    opacity: 1;
+}
+
+/* Enhanced cart item animations */
+.cart-item {
+    animation: slideInUp 0.4s ease-out;
+    margin-bottom: 1rem;
+}
+
+.cart-item:last-child {
+    margin-bottom: 0;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Scroll indicators */
+.scroll-indicator {
+    position: absolute;
+    right: 20px;
+    background: rgba(229, 62, 62, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.3s ease;
+    z-index: 20;
+}
+
+.scroll-indicator.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.scroll-indicator.top {
+    top: 30px;
+}
+
+.scroll-indicator.bottom {
+    bottom: 30px;
+}
+
+.scroll-indicator i {
+    margin-right: 4px;
+}
+
+/* Scroll control buttons */
+.scroll-controls {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 30;
+}
+
+.scroll-btn {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #e53e3e, #dc2626);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+.scroll-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(229, 62, 62, 0.4);
+}
+
+.scroll-btn:active {
+    transform: scale(0.95);
+}
+
+.scroll-btn i {
+    font-size: 14px;
+}
+
+/* Show scroll controls when needed */
+.cart-items.has-scroll .scroll-controls {
+    display: flex;
 }
 
 /* Empty cart state */
@@ -288,6 +506,52 @@
 .cart-summary {
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-top: 2px solid #e9ecef;
+}
+
+/* Cart item animations */
+.cart-item {
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Quick actions styling */
+#cartQuickActions {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+#toggleCartDetails {
+    transition: all 0.2s ease;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+#toggleCartDetails:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Item details styling */
+.item-details {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 6px;
+    padding: 8px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 /* Responsive improvements */
@@ -313,6 +577,35 @@
         width: 28px;
         height: 28px;
         font-size: 12px;
+    }
+
+    .item-details {
+        padding: 6px;
+        font-size: 11px;
+    }
+
+    /* Mobile scrollbar */
+    .cart-items::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .cart-items::-webkit-scrollbar-thumb {
+        border: 1px solid #f8fafc;
+    }
+
+    /* Mobile scroll indicators */
+    .scroll-indicator {
+        right: 10px;
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .scroll-indicator.top {
+        top: 20px;
+    }
+
+    .scroll-indicator.bottom {
+        bottom: 20px;
     }
 }
 </style>

@@ -92,6 +92,18 @@
             background: linear-gradient(45deg, #dc2626, #b91c1c);
             transform: scale(1.02);
         }
+
+        /* Button animations */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .add-to-cart-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
         
         /* Loading animation */
         .loading-spinner {
@@ -232,6 +244,8 @@
 
     <!-- JavaScript -->
     <script src="js/auth.js"></script>
+    <script src="js/social-auth.js"></script>
+    <script src="js/social-config.js"></script>
     <script src="js/components.js"></script>
     <script src="js/main.js"></script>
     <script src="js/chatbot.js"></script>
@@ -245,9 +259,29 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Menu-new.html loaded successfully!');
 
-            // Initialize menu manager after components are loaded
+            // Initialize cart manager first
             setTimeout(() => {
+                if (!window.cartManager) {
+                    window.cartManager = new CartManager();
+                    console.log('🛒 CartManager initialized');
+                }
+
+                // Then initialize menu manager
                 window.menuManager = new MenuManager();
+                console.log('📋 MenuManager initialized');
+
+                // Test cart functionality
+                setTimeout(() => {
+                    const cartBtn = document.getElementById('cartBtn');
+                    const cartModal = document.getElementById('cartModal');
+                    console.log('🔍 Cart button found:', !!cartBtn);
+                    console.log('🔍 Cart modal found:', !!cartModal);
+
+                    if (cartBtn) {
+                        console.log('🔍 Cart button classes:', cartBtn.className);
+                        console.log('🔍 Cart button visible:', !cartBtn.classList.contains('hidden'));
+                    }
+                }, 1000);
             }, 500);
         });
     </script>

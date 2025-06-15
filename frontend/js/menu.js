@@ -126,6 +126,12 @@ class MenuManager {
     async init() {
         console.log('🚀 Initializing MenuManager...');
 
+        // Initialize CartManager if not already initialized
+        if (!window.cartManager) {
+            window.cartManager = new CartManager();
+            console.log('🛒 CartManager initialized from MenuManager');
+        }
+
         // Always setup event listeners first
         this.setupEventListeners();
 
@@ -329,7 +335,13 @@ class MenuManager {
         if (emptyState) emptyState.classList.add('hidden');
         
         container.innerHTML = this.filteredData.map(item => `
-            <div class="menu-item bg-white rounded-lg overflow-hidden shadow-md stagger-item hover-lift" data-category="${item.category}">
+            <div class="menu-item bg-white rounded-lg overflow-hidden shadow-md stagger-item hover-lift"
+                 data-category="${item.category}"
+                 data-item-id="${item.id}"
+                 data-item-name="${item.name}"
+                 data-item-price="${item.price}"
+                 data-item-image="${item.image}"
+                 data-item-description="${item.description || 'Món ăn ngon đặc trưng miền Nam'}">
                 <div class="h-64 overflow-hidden relative">
                     <img src="${item.image}"
                          alt="${item.name}"
@@ -341,24 +353,27 @@ class MenuManager {
                             ${item.isAvailable ? 'Còn hàng' : 'Hết hàng'}
                         </span>
                     </div>
+                    ${item.stock && item.stock < 10 ? `
+                        <div class="absolute top-2 left-2">
+                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                                Còn ${item.stock} phần
+                            </span>
+                        </div>
+                    ` : ''}
                 </div>
                 <div class="p-6">
                     <div class="flex justify-between items-start mb-3">
-                        <h3 class="font-bold text-xl">${item.name}</h3>
-                        <span class="price-tag">${item.priceFormatted || this.formatPrice(item.price)}</span>
+                        <h3 class="item-name font-bold text-xl">${item.name}</h3>
+                        <span class="price-tag" data-price="${item.price}">${item.priceFormatted || this.formatPrice(item.price)}</span>
                     </div>
-                    <p class="text-gray-600 mb-4 leading-relaxed">${item.description || 'Món ăn ngon đặc trưng miền Nam'}</p>
+                    <p class="text-gray-600 mb-4 leading-relaxed description">${item.description || 'Món ăn ngon đặc trưng miền Nam'}</p>
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-sm text-gray-500">
                             <i class="fas fa-tag mr-1"></i>${item.categoryName || 'Món ăn'}
                         </span>
                         ${item.stockDisplay ? `<span class="text-sm text-blue-600">${item.stockDisplay}</span>` : ''}
                     </div>
-                    <button class="add-to-cart-btn ${item.isAvailable ? 'bg-primary hover:bg-red-700' : 'bg-gray-400 cursor-not-allowed'} text-white py-3 px-6 rounded-lg transition duration-300 w-full font-semibold"
-                            data-id="${item.id}"
-                            ${!item.isAvailable ? 'disabled' : ''}>
-                        <i class="fas fa-cart-plus mr-2"></i>${item.isAvailable ? 'Thêm vào giỏ' : 'Hết hàng'}
-                    </button>
+                    ${this.createAddToCartButton(item)}
                 </div>
             </div>
         `).join('');
@@ -368,6 +383,56 @@ class MenuManager {
         
         // Trigger animations
         this.triggerAnimations();
+    }
+
+    createAddToCartButton(item) {
+        const isLowStock = item.stock > 0 && item.stock <= 5;
+        const isOutOfStock = !item.isAvailable || item.stock === 0;
+
+        if (isOutOfStock) {
+            return `
+                <div class="relative">
+                    <button class="add-to-cart-btn bg-gray-400 text-white py-3 px-6 rounded-lg w-full font-semibold cursor-not-allowed opacity-75 relative overflow-hidden"
+                            data-id="${item.id}" disabled>
+                        <div class="flex items-center justify-center">
+                            <i class="fas fa-times-circle mr-2 text-red-200"></i>
+                            <span>Hết hàng</span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-r from-red-500/20 to-red-600/20"></div>
+                    </button>
+                    <div class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full shadow-lg">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Hết
+                    </div>
+                </div>
+            `;
+        }
+
+        if (isLowStock) {
+            return `
+                <div class="relative">
+                    <button class="add-to-cart add-to-cart-btn bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white py-3 px-6 rounded-lg transition-all duration-300 w-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+                            data-id="${item.id}">
+                        <div class="flex items-center justify-center">
+                            <i class="fas fa-cart-plus mr-2"></i>
+                            <span>Thêm vào giỏ</span>
+                        </div>
+                    </button>
+                    <div class="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-pulse">
+                        <i class="fas fa-exclamation mr-1"></i>Còn ${item.stock}
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <button class="add-to-cart add-to-cart-btn bg-gradient-to-r from-primary to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 px-6 rounded-lg transition-all duration-300 w-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+                    data-id="${item.id}">
+                <div class="flex items-center justify-center">
+                    <i class="fas fa-cart-plus mr-2"></i>
+                    <span>Thêm vào giỏ</span>
+                </div>
+            </button>
+        `;
     }
 
     setupAddToCartButtons() {
@@ -382,45 +447,68 @@ class MenuManager {
 
     addToCart(itemId, buttonElement) {
         const item = this.menuData.find(item => item.id === itemId);
-        if (!item) return;
-
-        // Add to cart array
-        const existingItem = this.cart.find(cartItem => cartItem.id === itemId);
-        if (existingItem) {
-            existingItem.quantity += 1;
-        } else {
-            this.cart.push({ ...item, quantity: 1 });
+        if (!item) {
+            console.error('Item not found:', itemId);
+            return;
         }
 
-        // Save to localStorage
-        localStorage.setItem('cart', JSON.stringify(this.cart));
-        
-        // Update cart counter
-        this.updateCartCounter();
-        
-        // Visual feedback
+        // Use CartManager if available, otherwise fallback to legacy method
+        if (window.cartManager) {
+            // Convert menu item to cart format
+            const cartItem = {
+                id_mon: item.id,
+                ten_mon: item.name,
+                gia: item.price,
+                hinh_anh: item.image,
+                mo_ta: item.description || 'Món ăn ngon đặc trưng miền Nam',
+                so_luong: item.stock || 999,
+                category: item.category,
+                categoryName: item.categoryName
+            };
+
+            window.cartManager.addToCart(cartItem, buttonElement);
+        } else {
+            // Legacy cart handling
+            const existingItem = this.cart.find(cartItem => cartItem.id === itemId);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                this.cart.push({ ...item, quantity: 1 });
+            }
+
+            localStorage.setItem('cart', JSON.stringify(this.cart));
+            this.updateCartCounter();
+            this.showButtonFeedback(buttonElement);
+            this.showNotification(`Đã thêm ${item.name} vào giỏ hàng!`, 'success');
+        }
+    }
+
+    showButtonFeedback(buttonElement) {
         const originalHTML = buttonElement.innerHTML;
         buttonElement.innerHTML = '<i class="fas fa-check mr-2"></i>Đã thêm!';
         buttonElement.classList.remove('bg-primary', 'hover:bg-red-700');
         buttonElement.classList.add('bg-green-500');
         buttonElement.disabled = true;
-        
+
         setTimeout(() => {
             buttonElement.innerHTML = originalHTML;
             buttonElement.classList.remove('bg-green-500');
             buttonElement.classList.add('bg-primary', 'hover:bg-red-700');
             buttonElement.disabled = false;
         }, 2000);
-        
-        // Show notification
-        this.showNotification(`Đã thêm ${item.name} vào giỏ hàng!`, 'success');
     }
 
     updateCartCounter() {
-        const cartCounter = document.querySelector('#cartBtn span');
-        if (cartCounter) {
-            const totalItems = this.cart.reduce((sum, item) => sum + item.quantity, 0);
-            cartCounter.textContent = totalItems;
+        // Use CartManager if available
+        if (window.cartManager) {
+            window.cartManager.updateCartUI();
+        } else {
+            // Legacy cart counter update
+            const cartCounter = document.querySelector('#cartBtn span');
+            if (cartCounter) {
+                const totalItems = this.cart.reduce((sum, item) => sum + item.quantity, 0);
+                cartCounter.textContent = totalItems;
+            }
         }
     }
 

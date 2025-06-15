@@ -21,6 +21,9 @@ const {
 // Import routes
 const apiRoutes = require('./routes');
 
+// Import models to initialize tables
+const CustomerModel = require('./models/CustomerModel');
+
 // Handle uncaught exceptions and unhandled rejections
 handleUncaughtException();
 handleUnhandledRejection();
@@ -197,6 +200,9 @@ class App {
     try {
       // Initialize database connection
       await initDatabase();
+
+      // Initialize database tables
+      await CustomerModel.createTable();
 
       // Start server
       const server = this.app.listen(this.port, () => {

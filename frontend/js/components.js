@@ -436,15 +436,15 @@ async function handleLoginSubmit(e) {
 
         const data = await auth.login(email, password);
 
-        // Update UI
-        updateUIAfterLogin(data.khach_hang);
+        // Close modal
         const loginModal = document.getElementById('loginModal');
         if (loginModal) loginModal.classList.remove('active');
 
-        showLoginNotification('Đăng nhập thành công!', 'success');
+        // UI đã được cập nhật trong auth.login()
+        auth.showNotification('Đăng nhập thành công!', 'success');
 
     } catch (error) {
-        showLoginNotification(error.message, 'error');
+        auth.showNotification(error.message, 'error');
     } finally {
         if (submitBtn) submitBtn.disabled = false;
     }
@@ -468,7 +468,8 @@ async function handleRegisterSubmit(e) {
             full_name: document.getElementById('registerName')?.value.trim(),
             email: document.getElementById('registerEmail')?.value.trim(),
             phone: document.getElementById('registerPhone')?.value.trim(),
-            password: password
+            password: password,
+            confirmPassword: confirmPassword
         };
 
         // Validate required fields
@@ -477,11 +478,11 @@ async function handleRegisterSubmit(e) {
         }
 
         await auth.register(userData);
-        showLoginNotification('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
+        auth.showNotification('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
         switchLoginTab('login');
 
     } catch (error) {
-        showLoginNotification(error.message, 'error');
+        auth.showNotification(error.message, 'error');
     } finally {
         if (submitBtn) submitBtn.disabled = false;
     }

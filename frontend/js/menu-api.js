@@ -1,7 +1,7 @@
 // Menu API Service - Tích hợp với Backend API
 class MenuAPIService {
     constructor() {
-        this.baseURL = 'http://localhost:3000/api';
+        this.baseURL = 'http://localhost:3001/api';
         this.cache = new Map();
         this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
     }
@@ -390,7 +390,7 @@ class MenuAPIService {
                 ten_mon: "Cá Lóc Nướng Trui",
                 gia: 185000,
                 gia_formatted: "185.000đ",
-                hinh_anh: "http://localhost:3000/images/calocnuongtrui.jpg",
+                hinh_anh: "http://localhost:3001/images/calocnuongtrui.jpg",
                 mo_ta: "Cá lóc tươi nướng trui trên than hoa, phết mỡ hành và ăn kèm với các loại rau thơm đặc trưng miền Nam.",
                 so_luong: 10,
                 so_luong_display: "Còn 10 phần",
@@ -403,7 +403,7 @@ class MenuAPIService {
                 ten_mon: "Lẩu Mắm",
                 gia: 250000,
                 gia_formatted: "250.000đ",
-                hinh_anh: "http://localhost:3000/images/laumam.webp",
+                hinh_anh: "http://localhost:3001/images/laumam.webp",
                 mo_ta: "Nước lẩu được nấu từ mắm cá linh, thêm các loại rau đồng và hải sản tươi ngon, tạo nên hương vị đậm đà khó quên.",
                 so_luong: 8,
                 so_luong_display: "Còn 8 phần",
@@ -416,7 +416,7 @@ class MenuAPIService {
                 ten_mon: "Bánh Xèo Miền Tây",
                 gia: 95000,
                 gia_formatted: "95.000đ",
-                hinh_anh: "http://localhost:3000/images/banhxeo.jpg",
+                hinh_anh: "http://localhost:3001/images/banhxeo.jpg",
                 mo_ta: "Bánh xèo giòn tan với nhân tôm, thịt, giá và đậu xanh, ăn kèm với rau sống và nước mắm chua ngọt.",
                 so_luong: 15,
                 so_luong_display: "Còn 15 phần",
@@ -429,7 +429,7 @@ class MenuAPIService {
                 ten_mon: "Gỏi Cuốn Tôm Thịt",
                 gia: 75000,
                 gia_formatted: "75.000đ",
-                hinh_anh: "http://localhost:3000/images/goicuon.jpg",
+                hinh_anh: "http://localhost:3001/images/goicuon.jpg",
                 mo_ta: "Gỏi cuốn tươi mát với tôm, thịt heo, bún và rau thơm, chấm với nước mắm chua ngọt đậm đà.",
                 so_luong: 20,
                 so_luong_display: "Còn 20 phần",
@@ -442,7 +442,7 @@ class MenuAPIService {
                 ten_mon: "Canh Chua Cá Lóc",
                 gia: 120000,
                 gia_formatted: "120.000đ",
-                hinh_anh: "http://localhost:3000/images/canhchuacaloc.jpg",
+                hinh_anh: "http://localhost:3001/images/canhchuacaloc.jpg",
                 mo_ta: "Canh chua truyền thống với cá lóc tươi, dứa, cà chua, đậu bắp và rau thơm miền Nam.",
                 so_luong: 12,
                 so_luong_display: "Còn 12 phần",
@@ -455,7 +455,7 @@ class MenuAPIService {
                 ten_mon: "Bún Riêu Cua",
                 gia: 85000,
                 gia_formatted: "85.000đ",
-                hinh_anh: "http://localhost:3000/images/bunrieucua.jpg",
+                hinh_anh: "http://localhost:3001/images/bunrieucua.jpg",
                 mo_ta: "Bún riêu cua đồng với nước dùng trong vắt, cua đồng tươi ngon và rau thơm.",
                 so_luong: 18,
                 so_luong_display: "Còn 18 phần",
@@ -468,7 +468,7 @@ class MenuAPIService {
                 ten_mon: "Bánh Khọt",
                 gia: 65000,
                 gia_formatted: "65.000đ",
-                hinh_anh: "http://localhost:3000/images/banhkhot.jpg",
+                hinh_anh: "http://localhost:3001/images/banhkhot.jpg",
                 mo_ta: "Bánh khọt giòn rụm với tôm tươi, ăn kèm rau sống và nước mắm chua ngọt.",
                 so_luong: 25,
                 so_luong_display: "Còn 25 phần",
@@ -481,7 +481,7 @@ class MenuAPIService {
                 ten_mon: "Cơm Tấm",
                 gia: 75000,
                 gia_formatted: "75.000đ",
-                hinh_anh: "http://localhost:3000/images/comtam.webp",
+                hinh_anh: "http://localhost:3001/images/comtam.webp",
                 mo_ta: "Cơm tấm sườn nướng với chả trứng, bì và nước mắm chua ngọt đặc trưng.",
                 so_luong: 20,
                 so_luong_display: "Còn 20 phần",

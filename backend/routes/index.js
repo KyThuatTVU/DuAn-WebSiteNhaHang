@@ -6,6 +6,7 @@ const router = express.Router();
 const categoryRoutes = require('./categoryRoutes');
 const foodRoutes = require('./foodRoutes');
 const chatRoutes = require('./chatRoutes');
+const customerRoutes = require('./customerRoutes');
 
 /**
  * @swagger
@@ -161,5 +162,6 @@ router.get('/docs', (req, res) => {
 router.use('/categories', categoryRoutes);
 router.use('/foods', foodRoutes);
 router.use('/chat', chatRoutes);
+router.use('/khach_hang', customerRoutes);
 
 module.exports = router;
