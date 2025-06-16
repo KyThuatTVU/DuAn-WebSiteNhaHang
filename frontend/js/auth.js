@@ -4,32 +4,23 @@ const API_BASE_URL = 'http://localhost:3000/api';
 const auth = {
     isAuthenticated: false,
     user: null,
-    tokenCheckInterval: null,
-    inactivityTimer: null,
-    lastActivity: Date.now(),
+    activityTimer: null,
+    warningTimer: null,
+    refreshTimer: null,
+    INACTIVITY_TIMEOUT: 3 * 60 * 1000, // 3 phút
+    WARNING_TIME: 30 * 1000, // 30 giây trước khi đăng xuất
+    TOKEN_REFRESH_INTERVAL: 4 * 60 * 1000, // 4 phút (trước khi token hết hạn)
 
     // Initialize auth state from localStorage
     init() {
         const user = localStorage.getItem('user');
         const token = localStorage.getItem('token');
-
         if (user && token) {
-            // Kiểm tra token còn hợp lệ không
-            this.verifyToken().then(isValid => {
-                if (isValid) {
-                    this.isAuthenticated = true;
-                    this.user = JSON.parse(user);
-                    this.startTokenCheck();
-                    this.startInactivityTimer();
-                    this.updateUI();
-                } else {
-                    this.logout();
-                }
-            });
+            this.isAuthenticated = true;
+            this.user = JSON.parse(user);
+            this.startActivityTracking();
+            this.startTokenRefresh();
         }
-
-        // Theo dõi hoạt động của user
-        this.trackUserActivity();
     },
 
     // Login
@@ -54,19 +45,21 @@ const auth = {
 
             // Store user data
             localStorage.setItem('user', JSON.stringify(data.khach_hang));
-            if (data.token) { // Lưu token nếu có
+            if (data.token) {
                 localStorage.setItem('token', data.token);
+            }
+            if (data.refreshToken) {
+                localStorage.setItem('refreshToken', data.refreshToken);
             }
             this.isAuthenticated = true;
             this.user = data.khach_hang;
 
-            // Bắt đầu kiểm tra token và timer
-            this.startTokenCheck();
-            this.startInactivityTimer();
-            this.updateUI();
+            // Bắt đầu theo dõi hoạt động và refresh token
+            this.startActivityTracking();
+            this.startTokenRefresh();
 
-            // Dispatch event cho cart
-            document.dispatchEvent(new CustomEvent('userLoggedIn'));
+            // Xử lý redirect sau khi đăng nhập
+            this.handlePostLoginRedirect();
 
             return data;
         } catch (error) {
@@ -79,19 +72,13 @@ const auth = {
     logout() {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         this.isAuthenticated = false;
         this.user = null;
 
-        // Dừng các timer
-        this.stopTokenCheck();
-        this.stopInactivityTimer();
-        this.updateUI();
-
-        // Dispatch event cho cart
-        document.dispatchEvent(new CustomEvent('userLoggedOut'));
-
-        // Hiển thị thông báo
-        this.showNotification('Đã đăng xuất thành công!', 'info');
+        // Dừng tất cả timers
+        this.stopActivityTracking();
+        this.stopTokenRefresh();
     },
 
     async register(userData) {
@@ -110,204 +97,275 @@ const auth = {
                 // Ném lỗi với thông điệp từ server nếu có, nếu không thì thông điệp mặc định
                 throw new Error(data.error || 'Đăng ký thất bại. Vui lòng thử lại.');
             }
-            // Có thể bạn muốn tự động đăng nhập người dùng sau khi đăng ký thành công
-            // hoặc hiển thị thông báo và yêu cầu họ đăng nhập.
-            // Ví dụ: return data; // Trả về dữ liệu để xử lý tiếp (vd: hiển thị thông báo)
+            // Tự động đăng nhập sau khi đăng ký thành công
+            if (data.token && data.refreshToken) {
+                localStorage.setItem('user', JSON.stringify(data.khach_hang));
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('refreshToken', data.refreshToken);
+                this.isAuthenticated = true;
+                this.user = data.khach_hang;
+
+                // Bắt đầu theo dõi hoạt động và refresh token
+                this.startActivityTracking();
+                this.startTokenRefresh();
+
+                // Xử lý redirect sau khi đăng ký
+                this.handlePostLoginRedirect();
+            }
+
             return data;
         } catch (error) {
-            console.error('Registration error:', error.message); // Log message của error
-            // Ném lại lỗi để hàm gọi có thể bắt và xử lý (ví dụ: hiển thị cho người dùng)
+            console.error('Registration error:', error.message);
             throw error;
         }
     },
 
-    // Verify token với server
-    async verifyToken() {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) return false;
+    // Bắt đầu theo dõi hoạt động người dùng
+    startActivityTracking() {
+        this.resetActivityTimer();
 
-            const response = await fetch(`${API_BASE_URL}/khach_hang/verify`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            return response.ok;
-        } catch (error) {
-            console.error('Token verification failed:', error);
-            return false;
-        }
-    },
-
-    // Bắt đầu kiểm tra token định kỳ
-    startTokenCheck() {
-        this.tokenCheckInterval = setInterval(async () => {
-            const isValid = await this.verifyToken();
-            if (!isValid) {
-                this.logout();
-                this.showNotification('Phiên đăng nhập đã hết hạn!', 'warning');
-            }
-        }, 30000); // Kiểm tra mỗi 30 giây
-    },
-
-    // Dừng kiểm tra token
-    stopTokenCheck() {
-        if (this.tokenCheckInterval) {
-            clearInterval(this.tokenCheckInterval);
-            this.tokenCheckInterval = null;
-        }
-    },
-
-    // Bắt đầu timer không hoạt động (5 phút)
-    startInactivityTimer() {
-        this.resetInactivityTimer();
-    },
-
-    // Reset timer không hoạt động
-    resetInactivityTimer() {
-        this.stopInactivityTimer();
-        this.lastActivity = Date.now();
-
-        this.inactivityTimer = setTimeout(() => {
-            this.logout();
-            this.showNotification('Đã tự động đăng xuất do không hoạt động!', 'warning');
-        }, 5 * 60 * 1000); // 5 phút
-    },
-
-    // Dừng timer không hoạt động
-    stopInactivityTimer() {
-        if (this.inactivityTimer) {
-            clearTimeout(this.inactivityTimer);
-            this.inactivityTimer = null;
-        }
-    },
-
-    // Theo dõi hoạt động của user
-    trackUserActivity() {
+        // Lắng nghe các sự kiện hoạt động
         const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-
         events.forEach(event => {
-            document.addEventListener(event, () => {
-                if (this.isAuthenticated) {
-                    this.resetInactivityTimer();
-                }
-            }, true);
+            document.addEventListener(event, this.resetActivityTimer.bind(this), true);
         });
     },
 
-    // Cập nhật UI sau khi đăng nhập/đăng xuất
-    updateUI() {
-        // Desktop elements
-        const loginBtn = document.getElementById('loginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const userDisplay = document.getElementById('userDisplay');
-        const userName = document.getElementById('userName');
-
-        // Mobile elements
-        const mobileLoginBtn = document.getElementById('mobileLoginBtn');
-        const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
-        const mobileUserDisplay = document.getElementById('mobileUserDisplay');
-        const mobileUserName = document.getElementById('mobileUserName');
-
-        if (this.isAuthenticated && this.user) {
-            // Desktop: Ẩn nút đăng nhập, hiển thị user info và nút đăng xuất
-            if (loginBtn) loginBtn.style.display = 'none';
-            if (logoutBtn) {
-                logoutBtn.style.display = 'block';
-                logoutBtn.onclick = () => this.logout();
-            }
-            if (userDisplay) userDisplay.classList.remove('hidden');
-            if (userName) userName.textContent = this.user.full_name;
-
-            // Mobile: Ẩn nút đăng nhập, hiển thị user info và nút đăng xuất
-            if (mobileLoginBtn) mobileLoginBtn.style.display = 'none';
-            if (mobileLogoutBtn) {
-                mobileLogoutBtn.style.display = 'block';
-                mobileLogoutBtn.onclick = () => this.logout();
-            }
-            if (mobileUserDisplay) mobileUserDisplay.classList.remove('hidden');
-            if (mobileUserName) mobileUserName.textContent = this.user.full_name;
-
-        } else {
-            // Desktop: Hiển thị nút đăng nhập, ẩn user info
-            if (loginBtn) loginBtn.style.display = 'block';
-            if (logoutBtn) logoutBtn.style.display = 'none';
-            if (userDisplay) userDisplay.classList.add('hidden');
-
-            // Mobile: Hiển thị nút đăng nhập, ẩn user info
-            if (mobileLoginBtn) mobileLoginBtn.style.display = 'block';
-            if (mobileLogoutBtn) mobileLogoutBtn.style.display = 'none';
-            if (mobileUserDisplay) mobileUserDisplay.classList.add('hidden');
+    // Dừng theo dõi hoạt động
+    stopActivityTracking() {
+        if (this.activityTimer) {
+            clearTimeout(this.activityTimer);
+            this.activityTimer = null;
         }
+        if (this.warningTimer) {
+            clearTimeout(this.warningTimer);
+            this.warningTimer = null;
+        }
+
+        // Xóa event listeners
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        events.forEach(event => {
+            document.removeEventListener(event, this.resetActivityTimer.bind(this), true);
+        });
     },
 
-    // Hiển thị thông báo
-    showNotification(message, type = 'info') {
-        // Tạo element thông báo
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
-                <span>${message}</span>
+    // Reset timer hoạt động
+    resetActivityTimer() {
+        if (!this.isAuthenticated) return;
+
+        // Xóa timer cũ
+        if (this.activityTimer) {
+            clearTimeout(this.activityTimer);
+        }
+        if (this.warningTimer) {
+            clearTimeout(this.warningTimer);
+        }
+
+        // Ẩn cảnh báo nếu đang hiển thị
+        this.hideSessionWarning();
+
+        // Đặt timer cảnh báo (2.5 phút)
+        this.warningTimer = setTimeout(() => {
+            this.showSessionWarning();
+        }, this.INACTIVITY_TIMEOUT - this.WARNING_TIME);
+
+        // Đặt timer đăng xuất (3 phút)
+        this.activityTimer = setTimeout(() => {
+            this.autoLogout();
+        }, this.INACTIVITY_TIMEOUT);
+    },
+
+    // Hiển thị cảnh báo session sắp hết hạn
+    showSessionWarning() {
+        const existingWarning = document.getElementById('sessionWarning');
+        if (existingWarning) return;
+
+        const warning = document.createElement('div');
+        warning.id = 'sessionWarning';
+        warning.className = 'fixed top-4 right-4 bg-yellow-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+        warning.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div>
+                    <h4 class="font-bold">Cảnh báo phiên làm việc</h4>
+                    <p class="text-sm">Phiên của bạn sẽ hết hạn trong <span id="countdown">30</span> giây</p>
+                </div>
+                <button id="extendSession" class="ml-4 bg-white text-yellow-500 px-3 py-1 rounded text-sm font-bold hover:bg-gray-100">
+                    Gia hạn
+                </button>
             </div>
         `;
 
-        // Thêm styles
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 10000;
-            transform: translateX(100%);
-            transition: transform 0.3s ease-out;
-        `;
+        document.body.appendChild(warning);
 
-        // Thêm CSS animation nếu chưa có
-        if (!document.getElementById('notification-styles')) {
-            const style = document.createElement('style');
-            style.id = 'notification-styles';
-            style.textContent = `
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); }
-                    to { transform: translateX(0); }
-                }
-                @keyframes slideOutRight {
-                    from { transform: translateX(0); }
-                    to { transform: translateX(100%); }
-                }
-                .notification-content {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-            `;
-            document.head.appendChild(style);
+        // Countdown
+        let countdown = 30;
+        const countdownEl = document.getElementById('countdown');
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            if (countdownEl) {
+                countdownEl.textContent = countdown;
+            }
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+            }
+        }, 1000);
+
+        // Extend session button
+        document.getElementById('extendSession')?.addEventListener('click', () => {
+            this.resetActivityTimer();
+            clearInterval(countdownInterval);
+        });
+    },
+
+    // Ẩn cảnh báo session
+    hideSessionWarning() {
+        const warning = document.getElementById('sessionWarning');
+        if (warning) {
+            warning.remove();
         }
+    },
+
+    // Tự động đăng xuất
+    autoLogout() {
+        this.hideSessionWarning();
+        this.logout();
+
+        // Hiển thị thông báo
+        this.showAutoLogoutNotification();
+
+        // Reload trang để cập nhật UI
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
+    },
+
+    // Hiển thị thông báo tự động đăng xuất
+    showAutoLogoutNotification() {
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <div>
+                    <h4 class="font-bold">Đã đăng xuất tự động</h4>
+                    <p class="text-sm">Phiên làm việc đã hết hạn do không hoạt động</p>
+                </div>
+            </div>
+        `;
 
         document.body.appendChild(notification);
 
-        // Trigger animation
         setTimeout(() => {
-            notification.style.transform = 'translateX(0)';
-        }, 10);
+            notification.remove();
+        }, 5000);
+    },
 
-        // Tự động xóa sau 3 giây
-        setTimeout(() => {
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
+    // Bắt đầu refresh token tự động
+    startTokenRefresh() {
+        this.refreshTimer = setInterval(async () => {
+            await this.refreshToken();
+        }, this.TOKEN_REFRESH_INTERVAL);
+    },
+
+    // Dừng refresh token
+    stopTokenRefresh() {
+        if (this.refreshTimer) {
+            clearInterval(this.refreshTimer);
+            this.refreshTimer = null;
+        }
+    },
+
+    // Refresh token
+    async refreshToken() {
+        try {
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (!refreshToken) {
+                this.autoLogout();
+                return;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/khach_hang/refresh`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ refreshToken })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                console.log('Token refreshed successfully');
+            } else {
+                console.error('Token refresh failed:', data.error);
+                this.autoLogout();
+            }
+        } catch (error) {
+            console.error('Token refresh error:', error);
+            this.autoLogout();
+        }
+    },
+
+    // Xử lý redirect sau khi đăng nhập thành công
+    handlePostLoginRedirect() {
+        const redirectTarget = localStorage.getItem('redirectAfterLogin');
+
+        if (redirectTarget) {
+            // Xóa redirect flag
+            localStorage.removeItem('redirectAfterLogin');
+
+            // Xử lý các loại redirect khác nhau
+            switch (redirectTarget) {
+                case 'cart':
+                    // Mở giỏ hàng sau khi đăng nhập
+                    setTimeout(() => {
+                        if (window.cartManager) {
+                            window.cartManager.openCartModal();
+                        }
+                    }, 500);
+                    break;
+
+                case 'checkout':
+                    // Redirect đến trang thanh toán
+                    setTimeout(() => {
+                        window.location.href = 'ThanhToan.html';
+                    }, 500);
+                    break;
+
+                default:
+                    // Redirect tùy chỉnh khác
+                    if (redirectTarget.startsWith('http') || redirectTarget.startsWith('/')) {
+                        setTimeout(() => {
+                            window.location.href = redirectTarget;
+                        }, 500);
+                    }
+                    break;
+            }
+        }
+    },
+
+    // Yêu cầu đăng nhập với redirect
+    requireLogin(redirectTo = null) {
+        if (this.isAuthenticated) {
+            return true;
+        }
+
+        // Lưu redirect target
+        if (redirectTo) {
+            localStorage.setItem('redirectAfterLogin', redirectTo);
+        }
+
+        // Hiển thị modal đăng nhập hoặc redirect
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) {
+            loginModal.classList.add('active');
+        } else {
+            // Redirect đến trang có form đăng nhập
+            window.location.href = 'Index-new.html';
+        }
+
+        return false;
     }
 };
 

@@ -6,12 +6,9 @@ class CustomerController {
     // Đăng ký khách hàng mới
     static async register(req, res) {
         try {
-            console.log('📝 Register request body:', req.body);
-
             // Kiểm tra validation errors
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                console.log('❌ Validation errors:', errors.array());
                 return res.status(400).json({
                     success: false,
                     error: 'Dữ liệu không hợp lệ',
@@ -24,23 +21,36 @@ class CustomerController {
             // Đăng ký khách hàng
             const newCustomer = await CustomerModel.register(customerData);
             
-            // Tạo JWT token với thời hạn 5 phút
+            // Tạo JWT token với thời gian ngắn
             const token = jwt.sign(
                 {
                     id: newCustomer.id,
                     email: newCustomer.email,
-                    full_name: newCustomer.full_name,
                     type: 'customer'
                 },
                 process.env.JWT_SECRET || 'your-secret-key',
-                { expiresIn: '5m' }
+                { expiresIn: process.env.JWT_EXPIRES_IN || '5m' }
+            );
+
+            // Tạo refresh token
+            const refreshToken = jwt.sign(
+                {
+                    id: newCustomer.id,
+                    email: newCustomer.email,
+                    type: 'customer',
+                    tokenType: 'refresh'
+                },
+                process.env.JWT_SECRET || 'your-secret-key',
+                { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
             );
 
             res.status(201).json({
                 success: true,
                 message: 'Đăng ký thành công',
                 khach_hang: newCustomer,
-                token
+                token,
+                refreshToken,
+                expiresIn: process.env.JWT_EXPIRES_IN || '5m'
             });
 
         } catch (error) {
@@ -70,23 +80,36 @@ class CustomerController {
             // Đăng nhập
             const customer = await CustomerModel.login(email, password);
             
-            // Tạo JWT token với thời hạn 5 phút
+            // Tạo JWT token với thời gian ngắn
             const token = jwt.sign(
                 {
                     id: customer.id,
                     email: customer.email,
-                    full_name: customer.full_name,
                     type: 'customer'
                 },
                 process.env.JWT_SECRET || 'your-secret-key',
-                { expiresIn: '5m' }
+                { expiresIn: process.env.JWT_EXPIRES_IN || '5m' }
+            );
+
+            // Tạo refresh token
+            const refreshToken = jwt.sign(
+                {
+                    id: customer.id,
+                    email: customer.email,
+                    type: 'customer',
+                    tokenType: 'refresh'
+                },
+                process.env.JWT_SECRET || 'your-secret-key',
+                { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
             );
 
             res.json({
                 success: true,
                 message: 'Đăng nhập thành công',
                 khach_hang: customer,
-                token
+                token,
+                refreshToken,
+                expiresIn: process.env.JWT_EXPIRES_IN || '5m'
             });
 
         } catch (error) {
@@ -203,7 +226,7 @@ class CustomerController {
         try {
             const customerId = req.user.id;
             const customer = await CustomerModel.findById(customerId);
-            
+
             if (!customer) {
                 return res.status(404).json({
                     success: false,
@@ -226,68 +249,68 @@ class CustomerController {
         }
     }
 
-    // Đăng nhập bằng mạng xã hội
-    static async socialLogin(req, res) {
+    // Refresh token
+    static async refreshToken(req, res) {
         try {
-            const { provider, providerId, email, full_name, avatar, phone, verified } = req.body;
+            const { refreshToken } = req.body;
 
-            if (!provider || !providerId || !email || !full_name) {
-                return res.status(400).json({
+            if (!refreshToken) {
+                return res.status(401).json({
                     success: false,
-                    error: 'Thiếu thông tin bắt buộc từ mạng xã hội'
+                    error: 'Refresh token không được cung cấp'
                 });
             }
 
-            // Kiểm tra xem user đã tồn tại chưa (theo email hoặc social ID)
-            let customer = await CustomerModel.findByEmail(email);
+            // Verify refresh token
+            const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET || 'your-secret-key');
 
+            if (decoded.tokenType !== 'refresh') {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Token không hợp lệ'
+                });
+            }
+
+            // Kiểm tra user còn tồn tại không
+            const customer = await CustomerModel.findById(decoded.id);
             if (!customer) {
-                // Tạo user mới từ thông tin social
-                const newCustomerData = {
-                    full_name,
-                    email,
-                    phone: phone || '0000000000', // Số điện thoại mặc định
-                    password: Math.random().toString(36).substring(2, 15), // Random password
-                    provider,
-                    provider_id: providerId,
-                    avatar,
-                    verified: verified || false
-                };
-
-                customer = await CustomerModel.createSocialUser(newCustomerData);
-            } else {
-                // Cập nhật thông tin social nếu chưa có
-                await CustomerModel.updateSocialInfo(customer.id, {
-                    provider,
-                    provider_id: providerId,
-                    avatar
+                return res.status(401).json({
+                    success: false,
+                    error: 'Người dùng không tồn tại'
                 });
             }
 
-            // Tạo JWT token
-            const token = jwt.sign(
+            // Tạo token mới
+            const newToken = jwt.sign(
                 {
                     id: customer.id,
                     email: customer.email,
-                    full_name: customer.full_name,
                     type: 'customer'
                 },
                 process.env.JWT_SECRET || 'your-secret-key',
-                { expiresIn: '5m' }
+                { expiresIn: process.env.JWT_EXPIRES_IN || '5m' }
             );
 
             res.json({
                 success: true,
-                message: 'Đăng nhập thành công',
-                khach_hang: customer,
-                token
+                message: 'Token đã được làm mới',
+                token: newToken,
+                expiresIn: process.env.JWT_EXPIRES_IN || '5m'
             });
 
         } catch (error) {
-            console.error('❌ Lỗi đăng nhập social:', error);
+            console.error('❌ Lỗi refresh token:', error);
+
+            if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Refresh token không hợp lệ hoặc đã hết hạn'
+                });
+            }
+
             res.status(500).json({
                 success: false,
-                error: error.message || 'Lỗi server'
+                error: 'Lỗi server'
             });
         }
     }
@@ -297,9 +320,9 @@ class CustomerController {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
-
+            
             const result = await CustomerModel.getAll(page, limit);
-
+            
             res.json({
                 success: true,
                 ...result

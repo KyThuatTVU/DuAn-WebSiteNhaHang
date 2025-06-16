@@ -9,10 +9,9 @@ class CartManager {
 
     init() {
         if (this.isInitialized) return;
-
+        
         this.setupEventListeners();
         this.updateCartUI();
-        this.setupAuthListeners();
         this.isInitialized = true;
         console.log('🛒 CartManager initialized');
     }
@@ -101,27 +100,6 @@ class CartManager {
                 const itemId = this.getItemIdFromElement(e.target);
                 this.removeFromCart(itemId);
             }
-        });
-    }
-
-    setupAuthListeners() {
-        // Lắng nghe sự kiện đăng nhập/đăng xuất
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'user' || e.key === 'token') {
-                this.updateCartUI();
-            }
-        });
-
-        // Lắng nghe custom events từ auth system
-        document.addEventListener('userLoggedIn', () => {
-            this.updateCartUI();
-        });
-
-        document.addEventListener('userLoggedOut', () => {
-            this.updateCartUI();
-            // Có thể xóa giỏ hàng khi đăng xuất
-            // this.cart = [];
-            // this.saveCart();
         });
     }
 
@@ -227,7 +205,7 @@ class CartManager {
 
     addToCart(item, buttonElement = null, quantity = 1) {
         // Kiểm tra đăng nhập trước khi thêm vào giỏ hàng
-        if (!this.checkLoginRequired()) {
+        if (!this.checkAuthBeforeCart()) {
             return false;
         }
 
@@ -344,15 +322,13 @@ class CartManager {
     }
 
     updateCartUI() {
-        // Kiểm tra đăng nhập để hiển thị số lượng giỏ hàng
-        const isLoggedIn = this.isUserLoggedIn();
-        const totalItems = isLoggedIn ? this.cart.reduce((sum, item) => sum + (item.qty || item.quantity || 0), 0) : 0;
+        const totalItems = this.cart.reduce((sum, item) => sum + (item.qty || item.quantity || 0), 0);
 
         // Update desktop cart counter
         const cartCounter = document.getElementById('cartCounter');
         if (cartCounter) {
             cartCounter.textContent = totalItems;
-            if (totalItems > 0 && isLoggedIn) {
+            if (totalItems > 0) {
                 cartCounter.style.transform = 'scale(1)';
                 cartCounter.style.display = 'flex';
             } else {
@@ -365,11 +341,6 @@ class CartManager {
         const mobileCartCounter = document.getElementById('mobileCartCounter');
         if (mobileCartCounter) {
             mobileCartCounter.textContent = totalItems;
-            if (!isLoggedIn) {
-                mobileCartCounter.style.display = 'none';
-            } else {
-                mobileCartCounter.style.display = totalItems > 0 ? 'flex' : 'none';
-            }
         }
 
         // Update cart item count in modal
@@ -387,7 +358,7 @@ class CartManager {
 
     openCartModal() {
         // Kiểm tra đăng nhập trước khi mở giỏ hàng
-        if (!this.checkLoginRequired()) {
+        if (!this.checkAuthBeforeCart()) {
             return;
         }
 
@@ -401,6 +372,122 @@ class CartManager {
                 this.hideCartLoading();
                 this.renderCartItems();
             }, 300);
+        }
+    }
+
+    // Kiểm tra đăng nhập trước khi truy cập giỏ hàng
+    checkAuthBeforeCart() {
+        // Kiểm tra xem auth object có tồn tại không
+        if (typeof window.auth === 'undefined') {
+            console.warn('Auth system not loaded');
+            this.showLoginRequiredNotification();
+            return false;
+        }
+
+        // Kiểm tra trạng thái đăng nhập
+        if (!window.auth.isAuthenticated || !window.auth.user) {
+            this.showLoginRequiredModal();
+            return false;
+        }
+
+        return true;
+    }
+
+    // Hiển thị modal yêu cầu đăng nhập
+    showLoginRequiredModal() {
+        // Hiển thị cart modal với trạng thái login required
+        const cartModal = document.getElementById('cartModal');
+        if (cartModal) {
+            cartModal.classList.add('active');
+            this.showLoginRequiredState();
+        }
+
+        // Tìm modal đăng nhập có sẵn
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) {
+            // Lưu trạng thái để redirect về giỏ hàng sau khi đăng nhập
+            localStorage.setItem('redirectAfterLogin', 'cart');
+        }
+
+        this.showLoginRequiredNotification();
+    }
+
+    // Hiển thị trạng thái yêu cầu đăng nhập trong cart modal
+    showLoginRequiredState() {
+        const emptyCartState = document.getElementById('emptyCartState');
+        const loginRequiredState = document.getElementById('loginRequiredState');
+        const cartItemsList = document.getElementById('cartItemsList');
+        const cartSummary = document.getElementById('cartSummary');
+        const loadingState = document.getElementById('cartLoadingState');
+
+        // Ẩn tất cả các state khác
+        if (emptyCartState) emptyCartState.classList.add('hidden');
+        if (cartItemsList) cartItemsList.classList.add('hidden');
+        if (cartSummary) cartSummary.classList.add('hidden');
+        if (loadingState) loadingState.classList.add('hidden');
+
+        // Hiển thị login required state
+        if (loginRequiredState) {
+            loginRequiredState.classList.remove('hidden');
+
+            // Setup event listeners cho các button
+            this.setupLoginRequiredButtons();
+        }
+    }
+
+    // Setup event listeners cho login required buttons
+    setupLoginRequiredButtons() {
+        const openLoginBtn = document.getElementById('openLoginFromCart');
+        const continueShoppingBtn = document.getElementById('continueShoppingBtn3');
+
+        if (openLoginBtn) {
+            openLoginBtn.addEventListener('click', () => {
+                // Lưu redirect target
+                localStorage.setItem('redirectAfterLogin', 'cart');
+
+                // Mở modal đăng nhập
+                const loginModal = document.getElementById('loginModal');
+                if (loginModal) {
+                    this.closeCartModal();
+                    loginModal.classList.add('active');
+                } else {
+                    // Redirect đến trang có form đăng nhập
+                    window.location.href = 'Index-new.html';
+                }
+            });
+        }
+
+        if (continueShoppingBtn) {
+            continueShoppingBtn.addEventListener('click', () => {
+                this.closeCartModal();
+                // Navigate to menu page if not already there
+                if (!window.location.pathname.includes('Menu')) {
+                    window.location.href = 'Menu-new.html';
+                }
+            });
+        }
+    }
+
+    // Hiển thị thông báo yêu cầu đăng nhập
+    showLoginRequiredNotification() {
+        this.showNotification(
+            'Vui lòng đăng nhập để xem giỏ hàng của bạn!',
+            'warning',
+            5000
+        );
+    }
+
+    // Scroll đến phần đăng nhập (nếu có)
+    scrollToLoginSection() {
+        const loginSection = document.querySelector('.login-section') ||
+                           document.querySelector('#loginForm') ||
+                           document.querySelector('[data-login]');
+
+        if (loginSection) {
+            loginSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
         }
     }
 
@@ -427,12 +514,23 @@ class CartManager {
     }
 
     renderCartItems() {
+        // Kiểm tra đăng nhập trước khi render
+        if (!this.checkAuthBeforeCart()) {
+            return;
+        }
+
         const cartItemsList = document.getElementById('cartItemsList');
         const emptyCartState = document.getElementById('emptyCartState');
         const cartSummary = document.getElementById('cartSummary');
         const quickActions = document.getElementById('cartQuickActions');
+        const loginRequiredState = document.getElementById('loginRequiredState');
 
         if (!cartItemsList) return;
+
+        // Ẩn login required state nếu đã đăng nhập
+        if (loginRequiredState) {
+            loginRequiredState.classList.add('hidden');
+        }
 
         if (this.cart.length === 0) {
             cartItemsList.classList.add('hidden');
@@ -612,7 +710,7 @@ class CartManager {
 
     checkout() {
         // Kiểm tra đăng nhập trước khi thanh toán
-        if (!this.checkLoginRequired()) {
+        if (!this.checkAuthBeforeCart()) {
             return;
         }
 
@@ -621,19 +719,17 @@ class CartManager {
             return;
         }
 
-        // Simulate checkout process
-        const checkoutModal = document.getElementById('checkoutModal');
-        if (checkoutModal) {
-            this.closeCartModal();
-            checkoutModal.classList.add('active');
-            
-            // Clear cart after successful checkout
-            setTimeout(() => {
-                this.cart = [];
-                this.saveCart();
-                this.updateCartUI();
-            }, 1000);
-        }
+        // Redirect đến trang thanh toán
+        this.redirectToCheckout();
+    }
+
+    // Redirect đến trang thanh toán
+    redirectToCheckout() {
+        // Lưu giỏ hàng trước khi chuyển trang
+        this.saveCart();
+
+        // Chuyển đến trang thanh toán
+        window.location.href = 'ThanhToan.html';
     }
 
     closeCheckoutModal() {
@@ -785,131 +881,6 @@ class CartManager {
         const cartItems = document.querySelector('.cart-items');
         if (cartItems) {
             cartItems.classList.remove('scrollable');
-        }
-    }
-
-    // Kiểm tra user đã đăng nhập chưa (không hiển thị modal)
-    isUserLoggedIn() {
-        const user = localStorage.getItem('user');
-        const token = localStorage.getItem('token');
-
-        if (!user || !token) {
-            return false;
-        }
-
-        // Kiểm tra auth object nếu có
-        if (window.auth && !window.auth.isAuthenticated) {
-            return false;
-        }
-
-        return true;
-    }
-
-    // Kiểm tra yêu cầu đăng nhập (hiển thị modal nếu chưa đăng nhập)
-    checkLoginRequired() {
-        if (!this.isUserLoggedIn()) {
-            this.showLoginRequiredModal();
-            return false;
-        }
-        return true;
-    }
-
-    // Hiển thị modal yêu cầu đăng nhập
-    showLoginRequiredModal() {
-        // Tạo modal yêu cầu đăng nhập
-        const modal = document.createElement('div');
-        modal.className = 'modal active';
-        modal.id = 'loginRequiredModal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        `;
-        modal.innerHTML = `
-            <div class="bg-white rounded-lg overflow-hidden shadow-xl w-full max-w-md mx-4" style="animation: fadeInScale 0.3s ease-out;">
-                <div class="p-6 text-center">
-                    <div class="mb-4">
-                        <i class="fas fa-lock text-4xl text-red-600 mb-4"></i>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Yêu cầu đăng nhập</h3>
-                        <p class="text-gray-600">Bạn cần đăng nhập để xem giỏ hàng và đặt món.</p>
-                    </div>
-                    <div class="flex gap-3 justify-center">
-                        <button id="loginRequiredBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
-                            Đăng nhập
-                        </button>
-                        <button id="cancelLoginRequired" class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-6 rounded-lg transition duration-300">
-                            Hủy
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Thêm CSS animation nếu chưa có
-        if (!document.getElementById('login-required-styles')) {
-            const style = document.createElement('style');
-            style.id = 'login-required-styles';
-            style.textContent = `
-                @keyframes fadeInScale {
-                    from {
-                        opacity: 0;
-                        transform: scale(0.9);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: scale(1);
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        document.body.appendChild(modal);
-
-        // Xử lý sự kiện
-        const loginBtn = modal.querySelector('#loginRequiredBtn');
-        const cancelBtn = modal.querySelector('#cancelLoginRequired');
-
-        loginBtn.addEventListener('click', () => {
-            this.closeLoginRequiredModal();
-            this.openLoginModal();
-        });
-
-        cancelBtn.addEventListener('click', () => {
-            this.closeLoginRequiredModal();
-        });
-
-        // Click outside to close
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                this.closeLoginRequiredModal();
-            }
-        });
-    }
-
-    // Đóng modal yêu cầu đăng nhập
-    closeLoginRequiredModal() {
-        const modal = document.getElementById('loginRequiredModal');
-        if (modal) {
-            modal.remove();
-        }
-    }
-
-    // Mở modal đăng nhập
-    openLoginModal() {
-        const loginModal = document.getElementById('loginModal');
-        if (loginModal) {
-            loginModal.classList.add('active');
-        } else {
-            // Nếu không có modal đăng nhập, chuyển hướng đến trang có form đăng nhập
-            this.showNotification('Vui lòng đăng nhập để tiếp tục', 'info');
         }
     }
 }

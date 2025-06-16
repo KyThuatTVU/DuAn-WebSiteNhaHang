@@ -11,10 +11,6 @@ class CustomerModel {
                 email VARCHAR(255) NOT NULL UNIQUE,
                 phone VARCHAR(20) NOT NULL,
                 password VARCHAR(255) NOT NULL,
-                provider VARCHAR(50) DEFAULT NULL,
-                provider_id VARCHAR(255) DEFAULT NULL,
-                avatar TEXT DEFAULT NULL,
-                verified BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB
         `;
@@ -217,70 +213,6 @@ class CustomerModel {
             };
         } catch (error) {
             console.error('❌ Lỗi lấy danh sách khách hàng:', error);
-            throw error;
-        }
-    }
-
-    // Tạo user từ social login
-    static async createSocialUser(userData) {
-        const { full_name, email, phone, password, provider, provider_id, avatar, verified } = userData;
-
-        try {
-            // Mã hóa mật khẩu random
-            const hashedPassword = await bcrypt.hash(password, 12);
-
-            const query = `
-                INSERT INTO khach_hang (full_name, email, phone, password, provider, provider_id, avatar, verified)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `;
-
-            const [result] = await pool.execute(query, [
-                full_name, email, phone, hashedPassword, provider, provider_id, avatar, verified
-            ]);
-
-            // Lấy thông tin khách hàng vừa tạo
-            const newCustomer = await this.findById(result.insertId);
-            return newCustomer;
-
-        } catch (error) {
-            console.error('❌ Lỗi tạo social user:', error);
-            throw error;
-        }
-    }
-
-    // Cập nhật thông tin social
-    static async updateSocialInfo(id, socialData) {
-        const { provider, provider_id, avatar } = socialData;
-
-        try {
-            const query = `
-                UPDATE khach_hang
-                SET provider = ?, provider_id = ?, avatar = ?
-                WHERE id = ?
-            `;
-
-            await pool.execute(query, [provider, provider_id, avatar, id]);
-            return await this.findById(id);
-
-        } catch (error) {
-            console.error('❌ Lỗi cập nhật social info:', error);
-            throw error;
-        }
-    }
-
-    // Tìm user theo provider ID
-    static async findByProviderId(provider, providerId) {
-        try {
-            const query = `
-                SELECT id, full_name, email, phone, provider, provider_id, avatar, verified, created_at
-                FROM khach_hang
-                WHERE provider = ? AND provider_id = ?
-            `;
-            const [rows] = await pool.execute(query, [provider, providerId]);
-
-            return rows.length > 0 ? rows[0] : null;
-        } catch (error) {
-            console.error('❌ Lỗi tìm user theo provider ID:', error);
             throw error;
         }
     }

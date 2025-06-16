@@ -140,65 +140,6 @@ router.post('/login', validateLogin, CustomerController.login);
 
 /**
  * @swagger
- * /api/khach_hang/social-login:
- *   post:
- *     summary: Đăng nhập bằng mạng xã hội
- *     tags: [Customer]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - provider
- *               - providerId
- *               - email
- *               - full_name
- *             properties:
- *               provider:
- *                 type: string
- *                 enum: [google, facebook]
- *                 description: Nhà cung cấp dịch vụ
- *               providerId:
- *                 type: string
- *                 description: ID từ nhà cung cấp
- *               email:
- *                 type: string
- *                 description: Email từ mạng xã hội
- *               full_name:
- *                 type: string
- *                 description: Tên đầy đủ
- *               avatar:
- *                 type: string
- *                 description: URL avatar
- *               phone:
- *                 type: string
- *                 description: Số điện thoại (tùy chọn)
- *               verified:
- *                 type: boolean
- *                 description: Trạng thái xác thực
- *     responses:
- *       200:
- *         description: Đăng nhập thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 khach_hang:
- *                   $ref: '#/components/schemas/Customer'
- *                 token:
- *                   type: string
- */
-router.post('/social-login', CustomerController.socialLogin);
-
-/**
- * @swagger
  * /api/khach_hang/logout:
  *   post:
  *     summary: Đăng xuất
@@ -303,6 +244,45 @@ router.put('/change-password', authenticateToken, validateChangePassword, Custom
  *         description: Token hợp lệ
  */
 router.get('/verify', authenticateToken, CustomerController.verifyToken);
+
+/**
+ * @swagger
+ * /api/khach_hang/refresh:
+ *   post:
+ *     summary: Làm mới token
+ *     tags: [Customer]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: Refresh token
+ *     responses:
+ *       200:
+ *         description: Token đã được làm mới
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 token:
+ *                   type: string
+ *                 expiresIn:
+ *                   type: string
+ *       401:
+ *         description: Refresh token không hợp lệ
+ */
+router.post('/refresh', CustomerController.refreshToken);
 
 /**
  * @swagger

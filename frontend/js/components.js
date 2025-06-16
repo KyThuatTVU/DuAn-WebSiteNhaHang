@@ -436,15 +436,20 @@ async function handleLoginSubmit(e) {
 
         const data = await auth.login(email, password);
 
-        // Close modal
+        // Update UI
+        updateUIAfterLogin(data.khach_hang);
         const loginModal = document.getElementById('loginModal');
-        if (loginModal) loginModal.classList.remove('active');
+        if (loginModal) {
+            // Đóng modal sau một chút để user thấy thông báo thành công
+            setTimeout(() => {
+                loginModal.classList.remove('active');
+            }, 1000);
+        }
 
-        // UI đã được cập nhật trong auth.login()
-        auth.showNotification('Đăng nhập thành công!', 'success');
+        showLoginNotification('Đăng nhập thành công!', 'success');
 
     } catch (error) {
-        auth.showNotification(error.message, 'error');
+        showLoginNotification(error.message, 'error');
     } finally {
         if (submitBtn) submitBtn.disabled = false;
     }
@@ -478,11 +483,11 @@ async function handleRegisterSubmit(e) {
         }
 
         await auth.register(userData);
-        auth.showNotification('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
+        showLoginNotification('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
         switchLoginTab('login');
 
     } catch (error) {
-        auth.showNotification(error.message, 'error');
+        showLoginNotification(error.message, 'error');
     } finally {
         if (submitBtn) submitBtn.disabled = false;
     }
