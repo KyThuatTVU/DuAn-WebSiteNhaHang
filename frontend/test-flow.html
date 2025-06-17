@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Complete Flow - Ẩm Thực Phương Nam</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .primary { background-color: #e53e3e; }
+        .bg-primary { background-color: #e53e3e; }
+        .text-primary { color: #e53e3e; }
+        .border-primary { border-color: #e53e3e; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-primary">Test Complete Flow</h1>
+                
+                <!-- Auth Status -->
+                <div class="flex items-center space-x-4">
+                    <div id="authStatus" class="text-gray-600">Chưa đăng nhập</div>
+                    <div id="cartStatus" class="text-gray-600">Giỏ hàng: 0 món</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto space-y-6">
+            
+            <!-- Step 1: Login -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">🔑 Bước 1: Đăng nhập</h2>
+                <div class="flex items-center space-x-4">
+                    <button id="loginBtn" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Đăng nhập
+                    </button>
+                    <button id="logoutBtn" class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 hidden">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
+                    </button>
+                    <div id="loginStatus" class="text-gray-600"></div>
+                </div>
+            </div>
+
+            <!-- Step 2: Add Items to Cart -->
+            <div id="addItemsSection" class="bg-white rounded-lg shadow-md p-6 hidden">
+                <h2 class="text-xl font-semibold mb-4">🛒 Bước 2: Thêm món vào giỏ hàng</h2>
+                
+                <!-- Sample Menu Items -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="border rounded-lg p-4 menu-item" data-item-id="1" data-item-name="Phở Bò Tái" data-item-price="85000">
+                        <img src="https://via.placeholder.com/200x150" alt="Phở Bò Tái" class="w-full h-32 object-cover rounded mb-3">
+                        <h3 class="font-semibold text-lg">Phở Bò Tái</h3>
+                        <p class="text-gray-600 mb-2">Phở bò tái truyền thống</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary font-bold text-lg">85,000đ</span>
+                            <button class="add-to-cart bg-primary text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                                <i class="fas fa-cart-plus mr-2"></i>Thêm
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="border rounded-lg p-4 menu-item" data-item-id="2" data-item-name="Bún Bò Huế" data-item-price="75000">
+                        <img src="https://via.placeholder.com/200x150" alt="Bún Bò Huế" class="w-full h-32 object-cover rounded mb-3">
+                        <h3 class="font-semibold text-lg">Bún Bò Huế</h3>
+                        <p class="text-gray-600 mb-2">Bún bò Huế cay nồng</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary font-bold text-lg">75,000đ</span>
+                            <button class="add-to-cart bg-primary text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                                <i class="fas fa-cart-plus mr-2"></i>Thêm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="viewCartBtn" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600">
+                        <i class="fas fa-shopping-cart mr-2"></i>Xem giỏ hàng
+                    </button>
+                    <button id="clearCartBtn" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">
+                        <i class="fas fa-trash mr-2"></i>Xóa giỏ hàng
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Checkout -->
+            <div id="checkoutSection" class="bg-white rounded-lg shadow-md p-6 hidden">
+                <h2 class="text-xl font-semibold mb-4">💳 Bước 3: Thanh toán</h2>
+                <div class="flex items-center space-x-4">
+                    <button id="goToCheckoutBtn" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-700">
+                        <i class="fas fa-credit-card mr-2"></i>Đi đến trang thanh toán
+                    </button>
+                    <button id="testCheckoutDataBtn" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                        <i class="fas fa-check mr-2"></i>Test dữ liệu thanh toán
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cart Display -->
+            <div id="cartDisplay" class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">🛒 Giỏ hàng hiện tại</h2>
+                <div id="cartItems" class="space-y-2">
+                    <p class="text-gray-500">Giỏ hàng trống</p>
+                </div>
+                <div id="cartTotal" class="mt-4 text-right font-semibold text-lg">
+                    Tổng: 0đ
+                </div>
+            </div>
+
+            <!-- Log -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">📝 Activity Log</h2>
+                <div id="activityLog" class="bg-gray-50 p-4 rounded-lg h-64 overflow-y-auto font-mono text-sm">
+                    <div class="text-gray-500">Chờ hoạt động...</div>
+                </div>
+                <button id="clearLogBtn" class="mt-2 bg-gray-500 text-white px-3 py-1 rounded text-sm">
+                    Xóa log
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Load Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+
+    <script>
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            updateUI();
+            log('🚀 Test flow page loaded');
+            
+            // Initialize CartManager
+            if (typeof CartManager !== 'undefined' && !window.cartManager) {
+                window.cartManager = new CartManager();
+                log('✅ CartManager initialized');
+            }
+        });
+
+        function setupEventListeners() {
+            // Login/Logout
+            document.getElementById('loginBtn').addEventListener('click', login);
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            
+            // Cart actions
+            document.querySelectorAll('.add-to-cart').forEach(btn => {
+                btn.addEventListener('click', addToCart);
+            });
+            document.getElementById('viewCartBtn').addEventListener('click', viewCart);
+            document.getElementById('clearCartBtn').addEventListener('click', clearCart);
+            
+            // Checkout
+            document.getElementById('goToCheckoutBtn').addEventListener('click', goToCheckout);
+            document.getElementById('testCheckoutDataBtn').addEventListener('click', testCheckoutData);
+            
+            // Log
+            document.getElementById('clearLogBtn').addEventListener('click', clearLog);
+        }
+
+        async function login() {
+            try {
+                log('🔑 Đang đăng nhập...');
+                
+                const response = await fetch(`${API_BASE_URL}/khach_hang/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'autologout@test.com',
+                        password: '123456'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store auth data
+                    localStorage.setItem('user', JSON.stringify(data.khach_hang));
+                    localStorage.setItem('token', data.token);
+                    if (data.refreshToken) {
+                        localStorage.setItem('refreshToken', data.refreshToken);
+                    }
+                    
+                    // Update auth object
+                    if (window.auth) {
+                        window.auth.isAuthenticated = true;
+                        window.auth.user = data.khach_hang;
+                    }
+                    
+                    log('✅ Đăng nhập thành công!');
+                    updateUI();
+                } else {
+                    log(`❌ Đăng nhập thất bại: ${data.error}`);
+                }
+                
+            } catch (error) {
+                log(`❌ Lỗi đăng nhập: ${error.message}`);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('cart');
+            localStorage.removeItem('cartItems');
+            
+            if (window.auth) {
+                window.auth.isAuthenticated = false;
+                window.auth.user = null;
+            }
+            
+            if (window.cartManager) {
+                window.cartManager.cart = [];
+                window.cartManager.saveCart();
+            }
+            
+            log('🚪 Đã đăng xuất');
+            updateUI();
+        }
+
+        function addToCart(event) {
+            const button = event.target.closest('.add-to-cart');
+            const menuItem = button.closest('.menu-item');
+            
+            const itemData = {
+                id_mon: parseInt(menuItem.dataset.itemId),
+                ten_mon: menuItem.dataset.itemName,
+                gia: parseInt(menuItem.dataset.itemPrice),
+                hinh_anh: menuItem.querySelector('img').src,
+                mo_ta: menuItem.querySelector('p').textContent,
+                so_luong: 50,
+                qty: 1
+            };
+            
+            if (window.cartManager) {
+                const success = window.cartManager.addToCart(itemData, button);
+                if (success) {
+                    log(`✅ Đã thêm "${itemData.ten_mon}" vào giỏ hàng`);
+                    updateCartDisplay();
+                    updateUI();
+                } else {
+                    log(`❌ Không thể thêm "${itemData.ten_mon}" vào giỏ hàng`);
+                }
+            } else {
+                log('❌ CartManager không khả dụng');
+            }
+        }
+
+        function viewCart() {
+            if (window.cartManager) {
+                window.cartManager.openCartModal();
+            } else {
+                log('❌ CartManager không khả dụng');
+            }
+        }
+
+        function clearCart() {
+            if (window.cartManager) {
+                window.cartManager.clearCart();
+                log('🗑️ Đã xóa giỏ hàng');
+                updateCartDisplay();
+                updateUI();
+            } else {
+                log('❌ CartManager không khả dụng');
+            }
+        }
+
+        function goToCheckout() {
+            log('💳 Chuyển đến trang thanh toán...');
+            window.location.href = 'ThanhToan.html';
+        }
+
+        function testCheckoutData() {
+            try {
+                log('🧪 Testing checkout data...');
+                
+                // Get user
+                const user = window.auth?.user || JSON.parse(localStorage.getItem('user') || '{}');
+                
+                // Get cart
+                const cart = window.cartManager ? window.cartManager.getCart() : [];
+                
+                // Calculate total
+                let total = 0;
+                const orderDetails = cart.map(item => {
+                    const price = item.gia || item.price;
+                    const quantity = item.qty || item.quantity || item.so_luong;
+                    const subtotal = price * quantity;
+                    total += subtotal;
+                    
+                    return {
+                        id_mon_an: item.id_mon || item.id,
+                        ten_mon: item.ten_mon || item.name,
+                        gia: price,
+                        so_luong: quantity
+                    };
+                });
+                
+                const orderData = {
+                    loai_don: 'tai_cho',
+                    tong_tien: total,
+                    dia_chi_giao_hang: null,
+                    ghi_chu: 'Test order',
+                    chi_tiet: orderDetails
+                };
+                
+                log('📊 Checkout data:');
+                log(`   User: ${user.full_name || 'N/A'} (ID: ${user.id || 'N/A'})`);
+                log(`   Cart items: ${cart.length}`);
+                log(`   Total: ${total.toLocaleString('vi-VN')}đ`);
+                log(`   Order data: ${JSON.stringify(orderData, null, 2)}`);
+                
+                if (!user.id) {
+                    log('❌ Thiếu user ID');
+                } else if (cart.length === 0) {
+                    log('❌ Giỏ hàng trống');
+                } else {
+                    log('✅ Dữ liệu thanh toán hợp lệ!');
+                }
+                
+            } catch (error) {
+                log(`❌ Lỗi test checkout: ${error.message}`);
+            }
+        }
+
+        function updateUI() {
+            const isAuthenticated = window.auth?.isAuthenticated || localStorage.getItem('user');
+            const user = window.auth?.user || JSON.parse(localStorage.getItem('user') || '{}');
+            
+            // Auth status
+            const authStatus = document.getElementById('authStatus');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const addItemsSection = document.getElementById('addItemsSection');
+            const checkoutSection = document.getElementById('checkoutSection');
+            
+            if (isAuthenticated && user.id) {
+                authStatus.textContent = `Đã đăng nhập: ${user.full_name}`;
+                authStatus.className = 'text-green-600 font-semibold';
+                loginBtn.classList.add('hidden');
+                logoutBtn.classList.remove('hidden');
+                addItemsSection.classList.remove('hidden');
+                checkoutSection.classList.remove('hidden');
+            } else {
+                authStatus.textContent = 'Chưa đăng nhập';
+                authStatus.className = 'text-gray-600';
+                loginBtn.classList.remove('hidden');
+                logoutBtn.classList.add('hidden');
+                addItemsSection.classList.add('hidden');
+                checkoutSection.classList.add('hidden');
+            }
+            
+            // Cart status
+            updateCartDisplay();
+        }
+
+        function updateCartDisplay() {
+            const cart = window.cartManager ? window.cartManager.getCart() : [];
+            const cartStatus = document.getElementById('cartStatus');
+            const cartItems = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+            
+            // Update cart status
+            cartStatus.textContent = `Giỏ hàng: ${cart.length} món`;
+            
+            // Update cart display
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p class="text-gray-500">Giỏ hàng trống</p>';
+                cartTotal.textContent = 'Tổng: 0đ';
+            } else {
+                let total = 0;
+                cartItems.innerHTML = cart.map(item => {
+                    const price = item.gia || item.price;
+                    const quantity = item.qty || item.quantity || item.so_luong;
+                    const subtotal = price * quantity;
+                    total += subtotal;
+                    
+                    return `
+                        <div class="flex justify-between items-center py-2 border-b">
+                            <div>
+                                <span class="font-medium">${item.ten_mon || item.name}</span>
+                                <span class="text-gray-600 ml-2">x${quantity}</span>
+                            </div>
+                            <span class="font-semibold">${subtotal.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                cartTotal.textContent = `Tổng: ${total.toLocaleString('vi-VN')}đ`;
+            }
+        }
+
+        function log(message) {
+            const activityLog = document.getElementById('activityLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.textContent = `[${timestamp}] ${message}`;
+            activityLog.appendChild(entry);
+            activityLog.scrollTop = activityLog.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('activityLog').innerHTML = '<div class="text-gray-500">Log đã được xóa...</div>';
+        }
+    </script>
+</body>
+</html>

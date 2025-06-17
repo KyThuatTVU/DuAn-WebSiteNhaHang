@@ -386,8 +386,32 @@ class MenuManager {
     }
 
     createAddToCartButton(item) {
-        const isLowStock = item.stock > 0 && item.stock <= 5;
-        const isOutOfStock = !item.isAvailable || item.stock === 0;
+        // Cải thiện logic kiểm tra tồn kho
+        let stock, isAvailable;
+
+        if (typeof item.stock === 'number') {
+            stock = item.stock;
+            isAvailable = stock > 0;
+        } else if (item.isAvailable === false) {
+            stock = 0;
+            isAvailable = false;
+        } else {
+            // Mặc định có hàng nếu không có thông tin rõ ràng
+            stock = 999;
+            isAvailable = true;
+        }
+
+        const isLowStock = stock > 0 && stock <= 5;
+        const isOutOfStock = !isAvailable || stock <= 0;
+
+        console.log(`🔍 Button stock check for "${item.name}":`, {
+            original_stock: item.stock,
+            original_isAvailable: item.isAvailable,
+            calculated_stock: stock,
+            calculated_isAvailable: isAvailable,
+            isLowStock,
+            isOutOfStock
+        });
 
         if (isOutOfStock) {
             return `
@@ -418,7 +442,7 @@ class MenuManager {
                         </div>
                     </button>
                     <div class="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-pulse">
-                        <i class="fas fa-exclamation mr-1"></i>Còn ${item.stock}
+                        <i class="fas fa-exclamation mr-1"></i>Còn ${stock}
                     </div>
                 </div>
             `;
@@ -454,17 +478,23 @@ class MenuManager {
 
         // Use CartManager if available, otherwise fallback to legacy method
         if (window.cartManager) {
-            // Convert menu item to cart format
+            // Convert menu item to cart format với thông tin tồn kho chính xác
             const cartItem = {
                 id_mon: item.id,
                 ten_mon: item.name,
                 gia: item.price,
                 hinh_anh: item.image,
                 mo_ta: item.description || 'Món ăn ngon đặc trưng miền Nam',
-                so_luong: item.stock || 999,
+                so_luong: typeof item.stock === 'number' ? item.stock : (item.isAvailable !== false ? 999 : 0),
+                isAvailable: item.isAvailable,
                 category: item.category,
                 categoryName: item.categoryName
             };
+
+            console.log(`🔄 Converting menu item to cart format:`, {
+                original: { stock: item.stock, isAvailable: item.isAvailable },
+                converted: { so_luong: cartItem.so_luong, isAvailable: cartItem.isAvailable }
+            });
 
             window.cartManager.addToCart(cartItem, buttonElement);
         } else {

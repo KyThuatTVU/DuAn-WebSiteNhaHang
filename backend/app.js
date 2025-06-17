@@ -23,6 +23,7 @@ const apiRoutes = require('./routes');
 
 // Import models to initialize tables
 const CustomerModel = require('./models/CustomerModel');
+const InvoiceModel = require('./models/InvoiceModel');
 
 // Handle uncaught exceptions and unhandled rejections
 handleUncaughtException();
@@ -203,6 +204,7 @@ class App {
 
       // Initialize database tables
       await CustomerModel.createTable();
+      await InvoiceModel.createTable();
 
       // Start server
       const server = this.app.listen(this.port, () => {

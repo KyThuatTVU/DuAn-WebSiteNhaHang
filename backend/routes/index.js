@@ -7,6 +7,7 @@ const categoryRoutes = require('./categoryRoutes');
 const foodRoutes = require('./foodRoutes');
 const chatRoutes = require('./chatRoutes');
 const customerRoutes = require('./customerRoutes');
+const invoiceRoutes = require('./invoiceRoutes');
 
 /**
  * @swagger
@@ -159,9 +160,16 @@ router.get('/docs', (req, res) => {
 });
 
 // Mount route modules
+console.log('🔧 Mounting routes...');
 router.use('/categories', categoryRoutes);
+console.log('✅ Categories routes mounted');
 router.use('/foods', foodRoutes);
+console.log('✅ Foods routes mounted');
 router.use('/chat', chatRoutes);
+console.log('✅ Chat routes mounted');
 router.use('/khach_hang', customerRoutes);
+console.log('✅ Customer routes mounted');
+router.use('/hoa_don', invoiceRoutes);
+console.log('✅ Invoice routes mounted');
 
 module.exports = router;

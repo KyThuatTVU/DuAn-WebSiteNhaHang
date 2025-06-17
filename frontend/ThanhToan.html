@@ -79,7 +79,34 @@
         </div>
     </div>
 
+    <!-- Load Auth System -->
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+
     <script>
+        // Initialize CartManager if not already done
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔍 Checking CartManager availability...');
+
+            if (typeof CartManager !== 'undefined') {
+                console.log('✅ CartManager class found');
+
+                if (!window.cartManager) {
+                    console.log('🔧 Creating CartManager instance...');
+                    window.cartManager = new CartManager();
+                    console.log('✅ CartManager instance created');
+                } else {
+                    console.log('✅ CartManager instance already exists');
+                }
+            } else {
+                console.log('❌ CartManager class not found');
+            }
+        });
+    </script>
+
+    <script>
+        // API_BASE_URL đã được khai báo trong auth.js
+
         // Khai báo biến ở phạm vi rộng hơn để processOrder có thể truy cập
         let user;
         let userCartItems = [];
@@ -89,12 +116,14 @@
 
 
         document.addEventListener('DOMContentLoaded', function() {
-            user = JSON.parse(localStorage.getItem('user')); // Gán vào biến toàn cục
-            if (!user || !user.id) {
+            // Kiểm tra đăng nhập
+            if (!auth.isAuthenticated || !auth.user) {
                 alert('Vui lòng đăng nhập để tiếp tục thanh toán.');
-                window.location.href = 'Menu.html';
+                window.location.href = 'Index-new.html';
                 return;
             }
+
+            user = auth.user; // Sử dụng user từ auth system
 
             console.log('THÔNG TIN USER TỪ LOCALSTORAGE KHI LOAD TRANG:', JSON.stringify(user, null, 2));
 
@@ -103,8 +132,44 @@
             document.getElementById('customerEmail').textContent = user.email || 'N/A';
             document.getElementById('customerPhone').textContent = user.phone || 'N/A';
 
-            const cartItemsRaw = JSON.parse(localStorage.getItem('cartItems')) || [];
-            userCartItems = cartItemsRaw.filter(item => item.userId === user.id && item.id_mon != null); // Gán vào biến toàn cục
+            // Lấy giỏ hàng từ CartManager hoặc localStorage
+            userCartItems = [];
+
+            console.log('🔍 Checking cart sources...');
+
+            // Thử CartManager trước
+            if (window.cartManager && typeof window.cartManager.getCart === 'function') {
+                try {
+                    userCartItems = window.cartManager.getCart();
+                    console.log('✅ Got cart from CartManager:', userCartItems.length, 'items');
+                    console.log('CartManager data:', JSON.stringify(userCartItems, null, 2));
+                } catch (error) {
+                    console.error('❌ Error getting cart from CartManager:', error);
+                }
+            } else {
+                console.log('⚠️ CartManager not available');
+            }
+
+            // Nếu CartManager không có dữ liệu, thử localStorage
+            if (userCartItems.length === 0) {
+                try {
+                    // Thử cart mới
+                    const newCart = localStorage.getItem('cart');
+                    if (newCart) {
+                        userCartItems = JSON.parse(newCart);
+                        console.log('✅ Got cart from localStorage (new format):', userCartItems.length, 'items');
+                    } else {
+                        // Thử cart cũ
+                        const cartItemsRaw = JSON.parse(localStorage.getItem('cartItems')) || [];
+                        userCartItems = cartItemsRaw.filter(item => item.userId === user.id && (item.id_mon != null || item.id != null));
+                        console.log('✅ Got cart from localStorage (legacy format):', userCartItems.length, 'items');
+                    }
+                    console.log('LocalStorage cart data:', JSON.stringify(userCartItems, null, 2));
+                } catch (error) {
+                    console.error('❌ Error getting cart from localStorage:', error);
+                    userCartItems = [];
+                }
+            }
             
             const orderItemsContainer = document.getElementById('orderItemsContainer');
             const totalAmountEl = document.getElementById('totalAmount');
@@ -124,18 +189,37 @@
                 emptyCartMsgEl.classList.add('hidden');
                 orderItemsContainer.innerHTML = '';
                 currentTotal = 0; // Reset currentTotal trước khi tính lại
-                userCartItems.forEach(item => {
-                    const itemSubtotal = item.price * item.quantity;
+                userCartItems.forEach((item, index) => {
+                    // Sử dụng format từ CartManager với validation
+                    const itemPrice = item.gia || item.price || 0;
+                    const itemName = item.ten_mon || item.name || `Món ăn ${index + 1}`;
+                    const itemImage = item.hinh_anh || item.image || 'img/no-image.png';
+                    const itemQuantity = item.qty || item.quantity || item.so_luong || 1;
+                    const itemId = item.id_mon || item.id || `temp_${index}`;
+
+                    console.log(`📦 Processing item ${index + 1}:`, {
+                        id: itemId,
+                        name: itemName,
+                        price: itemPrice,
+                        quantity: itemQuantity,
+                        originalItem: item
+                    });
+
+                    if (!itemPrice || itemPrice <= 0) {
+                        console.warn(`⚠️ Invalid price for item ${itemName}:`, itemPrice);
+                    }
+
+                    const itemSubtotal = itemPrice * itemQuantity;
                     currentTotal += itemSubtotal;
-                    
+
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0';
                     itemDiv.innerHTML = `
                         <div class="flex items-center">
-                            <img src="${item.image || 'img/no-image.png'}" alt="${item.name}" class="w-12 h-12 object-cover rounded mr-3" onerror="this.src='img/no-image.png'">
+                            <img src="${itemImage}" alt="${itemName}" class="w-12 h-12 object-cover rounded mr-3" onerror="this.src='img/no-image.png'">
                             <div>
-                                <p class="font-semibold text-gray-800">${item.name}</p>
-                                <p class="text-sm text-gray-600">SL: ${item.quantity} x ${item.price.toLocaleString('vi-VN')}đ</p>
+                                <p class="font-semibold text-gray-800">${itemName}</p>
+                                <p class="text-sm text-gray-600">SL: ${itemQuantity} x ${itemPrice.toLocaleString('vi-VN')}đ</p>
                             </div>
                         </div>
                         <div class="font-semibold text-gray-700">${itemSubtotal.toLocaleString('vi-VN')}đ</div>
@@ -257,28 +341,88 @@
                 }
             }
 
+            // Tạo chi tiết đơn hàng với validation
+            const chi_tiet = [];
+            let calculatedTotal = 0;
+
+            userCartItems.forEach((item, index) => {
+                const itemId = item.id_mon || item.id;
+                const itemName = item.ten_mon || item.name;
+                const itemPrice = item.gia || item.price;
+                const itemQuantity = item.qty || item.quantity || item.so_luong;
+
+                // Validation
+                if (!itemId) {
+                    console.error(`❌ Missing ID for item ${index}:`, item);
+                    return;
+                }
+
+                if (!itemName) {
+                    console.error(`❌ Missing name for item ${index}:`, item);
+                    return;
+                }
+
+                if (!itemPrice || itemPrice <= 0) {
+                    console.error(`❌ Invalid price for item ${index}:`, itemPrice, item);
+                    return;
+                }
+
+                if (!itemQuantity || itemQuantity <= 0) {
+                    console.error(`❌ Invalid quantity for item ${index}:`, itemQuantity, item);
+                    return;
+                }
+
+                const itemTotal = itemPrice * itemQuantity;
+                calculatedTotal += itemTotal;
+
+                chi_tiet.push({
+                    id_mon_an: itemId,
+                    ten_mon: itemName,
+                    gia: itemPrice,
+                    so_luong: itemQuantity
+                });
+
+                console.log(`✅ Added item to order:`, {
+                    id_mon_an: itemId,
+                    ten_mon: itemName,
+                    gia: itemPrice,
+                    so_luong: itemQuantity,
+                    thanh_tien: itemTotal
+                });
+            });
+
+            // Kiểm tra tổng tiền
+            if (Math.abs(calculatedTotal - currentTotal) > 0.01) {
+                console.warn(`⚠️ Total mismatch: calculated=${calculatedTotal}, current=${currentTotal}`);
+            }
+
             const orderData = {
-                id_khach: user.id, // **ĐẢM BẢO user.id là ID số nguyên từ CSDL**
                 loai_don: orderType,
-                tong_tien: currentTotal,
-                items: userCartItems.map(item => ({
-                    id_mon: item.id_mon,
-                    so_luong: item.quantity,
-                    gia_luc_dat: item.price // Giá tại thời điểm thêm vào giỏ/thanh toán
-                })),
-                // Chỉ gửi dia_chi_giao_hang và ghi_chu nếu DDL server của bạn có các cột này
-                // Nếu DDL server `hoa_don` không có 2 cột này, hãy bỏ chúng đi khỏi đây
-                // Hoặc server sẽ bỏ qua chúng nếu không có cột tương ứng
-                dia_chi_giao_hang: dia_chi_giao_hang, // Gửi nếu có
-                ghi_chu: notes || null // Gửi nếu có
+                tong_tien: calculatedTotal,
+                dia_chi_giao_hang: dia_chi_giao_hang,
+                ghi_chu: notes || null,
+                chi_tiet: chi_tiet
             };
+
+            // Validation cuối cùng
+            if (chi_tiet.length === 0) {
+                alert('Lỗi: Không có món ăn hợp lệ trong giỏ hàng');
+                const submitButton = document.getElementById('submitOrderBtn');
+                if(submitButton){
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Xác Nhận và Đặt Hàng';
+                }
+                return;
+            }
 
             console.log('CLIENT: Dữ liệu gửi đi để tạo đơn hàng:', JSON.stringify(orderData, null, 2));
 
             try {
-                const response = await fetch('http://localhost:3000/api/orders', {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/hoa_don`, {
                     method: 'POST',
                     headers: {
+                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(orderData)
@@ -286,12 +430,21 @@
 
                 const result = await response.json();
 
-                if (response.ok) { // Hoặc response.status === 201
-                    alert('Đặt hàng thành công! Mã đơn hàng của bạn là: ' + result.id_hoa_don);
-                    const allCartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-                    const remainingCartItems = allCartItems.filter(item => item.userId !== user.id);
-                    localStorage.setItem('cartItems', JSON.stringify(remainingCartItems));
-                    window.location.href = `order-success.html?orderId=${result.id_hoa_don}`; // Chuyển hướng đến trang thành công
+                if (response.ok) {
+                    alert('Đặt hàng thành công! Mã hóa đơn của bạn là: HD' + result.hoa_don.id_hoa_don.toString().padStart(6, '0'));
+
+                    // Xóa giỏ hàng
+                    if (window.cartManager) {
+                        window.cartManager.clearCart();
+                    } else {
+                        // Fallback: xóa từ localStorage
+                        const allCartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+                        const remainingCartItems = allCartItems.filter(item => item.userId !== user.id);
+                        localStorage.setItem('cartItems', JSON.stringify(remainingCartItems));
+                    }
+
+                    // Chuyển hướng đến trang hóa đơn
+                    window.location.href = `HoaDon.html?id=${result.hoa_don.id_hoa_don}`;
                 } else {
                     alert(`Đặt hàng thất bại: ${result.error || 'Lỗi không xác định từ máy chủ.'}`);
                 }

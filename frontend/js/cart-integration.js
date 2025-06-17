@@ -3,7 +3,7 @@
 // Enhanced cart integration for API data
 class CartIntegration {
     constructor() {
-        this.API_BASE = 'http://localhost:3001';
+        this.API_BASE = 'http://localhost:3000';
         this.PLACEHOLDER = `${this.API_BASE}/images/placeholder.png`;
         this.init();
     }

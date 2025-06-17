@@ -3,7 +3,7 @@ console.log('🔧 Starting API Test...');
 
 // Test API endpoints
 async function testAPI() {
-    const baseURL = 'http://localhost:3001/api';
+    const baseURL = 'http://localhost:3000/api';
     
     console.log('📡 Testing API connection...');
     

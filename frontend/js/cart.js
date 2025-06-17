@@ -104,24 +104,45 @@ class CartManager {
     }
 
     extractItemData(button) {
-        const itemElement = button.closest('.menu-item') || button.closest('[data-item]');
+        if (!button) {
+            console.warn('❌ No button provided to extractItemData');
+            return null;
+        }
+
+        const itemElement = button.closest('.menu-item') ||
+                           button.closest('[data-item]') ||
+                           button.closest('.food-item') ||
+                           button.closest('.item-card');
 
         if (!itemElement) {
-            console.warn('Could not find item element');
+            console.warn('❌ Could not find item element for button:', button);
             return null;
         }
 
         // Try to get data from data attributes first (for API-generated content)
         if (itemElement.dataset.itemId) {
             const stockInfo = this.extractStockInfo(itemElement);
+
+            // Validate required data
+            const itemId = parseInt(itemElement.dataset.itemId);
+            const itemName = itemElement.dataset.itemName;
+            const itemPrice = parseInt(itemElement.dataset.itemPrice);
+
+            if (!itemId || !itemName || (!itemPrice && itemPrice !== 0)) {
+                console.warn('❌ Invalid data attributes:', {
+                    itemId, itemName, itemPrice
+                });
+                return null;
+            }
+
             return {
-                id_mon: parseInt(itemElement.dataset.itemId),
-                ten_mon: itemElement.dataset.itemName,
-                gia: parseInt(itemElement.dataset.itemPrice),
-                hinh_anh: itemElement.dataset.itemImage,
-                mo_ta: itemElement.dataset.itemDescription,
+                id_mon: itemId,
+                ten_mon: itemName,
+                gia: itemPrice,
+                hinh_anh: itemElement.dataset.itemImage || 'http://localhost:3001/images/placeholder.png',
+                mo_ta: itemElement.dataset.itemDescription || 'Món ăn ngon đặc trưng miền Nam',
                 so_luong: stockInfo.stock,
-                category: itemElement.dataset.category,
+                category: itemElement.dataset.category || 'other',
                 isAvailable: stockInfo.isAvailable
             };
         }
@@ -203,9 +224,68 @@ class CartManager {
         return { stock, isAvailable };
     }
 
+    // Lấy thông tin tồn kho từ button element
+    extractStockFromButton(buttonElement) {
+        if (!buttonElement) {
+            return { stock: 999, isAvailable: true };
+        }
+
+        // Kiểm tra button có bị disabled không
+        if (buttonElement.disabled || buttonElement.classList.contains('disabled')) {
+            return { stock: 0, isAvailable: false };
+        }
+
+        // Tìm container của item
+        const itemContainer = buttonElement.closest('.menu-item, .food-item, .item-card, .product-card');
+        if (!itemContainer) {
+            return { stock: 999, isAvailable: true };
+        }
+
+        // Tìm thông tin tồn kho trong container
+        const stockElement = itemContainer.querySelector('.stock-info, .stock-status, [class*="stock"]');
+        if (stockElement) {
+            const stockText = stockElement.textContent.toLowerCase();
+
+            // Kiểm tra các pattern khác nhau
+            if (stockText.includes('hết hàng') || stockText.includes('out of stock')) {
+                return { stock: 0, isAvailable: false };
+            }
+
+            // Tìm số lượng cụ thể
+            const stockMatch = stockText.match(/còn\s*(\d+)|(\d+)\s*phần|(\d+)\s*left/i);
+            if (stockMatch) {
+                const stock = parseInt(stockMatch[1] || stockMatch[2] || stockMatch[3]);
+                return { stock, isAvailable: stock > 0 };
+            }
+
+            if (stockText.includes('còn hàng') || stockText.includes('available')) {
+                return { stock: 999, isAvailable: true };
+            }
+        }
+
+        // Kiểm tra badge hoặc indicator khác
+        const badge = itemContainer.querySelector('.badge, .tag, .status');
+        if (badge) {
+            const badgeText = badge.textContent.toLowerCase();
+            if (badgeText.includes('hết') || badgeText.includes('sold')) {
+                return { stock: 0, isAvailable: false };
+            }
+        }
+
+        // Mặc định
+        return { stock: 999, isAvailable: true };
+    }
+
     addToCart(item, buttonElement = null, quantity = 1) {
         // Kiểm tra đăng nhập trước khi thêm vào giỏ hàng
         if (!this.checkAuthBeforeCart()) {
+            return false;
+        }
+
+        // Kiểm tra dữ liệu đầu vào
+        if (!item || typeof item !== 'object') {
+            console.error('❌ Invalid item data:', item);
+            this.showNotification('Lỗi: Dữ liệu món ăn không hợp lệ', 'error');
             return false;
         }
 
@@ -213,17 +293,64 @@ class CartManager {
         const itemId = item.id_mon || item.id;
         const itemName = item.ten_mon || item.name;
         const itemPrice = item.gia || item.price;
-        const maxStock = item.so_luong || 999;
-        const isAvailable = item.isAvailable !== false && maxStock > 0;
 
-        if (!itemId || !itemName || !itemPrice) {
-            console.error('Invalid item data:', item);
-            this.showNotification('Lỗi: Dữ liệu món ăn không hợp lệ', 'error');
+        // Kiểm tra các trường bắt buộc
+        if (!itemId || !itemName || (!itemPrice && itemPrice !== 0)) {
+            console.error('❌ Missing required fields:', {
+                itemId, itemName, itemPrice, originalItem: item
+            });
+            this.showNotification('Lỗi: Thông tin món ăn không đầy đủ', 'error');
             return false;
         }
 
-        if (!isAvailable) {
-            this.showNotification(`"${itemName}" hiện đang hết hàng`, 'error');
+        // Cải thiện logic kiểm tra tồn kho
+        let maxStock, isAvailable;
+
+        // Kiểm tra tồn kho từ nhiều nguồn với logic cải thiện
+        if (typeof item.so_luong === 'number' && item.so_luong >= 0) {
+            // Có dữ liệu tồn kho từ API (bao gồm cả 0)
+            maxStock = item.so_luong;
+            isAvailable = maxStock > 0;
+        } else if (typeof item.stock === 'number' && item.stock >= 0) {
+            // Có dữ liệu tồn kho từ legacy format (bao gồm cả 0)
+            maxStock = item.stock;
+            isAvailable = maxStock > 0;
+        } else if (item.isAvailable === false) {
+            // Được đánh dấu rõ ràng là hết hàng
+            maxStock = 0;
+            isAvailable = false;
+        } else if (item.isAvailable === true) {
+            // Được đánh dấu rõ ràng là có hàng
+            maxStock = 999;
+            isAvailable = true;
+        } else {
+            // Không có thông tin tồn kho rõ ràng
+            // Kiểm tra từ UI elements nếu có buttonElement
+            if (buttonElement) {
+                const stockInfo = this.extractStockFromButton(buttonElement);
+                maxStock = stockInfo.stock;
+                isAvailable = stockInfo.isAvailable;
+            } else {
+                // Mặc định là có hàng với số lượng hạn chế
+                maxStock = 999;
+                isAvailable = true;
+            }
+        }
+
+        // Log debug info (chỉ trong development)
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log(`🔍 Stock check for "${itemName}":`, {
+                so_luong: item.so_luong,
+                stock: item.stock,
+                isAvailable: item.isAvailable,
+                calculated_maxStock: maxStock,
+                calculated_isAvailable: isAvailable
+            });
+        }
+
+        // Kiểm tra tồn kho
+        if (!isAvailable || maxStock <= 0) {
+            this.showStockErrorNotification(itemName, maxStock, item);
             return false;
         }
 
@@ -693,19 +820,80 @@ class CartManager {
         }, 2000);
     }
 
-    showNotification(message, type = 'info') {
+    showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
-        notification.className = `fixed top-20 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 ${
-            type === 'success' ? 'bg-green-500 text-white' : 
-            type === 'error' ? 'bg-red-500 text-white' : 
-            'bg-blue-500 text-white'
-        }`;
-        notification.innerHTML = `<i class="fas fa-info-circle mr-2"></i>${message}`;
+        const iconClass = type === 'success' ? 'fa-check-circle' :
+                         type === 'error' ? 'fa-exclamation-triangle' :
+                         type === 'warning' ? 'fa-exclamation-circle' :
+                         'fa-info-circle';
+
+        const bgClass = type === 'success' ? 'bg-green-500 text-white' :
+                       type === 'error' ? 'bg-red-500 text-white' :
+                       type === 'warning' ? 'bg-yellow-500 text-white' :
+                       'bg-blue-500 text-white';
+
+        notification.className = `fixed top-20 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 transform translate-x-full ${bgClass}`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas ${iconClass} mr-2"></i>
+                <span>${message}</span>
+                <button class="ml-4 text-white hover:text-gray-200" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+
         document.body.appendChild(notification);
 
+        // Animate in
         setTimeout(() => {
-            notification.remove();
-        }, 3000);
+            notification.classList.remove('translate-x-full');
+        }, 100);
+
+        // Auto remove
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }, duration);
+    }
+
+    // Hiển thị thông báo lỗi tồn kho chi tiết
+    showStockErrorNotification(itemName, maxStock, item) {
+        let message;
+
+        // Xác định thông báo phù hợp cho user
+        if (maxStock === 0) {
+            message = `"${itemName}" hiện đang hết hàng`;
+        } else if (maxStock < 0) {
+            message = `"${itemName}" không có sẵn`;
+        } else {
+            message = `Không thể thêm "${itemName}" vào giỏ hàng`;
+        }
+
+        // Hiển thị thông báo user-friendly (không có debug info)
+        this.showNotification(message, 'error', 4000);
+
+        // Log chi tiết cho developer (chỉ trong console)
+        console.error('❌ Stock Error Details:', {
+            itemName,
+            calculatedMaxStock: maxStock,
+            originalItem: item,
+            stockSources: {
+                so_luong: item.so_luong,
+                stock: item.stock,
+                isAvailable: item.isAvailable
+            },
+            itemType: typeof item,
+            hasRequiredFields: {
+                hasId: !!(item.id_mon || item.id),
+                hasName: !!(item.ten_mon || item.name),
+                hasPrice: !!(item.gia || item.price)
+            }
+        });
     }
 
     checkout() {
@@ -730,6 +918,14 @@ class CartManager {
 
         // Chuyển đến trang thanh toán
         window.location.href = 'ThanhToan.html';
+    }
+
+    // Xóa toàn bộ giỏ hàng
+    clearCart() {
+        this.cart = [];
+        this.saveCart();
+        this.updateCartUI();
+        this.showNotification('Đã xóa toàn bộ giỏ hàng', 'success');
     }
 
     closeCheckoutModal() {
