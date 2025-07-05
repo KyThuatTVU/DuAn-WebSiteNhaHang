@@ -8,6 +8,7 @@ const foodRoutes = require('./foodRoutes');
 const chatRoutes = require('./chatRoutes');
 const customerRoutes = require('./customerRoutes');
 const invoiceRoutes = require('./invoiceRoutes');
+const hoaDonRoutes = require('./hoa_don');
 
 /**
  * @swagger
@@ -169,7 +170,9 @@ router.use('/chat', chatRoutes);
 console.log('✅ Chat routes mounted');
 router.use('/khach_hang', customerRoutes);
 console.log('✅ Customer routes mounted');
-router.use('/hoa_don', invoiceRoutes);
+router.use('/invoices', invoiceRoutes);
 console.log('✅ Invoice routes mounted');
+router.use('/hoa_don', hoaDonRoutes);
+console.log('✅ Hoa don routes mounted');
 
 module.exports = router;

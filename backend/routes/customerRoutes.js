@@ -1,63 +1,50 @@
+// Customer Routes - Authentication & User Management
 const express = require('express');
 const router = express.Router();
-const CustomerController = require('../controllers/CustomerController');
-const { authenticateToken, requireAdmin } = require('../middleware/auth');
-const {
-    validateRegister,
-    validateLogin,
-    validateUpdateProfile,
-    validateChangePassword
-} = require('../middleware/customerValidation');
+const { authenticateToken, authEndpoints } = require('../middleware/auth');
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Authentication
+ *     description: User authentication and management
+ */
 
 /**
  * @swagger
  * components:
  *   schemas:
- *     Customer:
+ *     User:
  *       type: object
+ *       required:
+ *         - ho_ten
+ *         - email
+ *         - mat_khau
  *       properties:
  *         id:
  *           type: integer
- *           description: ID khách hàng
- *         full_name:
+ *           description: User ID
+ *         ho_ten:
  *           type: string
- *           description: Họ tên khách hàng
+ *           description: Full name
  *         email:
  *           type: string
- *           description: Email khách hàng
- *         phone:
+ *           format: email
+ *           description: Email address
+ *         so_dien_thoai:
  *           type: string
- *           description: Số điện thoại
- *         created_at:
+ *           description: Phone number
+ *         dia_chi:
+ *           type: string
+ *           description: Address
+ *         ngay_tao:
  *           type: string
  *           format: date-time
- *           description: Ngày tạo tài khoản
- *     
- *     RegisterRequest:
- *       type: object
- *       required:
- *         - full_name
- *         - email
- *         - phone
- *         - password
- *         - confirmPassword
- *       properties:
- *         full_name:
+ *           description: Creation date
+ *         trang_thai:
  *           type: string
- *           description: Họ tên khách hàng
- *         email:
- *           type: string
- *           description: Email khách hàng
- *         phone:
- *           type: string
- *           description: Số điện thoại
- *         password:
- *           type: string
- *           description: Mật khẩu
- *         confirmPassword:
- *           type: string
- *           description: Xác nhận mật khẩu
- *     
+ *           enum: [active, inactive]
+ *           description: User status
  *     LoginRequest:
  *       type: object
  *       required:
@@ -66,18 +53,50 @@ const {
  *       properties:
  *         email:
  *           type: string
- *           description: Email khách hàng
+ *           format: email
  *         password:
  *           type: string
- *           description: Mật khẩu
+ *     RegisterRequest:
+ *       type: object
+ *       required:
+ *         - ho_ten
+ *         - email
+ *         - mat_khau
+ *       properties:
+ *         ho_ten:
+ *           type: string
+ *         email:
+ *           type: string
+ *           format: email
+ *         mat_khau:
+ *           type: string
+ *         so_dien_thoai:
+ *           type: string
+ *         dia_chi:
+ *           type: string
+ *     AuthResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         khach_hang:
+ *           $ref: '#/components/schemas/User'
+ *         token:
+ *           type: string
+ *         refreshToken:
+ *           type: string
+ *         expiresIn:
+ *           type: string
  */
 
 /**
  * @swagger
  * /api/khach_hang/register:
  *   post:
- *     summary: Đăng ký tài khoản khách hàng
- *     tags: [Customer]
+ *     summary: Register a new user
+ *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
@@ -86,31 +105,24 @@ const {
  *             $ref: '#/components/schemas/RegisterRequest'
  *     responses:
  *       201:
- *         description: Đăng ký thành công
+ *         description: User registered successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 khach_hang:
- *                   $ref: '#/components/schemas/Customer'
- *                 token:
- *                   type: string
+ *               $ref: '#/components/schemas/AuthResponse'
  *       400:
- *         description: Dữ liệu không hợp lệ
+ *         description: Bad request - validation error
+ *       500:
+ *         description: Internal server error
  */
-router.post('/register', validateRegister, CustomerController.register);
+router.post('/register', authEndpoints.register);
 
 /**
  * @swagger
  * /api/khach_hang/login:
  *   post:
- *     summary: Đăng nhập
- *     tags: [Customer]
+ *     summary: Login user
+ *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
@@ -119,138 +131,24 @@ router.post('/register', validateRegister, CustomerController.register);
  *             $ref: '#/components/schemas/LoginRequest'
  *     responses:
  *       200:
- *         description: Đăng nhập thành công
+ *         description: Login successful
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 khach_hang:
- *                   $ref: '#/components/schemas/Customer'
- *                 token:
- *                   type: string
+ *               $ref: '#/components/schemas/AuthResponse'
  *       401:
- *         description: Email hoặc mật khẩu không đúng
+ *         description: Invalid credentials
+ *       500:
+ *         description: Internal server error
  */
-router.post('/login', validateLogin, CustomerController.login);
-
-/**
- * @swagger
- * /api/khach_hang/logout:
- *   post:
- *     summary: Đăng xuất
- *     tags: [Customer]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Đăng xuất thành công
- */
-router.post('/logout', authenticateToken, CustomerController.logout);
-
-/**
- * @swagger
- * /api/khach_hang/profile:
- *   get:
- *     summary: Lấy thông tin profile
- *     tags: [Customer]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Lấy thông tin thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 khach_hang:
- *                   $ref: '#/components/schemas/Customer'
- */
-router.get('/profile', authenticateToken, CustomerController.getProfile);
-
-/**
- * @swagger
- * /api/khach_hang/profile:
- *   put:
- *     summary: Cập nhật thông tin profile
- *     tags: [Customer]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               full_name:
- *                 type: string
- *               phone:
- *                 type: string
- *     responses:
- *       200:
- *         description: Cập nhật thành công
- */
-router.put('/profile', authenticateToken, validateUpdateProfile, CustomerController.updateProfile);
-
-/**
- * @swagger
- * /api/khach_hang/change-password:
- *   put:
- *     summary: Đổi mật khẩu
- *     tags: [Customer]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - oldPassword
- *               - newPassword
- *               - confirmNewPassword
- *             properties:
- *               oldPassword:
- *                 type: string
- *               newPassword:
- *                 type: string
- *               confirmNewPassword:
- *                 type: string
- *     responses:
- *       200:
- *         description: Đổi mật khẩu thành công
- */
-router.put('/change-password', authenticateToken, validateChangePassword, CustomerController.changePassword);
-
-/**
- * @swagger
- * /api/khach_hang/verify:
- *   get:
- *     summary: Xác thực token
- *     tags: [Customer]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Token hợp lệ
- */
-router.get('/verify', authenticateToken, CustomerController.verifyToken);
+router.post('/login', authEndpoints.login);
 
 /**
  * @swagger
  * /api/khach_hang/refresh:
  *   post:
- *     summary: Làm mới token
- *     tags: [Customer]
+ *     summary: Refresh access token
+ *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
@@ -262,10 +160,9 @@ router.get('/verify', authenticateToken, CustomerController.verifyToken);
  *             properties:
  *               refreshToken:
  *                 type: string
- *                 description: Refresh token
  *     responses:
  *       200:
- *         description: Token đã được làm mới
+ *         description: Token refreshed successfully
  *         content:
  *           application/json:
  *             schema:
@@ -273,40 +170,42 @@ router.get('/verify', authenticateToken, CustomerController.verifyToken);
  *               properties:
  *                 success:
  *                   type: boolean
- *                 message:
- *                   type: string
  *                 token:
  *                   type: string
  *                 expiresIn:
  *                   type: string
  *       401:
- *         description: Refresh token không hợp lệ
+ *         description: Invalid or expired refresh token
+ *       500:
+ *         description: Internal server error
  */
-router.post('/refresh', CustomerController.refreshToken);
+router.post('/refresh', authEndpoints.refresh);
 
 /**
  * @swagger
- * /api/khach_hang/all:
+ * /api/khach_hang/profile:
  *   get:
- *     summary: Lấy danh sách khách hàng (Admin only)
- *     tags: [Customer]
+ *     summary: Get user profile
+ *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *         description: Số trang
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *         description: Số lượng mỗi trang
  *     responses:
  *       200:
- *         description: Lấy danh sách thành công
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized - invalid or missing token
+ *       500:
+ *         description: Internal server error
  */
-router.get('/all', authenticateToken, requireAdmin, CustomerController.getAllCustomers);
+router.get('/profile', authenticateToken, authEndpoints.profile);
 
 module.exports = router;

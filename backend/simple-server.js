@@ -1,63 +1,83 @@
+require('dotenv').config();
 const express = require('express');
-const path = require('path');
 const cors = require('cors');
+
+// Import auth middleware và endpoints
+const { authenticateToken, authEndpoints } = require('./middleware/auth');
+
+// Import database config để test MySQL connection
+const { testConnection } = require('./config/database');
+
+
 
 const app = express();
 const PORT = 3000;
 
 // Middleware
-app.use(cors());
 app.use(express.json());
 
-// Static files for images
-app.use('/images', express.static(path.join(__dirname, 'images')));
+// CORS configuration
+app.use(cors({
+    origin: [
+        'http://localhost:5500', 'http://127.0.0.1:5500',
+        'http://localhost:8080', 'http://127.0.0.1:8080'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-// Test route
-app.get('/api/health', (req, res) => {
-    res.json({ success: true, message: 'Server is running!', port: PORT });
+// Request logging
+app.use((req, res, next) => {
+    console.log(`📥 ${req.method} ${req.path} from ${req.get('origin') || 'unknown'}`);
+    next();
 });
 
-// Test image route
-app.get('/api/test-image', (req, res) => {
-    res.json({ 
-        success: true, 
-        message: 'Images should be available at /images/filename',
-        example: `http://localhost:${PORT}/images/comtam.webp`
-    });
-});
+// Health check
+app.get('/api/health', authEndpoints.health);
 
-// List available images
-app.get('/api/images', (req, res) => {
-    const fs = require('fs');
-    try {
-        const imagesDir = path.join(__dirname, 'images');
-        const files = fs.readdirSync(imagesDir);
-        const imageFiles = files.filter(file => 
-            file.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|avif)$/)
-        );
-        
-        res.json({
-            success: true,
-            total: imageFiles.length,
-            images: imageFiles.map(file => ({
-                filename: file,
-                url: `http://localhost:${PORT}/images/${file}`
-            }))
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
+// Authentication routes sử dụng auth.js
+app.post('/api/khach_hang/register', authEndpoints.register);
+app.post('/api/khach_hang/login', authEndpoints.login);
+app.post('/api/khach_hang/refresh', authEndpoints.refresh);
+app.get('/api/test', authEndpoints.test);
 
-// Start server
-app.listen(PORT, () => {
+// Protected routes
+app.get('/api/profile', authenticateToken, authEndpoints.profile);
+
+
+
+// Start server with database detection
+app.listen(PORT, async () => {
     console.log(`🚀 Simple server running on http://localhost:${PORT}`);
-    console.log(`📁 Images available at http://localhost:${PORT}/images/`);
-    console.log(`🔍 Test health: http://localhost:${PORT}/api/health`);
-    console.log(`📋 List images: http://localhost:${PORT}/api/images`);
+    console.log('📋 Available endpoints:');
+    console.log('  POST /api/khach_hang/register');
+    console.log('  POST /api/khach_hang/login');
+    console.log('  POST /api/khach_hang/refresh');
+    console.log('  GET  /api/profile');
+
+    console.log('  GET  /api/health');
+    console.log('  GET  /api/test');
+    console.log('');
+    console.log('🔧 Using middleware/auth.js for authentication (MySQL database)');
+
+    // Test MySQL connection
+    console.log('🔍 Testing MySQL connection...');
+    const mysqlAvailable = await testConnection();
+
+    if (mysqlAvailable) {
+        console.log('✅ MySQL connected - Database ready');
+        global.USE_MYSQL = true;
+    } else {
+        console.log('⚠️  MySQL not available');
+        global.USE_MYSQL = false;
+    }
+
+    console.log('🌐 CORS enabled for: http://localhost:5500, http://127.0.0.1:5500, http://localhost:8080, http://127.0.0.1:8080');
 });
 
-module.exports = app;
+// Handle graceful shutdown
+process.on('SIGINT', () => {
+    console.log('\n👋 Shutting down server...');
+    process.exit(0);
+});

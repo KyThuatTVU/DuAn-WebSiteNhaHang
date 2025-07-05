@@ -18,7 +18,7 @@
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
             <div class="text-center mb-6">
-                <a href="Menu.html" class="text-primary hover:underline"><i class="fas fa-arrow-left"></i> Quay lại Thực đơn</a>
+                <a href="Menu-new.html" class="text-primary hover:underline"><i class="fas fa-arrow-left"></i> Quay lại Thực đơn</a>
                 <h1 class="text-3xl font-bold text-gray-800 mt-2">Thanh Toán Đơn Hàng</h1>
             </div>
             
@@ -79,8 +79,7 @@
         </div>
     </div>
 
-    <!-- Load Auth System -->
-    <script src="js/auth.js"></script>
+    <!-- Không cần load auth system nữa -->
     <script src="js/cart.js"></script>
 
     <script>
@@ -105,9 +104,10 @@
     </script>
 
     <script>
-        // API_BASE_URL đã được khai báo trong auth.js
+        // API_BASE_URL cho server không cần authentication
+        const API_BASE_URL = 'http://localhost:3000/api';
 
-        // Khai báo biến ở phạm vi rộng hơn để processOrder có thể truy cập
+        // Khai báo biến toàn cục
         let user;
         let userCartItems = [];
         let currentTotal = 0;
@@ -116,17 +116,41 @@
 
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Kiểm tra đăng nhập
-            if (!auth.isAuthenticated || !auth.user) {
-                alert('Vui lòng đăng nhập để tiếp tục thanh toán.');
-                window.location.href = 'Index-new.html';
-                return;
+            // Lấy thông tin khách hàng từ localStorage (ưu tiên user data từ login)
+            const loggedInUser = localStorage.getItem('user') || localStorage.getItem('userData');
+            const checkoutCustomerInfo = localStorage.getItem('checkoutCustomerInfo');
+
+            if (loggedInUser) {
+                try {
+                    user = JSON.parse(loggedInUser);
+                    console.log('✅ Loaded logged-in user data:', user);
+                } catch (error) {
+                    console.error('❌ Error parsing logged-in user data:', error);
+                }
             }
 
-            user = auth.user; // Sử dụng user từ auth system
+            // Fallback to checkout customer info if no logged-in user
+            if (!user && checkoutCustomerInfo) {
+                try {
+                    user = JSON.parse(checkoutCustomerInfo);
+                    console.log('✅ Loaded customer info from cart:', user);
+                } catch (error) {
+                    console.error('❌ Error parsing customer info:', error);
+                }
+            }
 
-            console.log('THÔNG TIN USER TỪ LOCALSTORAGE KHI LOAD TRANG:', JSON.stringify(user, null, 2));
+            // Final fallback to guest user
+            if (!user) {
+                user = {
+                    id: 1, // Default guest ID
+                    full_name: 'Khách hàng',
+                    email: 'guest@restaurant.com',
+                    phone: 'N/A'
+                };
+                console.log('✅ Using default guest user:', user);
+            }
 
+            console.log('👤 Customer info loaded for checkout:', JSON.stringify(user, null, 2));
 
             document.getElementById('customerName').textContent = user.full_name || 'N/A';
             document.getElementById('customerEmail').textContent = user.email || 'N/A';
@@ -272,8 +296,7 @@
                         paymentModal.classList.remove('hidden');
                     } else {
                         console.error("Payment modal not found!");
-                        // Nếu không có payment modal, có thể gọi processOrder trực tiếp
-                        // processOrder(); 
+                        // Không có payment modal
                     }
                     // Không disable nút submit chính ở đây nữa, vì việc submit chính sẽ qua payment modal
                 });
@@ -294,172 +317,82 @@
                     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
                     
                     if (paymentMethod === 'momo' || paymentMethod === 'vnpay') {
-                        alert(`Chức năng thanh toán với ${paymentMethod.toUpperCase()} đang được phát triển. Vui lòng chọn Tiền mặt.`);
-                        // Hiện lại payment modal hoặc cho phép người dùng chọn lại
-                        const paymentModal = document.getElementById('paymentModal');
-                        if (paymentModal) paymentModal.classList.remove('hidden');
-                         if(submitButton){ // Reset nút submit chính
-                            submitButton.disabled = false;
-                            submitButton.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Xác Nhận và Đặt Hàng';
+                        // Tạo dữ liệu đơn hàng cho thanh toán điện tử
+                        const orderData = {
+                            items: userCartItems,
+                            orderType: document.querySelector('input[name="orderType"]:checked')?.value || 'tai_cho',
+                            deliveryAddress: deliveryAddressInput?.value || '',
+                            notes: orderNotesInput?.value || '',
+                            paymentMethod: paymentMethod,
+                            total: currentTotal,
+                            timestamp: new Date().toISOString()
+                        };
+
+                        // Lưu thông tin đơn hàng vào localStorage
+                        localStorage.setItem('currentOrder', JSON.stringify(orderData));
+
+                        // Lưu thông tin khách hàng nếu có
+                        if (user) {
+                            localStorage.setItem('checkoutCustomerInfo', JSON.stringify(user));
                         }
-                        return; 
+
+                        // Xóa giỏ hàng
+                        if (window.cartManager) {
+                            window.cartManager.clearCart();
+                        } else {
+                            // Fallback: xóa từ localStorage
+                            const allCartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+                            const remainingCartItems = allCartItems.filter(item => item.userId !== user.id);
+                            localStorage.setItem('cartItems', JSON.stringify(remainingCartItems));
+                        }
+
+                        // Hiển thị thông báo thành công
+                        alert(`Thanh toán ${paymentMethod.toUpperCase()} thành công! Đang chuyển đến trang hóa đơn...`);
+
+                        // Chuyển đến trang hóa đơn
+                        window.location.href = 'HoaDon.html';
+                        return;
                     } else { // Tiền mặt
-                        await processOrder(); // Gọi processOrder cho trường hợp tiền mặt
+                        // Tạo dữ liệu đơn hàng để lưu vào localStorage
+                        const orderData = {
+                            items: userCartItems,
+                            orderType: document.querySelector('input[name="orderType"]:checked')?.value || 'tai_cho',
+                            deliveryAddress: deliveryAddressInput?.value || '',
+                            notes: orderNotesInput?.value || '',
+                            paymentMethod: 'cash',
+                            total: currentTotal,
+                            timestamp: new Date().toISOString()
+                        };
+
+                        // Lưu thông tin đơn hàng vào localStorage
+                        localStorage.setItem('currentOrder', JSON.stringify(orderData));
+
+                        // Lưu thông tin khách hàng nếu có
+                        if (user) {
+                            localStorage.setItem('checkoutCustomerInfo', JSON.stringify(user));
+                        }
+
+                        // Xóa giỏ hàng
+                        if (window.cartManager) {
+                            window.cartManager.clearCart();
+                        } else {
+                            // Fallback: xóa từ localStorage
+                            const allCartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+                            const remainingCartItems = allCartItems.filter(item => item.userId !== user.id);
+                            localStorage.setItem('cartItems', JSON.stringify(remainingCartItems));
+                        }
+
+                        // Hiển thị thông báo thành công
+                        alert('Đặt hàng thành công! Đang chuyển đến trang hóa đơn...');
+
+                        // Chuyển đến trang hóa đơn
+                        window.location.href = 'HoaDon.html';
                     }
                 });
             }
         });
 
-        async function processOrder() {
-            // user, userCartItems, currentTotal, deliveryAddressInput, orderNotesInput đã là biến toàn cục/phạm vi rộng hơn
-            if (!user || !user.id) {
-                alert('Lỗi: Thông tin người dùng không hợp lệ. Vui lòng đăng nhập lại.');
-                // Có thể cần reset nút submit ở đây nếu có
-                const submitButton = document.getElementById('submitOrderBtn');
-                if(submitButton){
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Xác Nhận và Đặt Hàng';
-                }
-                return;
-            }
 
-            const orderType = document.querySelector('input[name="orderType"]:checked').value;
-            const notes = orderNotesInput ? orderNotesInput.value.trim() : '';
-            let dia_chi_giao_hang = null;
-
-            if (orderType === 'giao_hang') {
-                dia_chi_giao_hang = deliveryAddressInput ? deliveryAddressInput.value.trim() : '';
-                if (!dia_chi_giao_hang) { // Double check, dù đã check ở paymentForm submit
-                    alert('Lỗi: Địa chỉ giao hàng là bắt buộc cho đơn giao hàng.');
-                    // Reset nút submit chính
-                    const submitButton = document.getElementById('submitOrderBtn');
-                    if(submitButton){
-                        submitButton.disabled = false;
-                        submitButton.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Xác Nhận và Đặt Hàng';
-                    }
-                    return;
-                }
-            }
-
-            // Tạo chi tiết đơn hàng với validation
-            const chi_tiet = [];
-            let calculatedTotal = 0;
-
-            userCartItems.forEach((item, index) => {
-                const itemId = item.id_mon || item.id;
-                const itemName = item.ten_mon || item.name;
-                const itemPrice = item.gia || item.price;
-                const itemQuantity = item.qty || item.quantity || item.so_luong;
-
-                // Validation
-                if (!itemId) {
-                    console.error(`❌ Missing ID for item ${index}:`, item);
-                    return;
-                }
-
-                if (!itemName) {
-                    console.error(`❌ Missing name for item ${index}:`, item);
-                    return;
-                }
-
-                if (!itemPrice || itemPrice <= 0) {
-                    console.error(`❌ Invalid price for item ${index}:`, itemPrice, item);
-                    return;
-                }
-
-                if (!itemQuantity || itemQuantity <= 0) {
-                    console.error(`❌ Invalid quantity for item ${index}:`, itemQuantity, item);
-                    return;
-                }
-
-                const itemTotal = itemPrice * itemQuantity;
-                calculatedTotal += itemTotal;
-
-                chi_tiet.push({
-                    id_mon_an: itemId,
-                    ten_mon: itemName,
-                    gia: itemPrice,
-                    so_luong: itemQuantity
-                });
-
-                console.log(`✅ Added item to order:`, {
-                    id_mon_an: itemId,
-                    ten_mon: itemName,
-                    gia: itemPrice,
-                    so_luong: itemQuantity,
-                    thanh_tien: itemTotal
-                });
-            });
-
-            // Kiểm tra tổng tiền
-            if (Math.abs(calculatedTotal - currentTotal) > 0.01) {
-                console.warn(`⚠️ Total mismatch: calculated=${calculatedTotal}, current=${currentTotal}`);
-            }
-
-            const orderData = {
-                loai_don: orderType,
-                tong_tien: calculatedTotal,
-                dia_chi_giao_hang: dia_chi_giao_hang,
-                ghi_chu: notes || null,
-                chi_tiet: chi_tiet
-            };
-
-            // Validation cuối cùng
-            if (chi_tiet.length === 0) {
-                alert('Lỗi: Không có món ăn hợp lệ trong giỏ hàng');
-                const submitButton = document.getElementById('submitOrderBtn');
-                if(submitButton){
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Xác Nhận và Đặt Hàng';
-                }
-                return;
-            }
-
-            console.log('CLIENT: Dữ liệu gửi đi để tạo đơn hàng:', JSON.stringify(orderData, null, 2));
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/hoa_don`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(orderData)
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert('Đặt hàng thành công! Mã hóa đơn của bạn là: HD' + result.hoa_don.id_hoa_don.toString().padStart(6, '0'));
-
-                    // Xóa giỏ hàng
-                    if (window.cartManager) {
-                        window.cartManager.clearCart();
-                    } else {
-                        // Fallback: xóa từ localStorage
-                        const allCartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-                        const remainingCartItems = allCartItems.filter(item => item.userId !== user.id);
-                        localStorage.setItem('cartItems', JSON.stringify(remainingCartItems));
-                    }
-
-                    // Chuyển hướng đến trang hóa đơn
-                    window.location.href = `HoaDon.html?id=${result.hoa_don.id_hoa_don}`;
-                } else {
-                    alert(`Đặt hàng thất bại: ${result.error || 'Lỗi không xác định từ máy chủ.'}`);
-                }
-            } catch (error) {
-                console.error('Lỗi khi gọi API đặt hàng:', error);
-                alert('Không thể kết nối đến máy chủ hoặc có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
-            } finally {
-                // Reset nút submit chính sau khi hoàn tất (thành công hoặc thất bại)
-                const submitButton = document.getElementById('submitOrderBtn');
-                if(submitButton){
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Xác Nhận và Đặt Hàng';
-                }
-            }
-        }
     </script>
 
     <!-- Payment Modal (giữ nguyên) -->

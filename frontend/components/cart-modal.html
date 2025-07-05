@@ -17,6 +17,9 @@
 
         <!-- Cart Content -->
         <div class="cart-content flex flex-col h-full max-h-[calc(90vh-140px)]">
+            <!-- Customer Info Display Placeholder -->
+            <div id="customer-info-placeholder" class="px-6 pt-4"></div>
+
             <!-- Cart Loading State -->
             <div id="cartLoadingState" class="hidden text-center py-8">
                 <div class="inline-block w-8 h-8 border-4 border-gray-300 border-t-primary rounded-full animate-spin mb-4"></div>
@@ -92,7 +95,7 @@
                 <!-- Action Buttons -->
                 <div class="space-y-3">
                     <button id="checkoutBtn" class="w-full bg-primary hover:bg-red-700 text-white py-3 px-6 rounded-lg font-bold transition duration-300">
-                        <i class="fas fa-credit-card mr-2"></i>Thanh Toán
+                        <i class="fas fa-credit-card mr-2"></i>Thanh Toán Ngay
                     </button>
                     <div class="grid grid-cols-2 gap-3">
                         <button id="clearCartBtn" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition duration-300">

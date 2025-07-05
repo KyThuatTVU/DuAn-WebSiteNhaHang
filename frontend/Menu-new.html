@@ -133,6 +133,51 @@
             margin-bottom: 1rem;
             opacity: 0.5;
         }
+
+        /* Floating Checkout Button */
+        #floatingCheckoutBtn {
+            animation: bounceIn 0.6s ease-out;
+        }
+
+        #floatingCheckoutBtn button {
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        #floatingCheckoutBtn button:hover {
+            box-shadow: 0 12px 35px rgba(220, 38, 38, 0.6);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.3) translateY(100px);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        #floatingCheckoutBtn.pulse {
+            animation: pulse 2s infinite;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -239,8 +284,20 @@
     <!-- Login Modal Placeholder -->
     <div id="login-modal-placeholder"></div>
 
+    <!-- Customer Info Modal Placeholder -->
+    <div id="customer-info-placeholder"></div>
+
     <!-- Cart Modal Placeholder -->
     <div id="cart-modal-placeholder"></div>
+
+    <!-- Floating Checkout Button -->
+    <div id="floatingCheckoutBtn" class="fixed bottom-6 right-6 z-50 hidden">
+        <button id="quickCheckoutBtn" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-3 font-bold text-lg">
+            <i class="fas fa-credit-card text-xl"></i>
+            <span>Thanh Toán</span>
+            <div id="floatingCartCount" class="bg-white text-red-600 px-3 py-1 rounded-full text-sm font-bold ml-2 min-w-[2rem] text-center">0</div>
+        </button>
+    </div>
 
     <!-- JavaScript -->
     <script src="js/auth.js"></script>
@@ -280,8 +337,82 @@
                         console.log('🔍 Cart button visible:', !cartBtn.classList.contains('hidden'));
                     }
                 }, 1000);
+
+                // Initialize floating checkout button
+                initFloatingCheckoutButton();
             }, 500);
         });
+
+        // Floating Checkout Button functionality
+        function initFloatingCheckoutButton() {
+            const floatingBtn = document.getElementById('floatingCheckoutBtn');
+            const quickCheckoutBtn = document.getElementById('quickCheckoutBtn');
+            const floatingCartCount = document.getElementById('floatingCartCount');
+
+            if (!floatingBtn || !quickCheckoutBtn || !floatingCartCount) {
+                console.log('❌ Floating checkout button elements not found');
+                return;
+            }
+
+            // Update floating button cart count
+            function updateFloatingCartCount() {
+                if (window.cartManager) {
+                    const cart = window.cartManager.getCart() || [];
+                    const totalItems = cart.reduce((sum, item) => sum + (item.so_luong || item.quantity || 1), 0);
+
+                    floatingCartCount.textContent = totalItems;
+
+                    if (totalItems > 0) {
+                        floatingBtn.classList.remove('hidden');
+                        floatingBtn.classList.add('pulse');
+                    } else {
+                        floatingBtn.classList.add('hidden');
+                        floatingBtn.classList.remove('pulse');
+                    }
+                }
+            }
+
+            // Quick checkout button click handler
+            quickCheckoutBtn.addEventListener('click', function() {
+                console.log('🛒 Quick checkout button clicked');
+
+                if (window.cartManager) {
+                    // Không cần kiểm tra đăng nhập nữa
+                    const cart = window.cartManager.getCart() || [];
+                    if (cart.length === 0) {
+                        window.cartManager.showNotification('Giỏ hàng trống!', 'error');
+                        return;
+                    }
+
+                    // Add loading state
+                    const originalText = quickCheckoutBtn.innerHTML;
+                    quickCheckoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang chuyển...';
+                    quickCheckoutBtn.disabled = true;
+
+                    // Redirect to checkout
+                    setTimeout(() => {
+                        window.cartManager.redirectToCheckout();
+                    }, 500);
+
+                    // Restore button after delay
+                    setTimeout(() => {
+                        quickCheckoutBtn.innerHTML = originalText;
+                        quickCheckoutBtn.disabled = false;
+                    }, 3000);
+                } else {
+                    console.log('❌ CartManager not available');
+                }
+            });
+
+            // Listen for cart updates
+            document.addEventListener('cartUpdated', updateFloatingCartCount);
+
+            // Initial update
+            setTimeout(updateFloatingCartCount, 1000);
+
+            // Periodic update
+            setInterval(updateFloatingCartCount, 2000);
+        }
     </script>
 </body>
 </html>

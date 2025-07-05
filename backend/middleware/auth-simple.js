@@ -1,92 +1,121 @@
-// Authentication Middleware - Unified Auth System
-
-const bcrypt = require('bcryptjs');
+// Simple Authentication Middleware - File-based storage for testing
 const jwt = require('jsonwebtoken');
-const mysql = require('mysql2/promise');
-const { logger } = require('../utils/logger');
-
-const dbConfig = {
-  host: process.env.DB_HOST || '127.0.0.1',
-  port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || 'restaurant_user',
-  password: process.env.DB_PASSWORD || 'TVU@842004',
-  database: process.env.DB_NAME || 'QuanLyNhaHang',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  connectTimeout: 10000,
-  // Removed invalid options: acquireTimeout, timeout, reconnect
-  charset: 'utf8mb4',
-  timezone: '+07:00'
-};
+const bcrypt = require('bcryptjs');
+const fs = require('fs').promises;
+const path = require('path');
 
 // JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production-restaurant-api-2024';
 
-// Create database connection
-async function getConnection() {
+// Data file path
+const DATA_FILE = path.join(__dirname, '../data/users.json');
+
+// Ensure data directory exists
+async function ensureDataDir() {
+    const dataDir = path.dirname(DATA_FILE);
     try {
-        const connection = await mysql.createConnection(dbConfig);
-        return connection;
-    } catch (error) {
-        logger.error('Database connection failed:', error);
-        throw error;
+        await fs.access(dataDir);
+    } catch {
+        await fs.mkdir(dataDir, { recursive: true });
     }
 }
 
-// Middleware to authenticate JWT token
-const authenticateToken = async (req, res, next) => {
+// Load users from file
+async function loadUsers() {
     try {
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
-        if (!token) {
-            return res.status(401).json({
-                success: false,
-                error: 'Access token required'
-            });
-        }
-
-        // Verify token
-        const decoded = jwt.verify(token, JWT_SECRET);
-        
-        // Get user from database to ensure user still exists
-        const connection = await getConnection();
-        const [users] = await connection.execute(
-            'SELECT id, email, ho_ten, so_dien_thoai, dia_chi FROM khach_hang WHERE id = ? AND trang_thai = "active"',
-            [decoded.id]
-        );
-        await connection.end();
-
-        if (users.length === 0) {
-            return res.status(401).json({
-                success: false,
-                error: 'User not found or inactive'
-            });
-        }
-
-        // Add user info to request
-        req.user = users[0];
-        next();
+        await ensureDataDir();
+        const data = await fs.readFile(DATA_FILE, 'utf8');
+        return JSON.parse(data);
     } catch (error) {
-        if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({
-                success: false,
-                error: 'Token expired'
-            });
-        } else if (error.name === 'JsonWebTokenError') {
-            return res.status(401).json({
-                success: false,
-                error: 'Invalid token'
-            });
-        }
-        
-        logger.error('Authentication error:', error);
-        return res.status(500).json({
+        // File doesn't exist or is empty, return empty array
+        return [];
+    }
+}
+
+// Save users to file
+async function saveUsers(users) {
+    await ensureDataDir();
+    await fs.writeFile(DATA_FILE, JSON.stringify(users, null, 2));
+}
+
+// Find user by email
+async function findUserByEmail(email) {
+    const users = await loadUsers();
+    return users.find(user => user.email === email);
+}
+
+// Find user by ID
+async function findUserById(id) {
+    const users = await loadUsers();
+    return users.find(user => user.id === id);
+}
+
+// Create new user
+async function createUser(userData) {
+    const users = await loadUsers();
+    
+    // Generate new ID
+    const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+    
+    const newUser = {
+        id: newId,
+        full_name: userData.full_name,
+        email: userData.email,
+        phone: userData.phone,
+        password: userData.password,
+        created_at: new Date().toISOString()
+    };
+    
+    users.push(newUser);
+    await saveUsers(users);
+    
+    // Return user without password
+    const { password, ...userWithoutPassword } = newUser;
+    return userWithoutPassword;
+}
+
+// JWT Token verification middleware
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    if (!token) {
+        return res.status(401).json({
             success: false,
-            error: 'Authentication failed'
+            error: 'Access token required'
         });
     }
+
+    jwt.verify(token, JWT_SECRET, async (err, decoded) => {
+        if (err) {
+            return res.status(403).json({
+                success: false,
+                error: 'Invalid or expired token'
+            });
+        }
+
+        try {
+            // Get user info from file
+            const user = await findUserById(decoded.id);
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'User not found'
+                });
+            }
+
+            // Remove password from user object
+            const { password, ...userWithoutPassword } = user;
+            req.user = userWithoutPassword;
+            next();
+        } catch (error) {
+            console.error('Auth middleware error:', error);
+            return res.status(500).json({
+                success: false,
+                error: 'Authentication error'
+            });
+        }
+    });
 };
 
 // Auth endpoints
@@ -118,7 +147,7 @@ const authEndpoints = {
             if (!full_name || !email || !password || !phone) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Họ tên, email và mật khẩu là bắt buộc'
+                    error: 'Vui lòng điền đầy đủ thông tin bắt buộc'
                 });
             }
 
@@ -131,16 +160,9 @@ const authEndpoints = {
                 });
             }
 
-            const connection = await getConnection();
-
             // Check if user already exists
-            const [existingUsers] = await connection.execute(
-                'SELECT id FROM khach_hang WHERE email = ?',
-                [email]
-            );
-
-            if (existingUsers.length > 0) {
-                await connection.end();
+            const existingUser = await findUserByEmail(email);
+            if (existingUser) {
                 return res.status(400).json({
                     success: false,
                     error: 'Email đã được sử dụng'
@@ -150,26 +172,19 @@ const authEndpoints = {
             // Hash password
             const hashedPassword = await bcrypt.hash(password, 12);
 
-            // Insert new user
-            const [result] = await connection.execute(
-                `INSERT INTO khach_hang (full_name, email, password, phone, created_at)
-                 VALUES (?, ?, ?, ?, NOW())`,
-                [full_name, email, hashedPassword, phone]
-            );
-
-            // Get the created user
-            const [newUser] = await connection.execute(
-                'SELECT id, full_name, email, phone, created_at FROM khach_hang WHERE id = ?',
-                [result.insertId]
-            );
-
-            await connection.end();
+            // Create user
+            const user = await createUser({
+                full_name,
+                email,
+                password: hashedPassword,
+                phone
+            });
 
             // Create JWT token
             const token = jwt.sign(
                 {
-                    id: newUser[0].id,
-                    email: newUser[0].email
+                    id: user.id,
+                    email: user.email
                 },
                 JWT_SECRET,
                 { expiresIn: '24h' }
@@ -178,27 +193,25 @@ const authEndpoints = {
             // Create refresh token
             const refreshToken = jwt.sign(
                 {
-                    id: newUser[0].id,
-                    email: newUser[0].email,
+                    id: user.id,
+                    email: user.email,
                     tokenType: 'refresh'
                 },
                 JWT_SECRET,
                 { expiresIn: '7d' }
             );
 
-            logger.info('User registered successfully:', newUser[0].email);
-
             res.status(201).json({
                 success: true,
                 message: 'Đăng ký thành công',
-                khach_hang: newUser[0],
+                khach_hang: user,
                 token,
                 refreshToken,
                 expiresIn: '24h'
             });
 
         } catch (error) {
-            logger.error('Registration error:', error);
+            console.error('Registration error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Lỗi server'
@@ -209,34 +222,28 @@ const authEndpoints = {
     // User login
     login: async (req, res) => {
         try {
+            console.log('🔐 Login attempt:', req.body);
             const { email, password } = req.body;
 
             // Validate input
             if (!email || !password) {
+                console.log('❌ Missing email or password');
                 return res.status(400).json({
                     success: false,
                     error: 'Email và mật khẩu là bắt buộc'
                 });
             }
 
-            const connection = await getConnection();
-
+            console.log('🔍 Finding user by email:', email);
             // Find user by email
-            const [users] = await connection.execute(
-                'SELECT id, full_name, email, password, phone, created_at FROM khach_hang WHERE email = ?',
-                [email]
-            );
-
-            await connection.end();
-
-            if (users.length === 0) {
+            const user = await findUserByEmail(email);
+            console.log('👤 User found:', user ? 'Yes' : 'No');
+            if (!user) {
                 return res.status(401).json({
                     success: false,
                     error: 'Email hoặc mật khẩu không đúng'
                 });
             }
-
-            const user = users[0];
 
             // Verify password
             const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -271,8 +278,6 @@ const authEndpoints = {
             // Remove password from response
             const { password: _, ...userWithoutPassword } = user;
 
-            logger.info('User logged in successfully:', userWithoutPassword.email);
-
             res.json({
                 success: true,
                 message: 'Đăng nhập thành công',
@@ -283,7 +288,7 @@ const authEndpoints = {
             });
 
         } catch (error) {
-            logger.error('Login error:', error);
+            console.error('Login error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Lỗi server'
@@ -299,7 +304,7 @@ const authEndpoints = {
                 user: req.user
             });
         } catch (error) {
-            logger.error('Profile error:', error);
+            console.error('Profile error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Lỗi server'
@@ -346,22 +351,10 @@ const authEndpoints = {
             });
 
         } catch (error) {
-            if (error.name === 'TokenExpiredError') {
-                return res.status(401).json({
-                    success: false,
-                    error: 'Refresh token expired'
-                });
-            } else if (error.name === 'JsonWebTokenError') {
-                return res.status(401).json({
-                    success: false,
-                    error: 'Invalid refresh token'
-                });
-            }
-            
-            logger.error('Token refresh error:', error);
-            res.status(500).json({
+            console.error('Refresh token error:', error);
+            res.status(401).json({
                 success: false,
-                error: 'Token refresh failed'
+                error: 'Invalid or expired refresh token'
             });
         }
     }

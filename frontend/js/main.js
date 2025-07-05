@@ -10,9 +10,9 @@ function initializeApp() {
     setupNavigation();
     setupMobileMenu();
     setupCartFunctionality();
-    checkLoginStatus();
+    // Không cần kiểm tra login status nữa
     setupScrollAnimations();
-    setupLogoutHandler();
+    // Không cần logout handler nữa
 }
 
 // Navigation Setup

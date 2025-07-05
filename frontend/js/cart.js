@@ -3,6 +3,7 @@
 class CartManager {
     constructor() {
         this.cart = JSON.parse(localStorage.getItem('cart')) || [];
+        this.customerInfo = this.loadCustomerInfo();
         this.isInitialized = false;
         this.init();
     }
@@ -68,6 +69,40 @@ class CartManager {
             if (e.target.id === 'trackOrderBtn') {
                 this.trackOrder();
             }
+        });
+
+        // Customer info modal events
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'closeCustomerInfoModal' || e.target.id === 'cancelCustomerInfo') {
+                this.closeCustomerInfoModal();
+            }
+            if (e.target.id === 'editCustomerInfo') {
+                this.showCustomerInfoModal();
+            }
+        });
+
+        // Customer info form submit
+        document.addEventListener('submit', (e) => {
+            if (e.target.id === 'customerInfoForm') {
+                e.preventDefault();
+                this.saveCustomerInfoFromForm();
+            }
+        });
+
+        // Listen for auth changes (login/logout)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'user' || e.key === 'userData' || e.key === 'token') {
+                console.log('🔄 Auth state changed, refreshing customer info');
+                this.customerInfo = this.loadCustomerInfo();
+                this.updateCustomerInfoDisplay();
+            }
+        });
+
+        // Listen for custom auth events
+        document.addEventListener('authStateChanged', (e) => {
+            console.log('🔄 Auth state changed via event:', e.detail);
+            this.customerInfo = this.loadCustomerInfo();
+            this.updateCustomerInfoDisplay();
         });
 
         // Toggle cart details
@@ -277,11 +312,13 @@ class CartManager {
     }
 
     addToCart(item, buttonElement = null, quantity = 1) {
-        // Kiểm tra đăng nhập trước khi thêm vào giỏ hàng
-        if (!this.checkAuthBeforeCart()) {
-            return false;
-        }
+        // Yêu cầu thông tin khách hàng trước khi thêm vào giỏ hàng
+        this.requireCustomerInfo(() => {
+            this.performAddToCart(item, buttonElement, quantity);
+        });
+    }
 
+    performAddToCart(item, buttonElement = null, quantity = 1) {
         // Kiểm tra dữ liệu đầu vào
         if (!item || typeof item !== 'object') {
             console.error('❌ Invalid item data:', item);
@@ -446,6 +483,11 @@ class CartManager {
 
     saveCart() {
         localStorage.setItem('cart', JSON.stringify(this.cart));
+
+        // Dispatch cart updated event for floating button
+        document.dispatchEvent(new CustomEvent('cartUpdated', {
+            detail: { cart: this.cart }
+        }));
     }
 
     updateCartUI() {
@@ -484,10 +526,7 @@ class CartManager {
     }
 
     openCartModal() {
-        // Kiểm tra đăng nhập trước khi mở giỏ hàng
-        if (!this.checkAuthBeforeCart()) {
-            return;
-        }
+        // Không cần kiểm tra đăng nhập nữa
 
         const cartModal = document.getElementById('cartModal');
         if (cartModal) {
@@ -504,19 +543,39 @@ class CartManager {
 
     // Kiểm tra đăng nhập trước khi truy cập giỏ hàng
     checkAuthBeforeCart() {
+        console.log('🔍 Checking auth before cart...');
+
         // Kiểm tra xem auth object có tồn tại không
         if (typeof window.auth === 'undefined') {
-            console.warn('Auth system not loaded');
+            console.log('⚠️ Auth system not loaded, checking localStorage...');
+
+            // Fallback: kiểm tra localStorage trực tiếp
+            const token = localStorage.getItem('token');
+            const userData = localStorage.getItem('userData') || localStorage.getItem('user');
+
+            if (token && userData) {
+                console.log('✅ Found auth data in localStorage, allowing cart access');
+                return true;
+            }
+
+            console.log('❌ No auth data found, showing login required');
             this.showLoginRequiredNotification();
             return false;
         }
 
+        console.log('🔍 Auth system found:', {
+            isAuthenticated: window.auth.isAuthenticated,
+            hasUser: !!window.auth.user
+        });
+
         // Kiểm tra trạng thái đăng nhập
         if (!window.auth.isAuthenticated || !window.auth.user) {
+            console.log('❌ Not authenticated, showing login modal');
             this.showLoginRequiredModal();
             return false;
         }
 
+        console.log('✅ User authenticated, allowing cart access');
         return true;
     }
 
@@ -641,10 +700,10 @@ class CartManager {
     }
 
     renderCartItems() {
-        // Kiểm tra đăng nhập trước khi render
-        if (!this.checkAuthBeforeCart()) {
-            return;
-        }
+        // Không cần kiểm tra đăng nhập nữa
+
+        // Update customer info display
+        this.updateCustomerInfoDisplay();
 
         const cartItemsList = document.getElementById('cartItemsList');
         const emptyCartState = document.getElementById('emptyCartState');
@@ -897,27 +956,57 @@ class CartManager {
     }
 
     checkout() {
-        // Kiểm tra đăng nhập trước khi thanh toán
-        if (!this.checkAuthBeforeCart()) {
-            return;
-        }
+        // Không cần kiểm tra đăng nhập nữa
 
         if (this.cart.length === 0) {
             this.showNotification('Giỏ hàng trống!', 'error');
             return;
         }
 
+        // Hiển thị loading state
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        if (checkoutBtn) {
+            const originalText = checkoutBtn.innerHTML;
+            checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang chuyển...';
+            checkoutBtn.disabled = true;
+
+            // Restore button after a short delay
+            setTimeout(() => {
+                checkoutBtn.innerHTML = originalText;
+                checkoutBtn.disabled = false;
+            }, 3000);
+        }
+
         // Redirect đến trang thanh toán
         this.redirectToCheckout();
     }
 
-    // Redirect đến trang thanh toán
+    // Redirect đến trang thanh toán với đầy đủ dữ liệu
     redirectToCheckout() {
-        // Lưu giỏ hàng trước khi chuyển trang
+        console.log('🛒 Preparing checkout with cart data:', this.cart);
+        console.log('👤 Customer info:', this.customerInfo);
+
+        // Đảm bảo giỏ hàng được lưu với đầy đủ thông tin
         this.saveCart();
 
-        // Chuyển đến trang thanh toán
-        window.location.href = 'ThanhToan.html';
+        // Lưu thông tin khách hàng để sử dụng trong trang thanh toán
+        if (this.customerInfo) {
+            localStorage.setItem('checkoutCustomerInfo', JSON.stringify(this.customerInfo));
+        }
+
+        // Lưu timestamp để tracking
+        localStorage.setItem('checkoutTimestamp', new Date().toISOString());
+
+        // Hiển thị thông báo
+        this.showNotification('Đang chuyển đến trang thanh toán...', 'info', 2000);
+
+        // Đóng cart modal trước khi chuyển trang
+        this.closeCartModal();
+
+        // Chuyển đến trang thanh toán sau một delay ngắn
+        setTimeout(() => {
+            window.location.href = 'ThanhToan.html';
+        }, 500);
     }
 
     // Xóa toàn bộ giỏ hàng
@@ -1078,6 +1167,279 @@ class CartManager {
         if (cartItems) {
             cartItems.classList.remove('scrollable');
         }
+    }
+
+    // Customer Info Management Methods
+    loadCustomerInfo() {
+        try {
+            // Kiểm tra xem user đã đăng nhập chưa
+            const loggedInUser = this.getLoggedInUser();
+            if (loggedInUser) {
+                console.log('✅ User đã đăng nhập, sử dụng thông tin từ account:', loggedInUser.email);
+                return {
+                    full_name: loggedInUser.full_name,
+                    email: loggedInUser.email,
+                    phone: loggedInUser.phone || '',
+                    address: loggedInUser.address || '',
+                    isLoggedInUser: true // Đánh dấu là user đã đăng nhập
+                };
+            }
+
+            // Nếu chưa đăng nhập, lấy thông tin đã lưu từ form
+            const saved = localStorage.getItem('customerInfo');
+            const customerInfo = saved ? JSON.parse(saved) : null;
+
+            if (customerInfo) {
+                customerInfo.isLoggedInUser = false; // Đánh dấu là guest user
+            }
+
+            return customerInfo;
+        } catch (error) {
+            console.error('Error loading customer info:', error);
+            return null;
+        }
+    }
+
+    getLoggedInUser() {
+        try {
+            // Kiểm tra cả 2 format để tương thích
+            const user = localStorage.getItem('user') || localStorage.getItem('userData');
+            const token = localStorage.getItem('token');
+
+            if (user && token) {
+                const userData = JSON.parse(user);
+                console.log('👤 Found logged in user:', userData.email);
+                return userData;
+            }
+
+            return null;
+        } catch (error) {
+            console.error('Error getting logged in user:', error);
+            return null;
+        }
+    }
+
+    saveCustomerInfo(customerInfo) {
+        try {
+            localStorage.setItem('customerInfo', JSON.stringify(customerInfo));
+            this.customerInfo = customerInfo;
+            console.log('✅ Customer info saved:', customerInfo);
+            this.updateCustomerInfoDisplay();
+        } catch (error) {
+            console.error('Error saving customer info:', error);
+        }
+    }
+
+    showCustomerInfoModal() {
+        // Kiểm tra xem user đã đăng nhập chưa
+        const loggedInUser = this.getLoggedInUser();
+        if (loggedInUser) {
+            console.log('✅ User đã đăng nhập, không cần hiển thị modal');
+            // Tự động lưu thông tin từ user đã đăng nhập
+            this.customerInfo = this.loadCustomerInfo();
+            this.updateCustomerInfoDisplay();
+
+            // Thực hiện action đang chờ
+            if (this.pendingCartAction) {
+                this.pendingCartAction();
+                this.pendingCartAction = null;
+            }
+            return;
+        }
+
+        const modal = document.getElementById('customerInfoModal');
+        if (modal) {
+            modal.classList.add('active');
+
+            // Pre-fill form if customer info exists (chỉ cho guest user)
+            if (this.customerInfo && !this.customerInfo.isLoggedInUser) {
+                this.fillCustomerInfoForm(this.customerInfo);
+            }
+        }
+    }
+
+    closeCustomerInfoModal() {
+        const modal = document.getElementById('customerInfoModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    fillCustomerInfoForm(customerInfo) {
+        const form = document.getElementById('customerInfoForm');
+        if (form && customerInfo) {
+            const fullNameInput = form.querySelector('#customerFullName');
+            const phoneInput = form.querySelector('#customerPhone');
+            const emailInput = form.querySelector('#customerEmail');
+            const addressInput = form.querySelector('#customerAddress');
+
+            if (fullNameInput) fullNameInput.value = customerInfo.full_name || '';
+            if (phoneInput) phoneInput.value = customerInfo.phone || '';
+            if (emailInput) emailInput.value = customerInfo.email || '';
+            if (addressInput) addressInput.value = customerInfo.address || '';
+        }
+    }
+
+    saveCustomerInfoFromForm() {
+        const form = document.getElementById('customerInfoForm');
+        if (!form) return;
+
+        const formData = new FormData(form);
+        const customerInfo = {
+            full_name: formData.get('full_name')?.trim(),
+            phone: formData.get('phone')?.trim(),
+            email: formData.get('email')?.trim(),
+            address: formData.get('address')?.trim(),
+            save_info: formData.get('save_info') === 'on'
+        };
+
+        // Validate required fields
+        if (!customerInfo.full_name || !customerInfo.phone) {
+            this.showNotification('Vui lòng nhập đầy đủ họ tên và số điện thoại', 'error');
+            return;
+        }
+
+        // Validate phone number
+        const phoneRegex = /^[0-9]{10,11}$/;
+        if (!phoneRegex.test(customerInfo.phone)) {
+            this.showNotification('Số điện thoại không hợp lệ (10-11 số)', 'error');
+            return;
+        }
+
+        // Đánh dấu là guest user (không phải user đã đăng nhập)
+        customerInfo.isLoggedInUser = false;
+
+        // Save customer info
+        this.saveCustomerInfo(customerInfo);
+        this.closeCustomerInfoModal();
+        this.showNotification('Đã lưu thông tin khách hàng', 'success');
+
+        // Continue with the pending action (add to cart)
+        if (this.pendingCartAction) {
+            this.pendingCartAction();
+            this.pendingCartAction = null;
+        }
+    }
+
+    updateCustomerInfoDisplay() {
+        // Update in cart modal
+        const placeholder = document.getElementById('customer-info-placeholder');
+        if (placeholder && this.customerInfo) {
+            const isLoggedIn = this.customerInfo.isLoggedInUser;
+            const bgColor = isLoggedIn ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200';
+            const textColor = isLoggedIn ? 'text-green-800' : 'text-blue-800';
+            const iconColor = isLoggedIn ? 'text-green-600' : 'text-blue-600';
+            const statusIcon = isLoggedIn ? 'fas fa-user-check' : 'fas fa-user';
+            const statusText = isLoggedIn ? 'Thành viên đã đăng nhập' : 'Thông tin khách hàng';
+
+            placeholder.innerHTML = `
+                <div id="customerInfoDisplay" class="${bgColor} border rounded-lg p-4 mb-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-semibold ${textColor} mb-2">
+                                <i class="${statusIcon} mr-2"></i>${statusText}
+                            </h4>
+                            <div class="text-sm ${textColor.replace('800', '700')} space-y-1">
+                                <div id="displayFullName" class="flex items-center">
+                                    <i class="fas fa-user w-4 mr-2"></i>
+                                    <span>${this.customerInfo.full_name}</span>
+                                </div>
+                                <div id="displayPhone" class="flex items-center">
+                                    <i class="fas fa-phone w-4 mr-2"></i>
+                                    <span>${this.customerInfo.phone}</span>
+                                </div>
+                                ${this.customerInfo.email ? `
+                                <div id="displayEmail" class="flex items-center">
+                                    <i class="fas fa-envelope w-4 mr-2"></i>
+                                    <span>${this.customerInfo.email}</span>
+                                </div>
+                                ` : ''}
+                                ${this.customerInfo.address ? `
+                                <div id="displayAddress" class="flex items-start">
+                                    <i class="fas fa-map-marker-alt w-4 mr-2 mt-0.5"></i>
+                                    <span>${this.customerInfo.address}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        ${!isLoggedIn ? `
+                        <button
+                            id="editCustomerInfo"
+                            class="${iconColor} hover:${iconColor.replace('600', '800')} text-sm"
+                            title="Chỉnh sửa thông tin"
+                        >
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ` : `
+                        <div class="text-xs ${textColor} opacity-75">
+                            <i class="fas fa-lock mr-1"></i>Tự động từ tài khoản
+                        </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        } else if (placeholder) {
+            placeholder.innerHTML = '';
+        }
+
+        // Also update standalone display if exists
+        const display = document.getElementById('customerInfoDisplay');
+        if (!display) return;
+
+        if (this.customerInfo) {
+            display.classList.remove('hidden');
+
+            const fullNameSpan = display.querySelector('#displayFullName span');
+            const phoneSpan = display.querySelector('#displayPhone span');
+            const emailDiv = display.querySelector('#displayEmail');
+            const emailSpan = emailDiv?.querySelector('span');
+            const addressDiv = display.querySelector('#displayAddress');
+            const addressSpan = addressDiv?.querySelector('span');
+
+            if (fullNameSpan) fullNameSpan.textContent = this.customerInfo.full_name;
+            if (phoneSpan) phoneSpan.textContent = this.customerInfo.phone;
+
+            if (this.customerInfo.email && emailDiv) {
+                emailDiv.classList.remove('hidden');
+                if (emailSpan) emailSpan.textContent = this.customerInfo.email;
+            } else if (emailDiv) {
+                emailDiv.classList.add('hidden');
+            }
+
+            if (this.customerInfo.address && addressDiv) {
+                addressDiv.classList.remove('hidden');
+                if (addressSpan) addressSpan.textContent = this.customerInfo.address;
+            } else if (addressDiv) {
+                addressDiv.classList.add('hidden');
+            }
+        } else {
+            display.classList.add('hidden');
+        }
+    }
+
+    requireCustomerInfo(callback) {
+        // Refresh customer info để kiểm tra trạng thái đăng nhập mới nhất
+        this.customerInfo = this.loadCustomerInfo();
+
+        if (this.customerInfo) {
+            if (this.customerInfo.isLoggedInUser) {
+                console.log('✅ Sử dụng thông tin từ user đã đăng nhập');
+                this.showNotification(`Xin chào ${this.customerInfo.full_name}! Đang thêm món vào giỏ hàng...`, 'success', 2000);
+            } else {
+                console.log('✅ Sử dụng thông tin khách hàng đã lưu');
+            }
+            // Customer info already exists, execute callback
+            callback();
+        } else {
+            console.log('❌ Chưa có thông tin khách hàng, yêu cầu nhập thông tin');
+            // Store the callback to execute after customer info is provided
+            this.pendingCartAction = callback;
+            this.showCustomerInfoModal();
+        }
+    }
+
+    getCustomerInfo() {
+        return this.customerInfo;
     }
 }
 

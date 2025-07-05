@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh Sách Hóa Đơn - Ẩm Thực Phương Nam</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .invoice-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #e5e7eb;
+        }
+
+        .invoice-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-confirmed {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-completed {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-cancelled {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .filter-btn {
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .empty-state {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="goBack()" class="text-gray-600 hover:text-gray-800 transition-colors">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">Danh Sách Hóa Đơn</h1>
+                        <p class="text-gray-600">Quản lý và xem lại các đơn hàng của bạn</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="refreshList()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>Làm mới
+                    </button>
+                    <button onclick="goToMenu()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Đặt món mới
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filters -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="filterInvoices('all')" class="filter-btn active px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-filter="all">
+                        <i class="fas fa-list mr-2"></i>Tất cả
+                    </button>
+                    <button onclick="filterInvoices('pending')" class="filter-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-filter="pending">
+                        <i class="fas fa-clock mr-2"></i>Chờ xác nhận
+                    </button>
+                    <button onclick="filterInvoices('confirmed')" class="filter-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-filter="confirmed">
+                        <i class="fas fa-check-circle mr-2"></i>Đã xác nhận
+                    </button>
+                    <button onclick="filterInvoices('completed')" class="filter-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-filter="completed">
+                        <i class="fas fa-check-double mr-2"></i>Hoàn thành
+                    </button>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Tìm kiếm hóa đơn..."
+                               class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    <select id="sortSelect" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="newest">Mới nhất</option>
+                        <option value="oldest">Cũ nhất</option>
+                        <option value="amount-high">Giá cao nhất</option>
+                        <option value="amount-low">Giá thấp nhất</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Tổng hóa đơn</p>
+                        <p id="totalInvoices" class="text-2xl font-bold text-gray-800">0</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <i class="fas fa-receipt text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Tổng tiền</p>
+                        <p id="totalAmount" class="text-2xl font-bold text-green-600">0 ₫</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <i class="fas fa-dollar-sign text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Đã hoàn thành</p>
+                        <p id="completedInvoices" class="text-2xl font-bold text-purple-600">0</p>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-full">
+                        <i class="fas fa-check-double text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Hóa đơn hôm nay</p>
+                        <p id="todayInvoices" class="text-2xl font-bold text-orange-600">0</p>
+                    </div>
+                    <div class="bg-orange-100 p-3 rounded-full">
+                        <i class="fas fa-calendar-day text-orange-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice List -->
+        <div class="bg-white rounded-lg shadow-sm">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">
+                    <i class="fas fa-list mr-2 text-blue-600"></i>Danh sách hóa đơn
+                </h2>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="p-8 text-center">
+                <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
+                <p class="text-gray-600">Đang tải danh sách hóa đơn...</p>
+            </div>
+
+            <!-- Invoice Items Container -->
+            <div id="invoiceList" class="hidden">
+                <!-- Invoice items will be populated by JavaScript -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden p-12 text-center">
+                <div class="empty-state rounded-lg p-8 text-white mb-6">
+                    <i class="fas fa-receipt text-6xl mb-4 opacity-80"></i>
+                    <h3 class="text-xl font-semibold mb-2">Chưa có hóa đơn nào</h3>
+                    <p class="opacity-90">Bạn chưa có đơn hàng nào. Hãy đặt món ngay để tạo hóa đơn đầu tiên!</p>
+                </div>
+                <button onclick="goToMenu()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-utensils mr-2"></i>Đặt món ngay
+                </button>
+            </div>
+
+            <!-- No Results State -->
+            <div id="noResultsState" class="hidden p-8 text-center">
+                <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-semibold text-gray-600 mb-2">Không tìm thấy kết quả</h3>
+                <p class="text-gray-500">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="hidden mt-6 flex justify-center">
+            <div class="flex items-center space-x-2">
+                <button onclick="changePage('prev')" class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div id="pageNumbers" class="flex space-x-1">
+                    <!-- Page numbers will be populated by JavaScript -->
+                </div>
+                <button onclick="changePage('next')" class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let allInvoices = [];
+        let filteredInvoices = [];
+        let currentFilter = 'all';
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
+        // Utility functions
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(price);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatDateShort(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        function generateInvoiceNumber(timestamp) {
+            const date = new Date(timestamp);
+            const random = Math.floor(Math.random() * 1000);
+            return `HD${date.getTime().toString().slice(-6)}${random.toString().padStart(3, '0')}`;
+        }
+
+        // Navigation functions
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                goToHome();
+            }
+        }
+
+        function goToMenu() {
+            window.location.href = 'Menu-new.html';
+        }
+
+        function goToHome() {
+            window.location.href = 'Index-new.html';
+        }
+
+        function viewInvoiceDetail(invoiceId) {
+            // Set the invoice data in localStorage and redirect to detail page
+            const invoice = allInvoices.find(inv => inv.id === invoiceId);
+            if (invoice) {
+                localStorage.setItem('currentOrder', JSON.stringify(invoice));
+                window.location.href = 'HoaDon.html';
+            }
+        }
+
+        // Load invoices from localStorage
+        function loadInvoices() {
+            try {
+                // Get all invoices from localStorage
+                const storedInvoices = localStorage.getItem('invoiceHistory');
+                if (storedInvoices) {
+                    allInvoices = JSON.parse(storedInvoices);
+                } else {
+                    allInvoices = [];
+                }
+
+                // Add current order if exists and not already in history
+                const currentOrder = localStorage.getItem('currentOrder');
+                if (currentOrder) {
+                    const order = JSON.parse(currentOrder);
+                    const orderId = order.id || generateInvoiceId();
+
+                    // Check if this order is already in history
+                    const existingIndex = allInvoices.findIndex(inv => inv.id === orderId);
+                    if (existingIndex === -1) {
+                        // Add to history
+                        const invoice = {
+                            ...order,
+                            id: orderId,
+                            invoiceNumber: generateInvoiceNumber(order.timestamp || Date.now()),
+                            status: 'confirmed',
+                            createdAt: order.timestamp || new Date().toISOString()
+                        };
+                        allInvoices.unshift(invoice);
+                        saveInvoiceHistory();
+                    }
+                }
+
+                filteredInvoices = [...allInvoices];
+                updateStatistics();
+                renderInvoices();
+
+                // Hide loading state
+                document.getElementById('loadingState').style.display = 'none';
+
+                if (allInvoices.length === 0) {
+                    showEmptyState();
+                } else {
+                    showInvoiceList();
+                }
+
+            } catch (error) {
+                console.error('Error loading invoices:', error);
+                showEmptyState();
+            }
+        }
+
+        function generateInvoiceId() {
+            return 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function saveInvoiceHistory() {
+            localStorage.setItem('invoiceHistory', JSON.stringify(allInvoices));
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const total = allInvoices.length;
+            const totalAmount = allInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+            const completed = allInvoices.filter(inv => inv.status === 'completed').length;
+
+            const today = new Date().toDateString();
+            const todayCount = allInvoices.filter(inv => {
+                const invDate = new Date(inv.createdAt || inv.timestamp).toDateString();
+                return invDate === today;
+            }).length;
+
+            document.getElementById('totalInvoices').textContent = total;
+            document.getElementById('totalAmount').textContent = formatPrice(totalAmount);
+            document.getElementById('completedInvoices').textContent = completed;
+            document.getElementById('todayInvoices').textContent = todayCount;
+        }
+
+        // Filter invoices
+        function filterInvoices(filter) {
+            currentFilter = filter;
+            currentPage = 1;
+
+            // Update filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+
+            // Apply filter
+            if (filter === 'all') {
+                filteredInvoices = [...allInvoices];
+            } else {
+                filteredInvoices = allInvoices.filter(inv => inv.status === filter);
+            }
+
+            // Apply search if exists
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (searchTerm) {
+                applySearch(searchTerm);
+            }
+
+            renderInvoices();
+        }
+
+        // Search functionality
+        function applySearch(searchTerm) {
+            if (!searchTerm) {
+                filterInvoices(currentFilter);
+                return;
+            }
+
+            filteredInvoices = filteredInvoices.filter(invoice => {
+                const searchLower = searchTerm.toLowerCase();
+                return (
+                    (invoice.invoiceNumber && invoice.invoiceNumber.toLowerCase().includes(searchLower)) ||
+                    (invoice.items && invoice.items.some(item =>
+                        (item.ten_mon || item.name || '').toLowerCase().includes(searchLower)
+                    )) ||
+                    (invoice.paymentMethod && invoice.paymentMethod.toLowerCase().includes(searchLower))
+                );
+            });
+
+            renderInvoices();
+        }
+
+        // Sort functionality
+        function sortInvoices(sortBy) {
+            switch (sortBy) {
+                case 'newest':
+                    filteredInvoices.sort((a, b) => new Date(b.createdAt || b.timestamp) - new Date(a.createdAt || a.timestamp));
+                    break;
+                case 'oldest':
+                    filteredInvoices.sort((a, b) => new Date(a.createdAt || a.timestamp) - new Date(b.createdAt || b.timestamp));
+                    break;
+                case 'amount-high':
+                    filteredInvoices.sort((a, b) => (b.total || 0) - (a.total || 0));
+                    break;
+                case 'amount-low':
+                    filteredInvoices.sort((a, b) => (a.total || 0) - (b.total || 0));
+                    break;
+            }
+            renderInvoices();
+        }
+
+        // Render invoices
+        function renderInvoices() {
+            const container = document.getElementById('invoiceList');
+
+            if (filteredInvoices.length === 0) {
+                showNoResults();
+                return;
+            }
+
+            // Calculate pagination
+            const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageInvoices = filteredInvoices.slice(startIndex, endIndex);
+
+            container.innerHTML = '';
+
+            pageInvoices.forEach(invoice => {
+                const invoiceCard = createInvoiceCard(invoice);
+                container.appendChild(invoiceCard);
+            });
+
+            showInvoiceList();
+            renderPagination(totalPages);
+        }
+
+        // Create invoice card
+        function createInvoiceCard(invoice) {
+            const card = document.createElement('div');
+            card.className = 'invoice-card border-b border-gray-200 p-4 hover:bg-gray-50 cursor-pointer';
+            card.onclick = () => viewInvoiceDetail(invoice.id);
+
+            const statusClass = getStatusClass(invoice.status);
+            const statusText = getStatusText(invoice.status);
+            const paymentMethodText = getPaymentMethodText(invoice.paymentMethod);
+
+            const itemsPreview = (invoice.items || []).slice(0, 2).map(item =>
+                item.ten_mon || item.name || 'Món ăn'
+            ).join(', ');
+            const moreItems = (invoice.items || []).length > 2 ? ` và ${(invoice.items || []).length - 2} món khác` : '';
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-3">
+                                <h3 class="font-semibold text-gray-800">${invoice.invoiceNumber || 'HD000001'}</h3>
+                                <span class="status-badge ${statusClass}">
+                                    <i class="fas ${getStatusIcon(invoice.status)} mr-1"></i>${statusText}
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-lg text-blue-600">${formatPrice(invoice.total || 0)}</p>
+                                <p class="text-sm text-gray-500">${formatDateShort(invoice.createdAt || invoice.timestamp)}</p>
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-600 mb-1">
+                                    <i class="fas fa-utensils mr-2 text-blue-500"></i>Món ăn:
+                                </p>
+                                <p class="text-gray-800">${itemsPreview}${moreItems}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 mb-1">
+                                    <i class="fas fa-credit-card mr-2 text-green-500"></i>Thanh toán:
+                                </p>
+                                <p class="text-gray-800">${paymentMethodText}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 mb-1">
+                                    <i class="fas fa-truck mr-2 text-purple-500"></i>Loại đơn:
+                                </p>
+                                <p class="text-gray-800">${invoice.orderType === 'giao_hang' ? 'Giao hàng' : 'Tại chỗ'}</p>
+                            </div>
+                        </div>
+
+                        ${invoice.deliveryAddress ? `
+                            <div class="mt-2 text-sm">
+                                <p class="text-gray-600">
+                                    <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>Địa chỉ:
+                                    <span class="text-gray-800">${invoice.deliveryAddress}</span>
+                                </p>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="ml-4 flex flex-col items-center space-y-2">
+                        <button onclick="event.stopPropagation(); viewInvoiceDetail('${invoice.id}')"
+                                class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-eye mr-1"></i>Xem
+                        </button>
+                        <button onclick="event.stopPropagation(); printInvoice('${invoice.id}')"
+                                class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-print mr-1"></i>In
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Helper functions for status
+        function getStatusClass(status) {
+            switch (status) {
+                case 'pending': return 'status-pending';
+                case 'confirmed': return 'status-confirmed';
+                case 'completed': return 'status-completed';
+                case 'cancelled': return 'status-cancelled';
+                default: return 'status-pending';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'pending': return 'Chờ xác nhận';
+                case 'confirmed': return 'Đã xác nhận';
+                case 'completed': return 'Hoàn thành';
+                case 'cancelled': return 'Đã hủy';
+                default: return 'Chờ xác nhận';
+            }
+        }
+
+        function getStatusIcon(status) {
+            switch (status) {
+                case 'pending': return 'fa-clock';
+                case 'confirmed': return 'fa-check-circle';
+                case 'completed': return 'fa-check-double';
+                case 'cancelled': return 'fa-times-circle';
+                default: return 'fa-clock';
+            }
+        }
+
+        function getPaymentMethodText(method) {
+            switch (method) {
+                case 'momo': return 'MoMo';
+                case 'vnpay': return 'VNPay';
+                case 'card': return 'Thẻ tín dụng';
+                case 'cash':
+                default: return 'Tiền mặt';
+            }
+        }
+
+        // Print invoice
+        function printInvoice(invoiceId) {
+            const invoice = allInvoices.find(inv => inv.id === invoiceId);
+            if (invoice) {
+                localStorage.setItem('currentOrder', JSON.stringify(invoice));
+                const printWindow = window.open('HoaDon.html', '_blank');
+                printWindow.onload = function() {
+                    setTimeout(() => {
+                        printWindow.print();
+                    }, 1000);
+                };
+            }
+        }
+
+        // Show/hide states
+        function showInvoiceList() {
+            document.getElementById('invoiceList').classList.remove('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('noResultsState').classList.add('hidden');
+        }
+
+        function showEmptyState() {
+            document.getElementById('invoiceList').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+            document.getElementById('noResultsState').classList.add('hidden');
+            document.getElementById('pagination').classList.add('hidden');
+        }
+
+        function showNoResults() {
+            document.getElementById('invoiceList').classList.add('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('noResultsState').classList.remove('hidden');
+            document.getElementById('pagination').classList.add('hidden');
+        }
+
+        // Pagination
+        function renderPagination(totalPages) {
+            const paginationContainer = document.getElementById('pagination');
+            const pageNumbersContainer = document.getElementById('pageNumbers');
+
+            if (totalPages <= 1) {
+                paginationContainer.classList.add('hidden');
+                return;
+            }
+
+            paginationContainer.classList.remove('hidden');
+            pageNumbersContainer.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.className = `px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ${i === currentPage ? 'bg-blue-600 text-white border-blue-600' : ''}`;
+                pageButton.textContent = i;
+                pageButton.onclick = () => changePage(i);
+                pageNumbersContainer.appendChild(pageButton);
+            }
+        }
+
+        function changePage(page) {
+            if (page === 'prev') {
+                if (currentPage > 1) currentPage--;
+            } else if (page === 'next') {
+                const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
+                if (currentPage < totalPages) currentPage++;
+            } else {
+                currentPage = page;
+            }
+            renderInvoices();
+        }
+
+        // Refresh list
+        function refreshList() {
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('invoiceList').classList.add('hidden');
+
+            setTimeout(() => {
+                loadInvoices();
+            }, 500);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    applySearch(this.value.trim());
+                }, 300);
+            });
+
+            // Sort functionality
+            document.getElementById('sortSelect').addEventListener('change', function() {
+                sortInvoices(this.value);
+            });
+
+            // Load invoices
+            loadInvoices();
+        });
+    </script>
+</body>
+</html>

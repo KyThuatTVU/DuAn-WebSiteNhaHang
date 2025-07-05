@@ -26,12 +26,12 @@ class ComponentLoader {
     static async loadAllComponents() {
         const components = [
             { name: 'header', target: '#header-placeholder' },
-            { name: 'header-menu', target: '#header-menu-placeholder' },
             { name: 'footer', target: '#footer-placeholder' },
             { name: 'ad-banner', target: '#ad-banner-placeholder' },
             { name: 'chatbot', target: '#chatbot-placeholder' },
             { name: 'login-modal', target: '#login-modal-placeholder' },
-            { name: 'cart-modal', target: '#cart-modal-placeholder' }
+            { name: 'cart-modal', target: '#cart-modal-placeholder' },
+            { name: 'customer-info-modal', target: '#customer-info-placeholder' }
         ];
 
         for (const component of components) {
@@ -290,6 +290,8 @@ function showCartOnMenuPage() {
 
 // Initialize all components when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Initializing unified components system...');
+
     // Load components first
     ComponentLoader.loadAllComponents().then(() => {
         // Initialize component functionality after loading
@@ -314,8 +316,21 @@ document.addEventListener('DOMContentLoaded', function() {
             if (window.initializeApp) {
                 initializeApp();
             }
+
+            console.log('✅ Unified components system initialized');
         }, 100);
     });
+});
+
+// Listen for unified auth state changes
+window.addEventListener('authStateChanged', function(event) {
+    console.log('🔔 Auth state changed in components:', event.detail);
+
+    if (event.detail.type === 'login' || event.detail.type === 'register') {
+        updateUIAfterLogin(event.detail.user);
+    } else if (event.detail.type === 'logout') {
+        updateUIAfterLogout();
+    }
 });
 
 // Setup login modal events after components are loaded
@@ -380,11 +395,17 @@ function setupLoginModalEvents() {
 
     // Form submission events
     if (loginForm) {
+        console.log('✅ Login form found, adding event listener');
         loginForm.addEventListener('submit', handleLoginSubmit);
+    } else {
+        console.log('❌ Login form not found');
     }
 
     if (registerForm) {
+        console.log('✅ Register form found, adding event listener');
         registerForm.addEventListener('submit', handleRegisterSubmit);
+    } else {
+        console.log('❌ Register form not found');
     }
 }
 
@@ -420,8 +441,9 @@ function switchLoginTab(tab) {
     }
 }
 
-// Handle login form submission
+// Handle unified login form submission
 async function handleLoginSubmit(e) {
+    console.log('🔥 handleLoginSubmit called!');
     e.preventDefault();
     const submitBtn = document.querySelector('#loginForm button[type="submit"]');
     if (submitBtn) submitBtn.disabled = true;
@@ -430,11 +452,14 @@ async function handleLoginSubmit(e) {
         const email = document.getElementById('loginEmail')?.value.trim();
         const password = document.getElementById('loginPassword')?.value;
 
+        console.log('📝 Form data - Email:', email, 'Password:', password ? '***' : 'empty');
+
         if (!email || !password) {
             throw new Error('Vui lòng nhập đầy đủ email và mật khẩu');
         }
 
-        const data = await auth.login(email, password);
+        console.log('🔐 Unified login attempt from modal for:', email);
+        const data = await window.auth.login(email, password);
 
         // Update UI
         updateUIAfterLogin(data.khach_hang);
@@ -445,6 +470,8 @@ async function handleLoginSubmit(e) {
                 loginModal.classList.remove('active');
             }, 1000);
         }
+
+        console.log('✅ Unified login successful from modal');
 
         showLoginNotification('Đăng nhập thành công!', 'success');
 
@@ -482,9 +509,11 @@ async function handleRegisterSubmit(e) {
             throw new Error('Vui lòng điền đầy đủ thông tin');
         }
 
-        await auth.register(userData);
+        console.log('📝 Unified registration attempt from modal for:', userData.email);
+        await window.auth.register(userData);
         showLoginNotification('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
         switchLoginTab('login');
+        console.log('✅ Unified registration successful from modal');
 
     } catch (error) {
         showLoginNotification(error.message, 'error');
@@ -493,20 +522,26 @@ async function handleRegisterSubmit(e) {
     }
 }
 
-// Check login status and update UI accordingly
+// Check unified login status and update UI accordingly
 function checkLoginStatus() {
-    const user = JSON.parse(localStorage.getItem('user'));
+    console.log('🔍 Checking unified login status...');
 
-    if (user) {
+    if (window.auth && window.auth.isLoggedIn()) {
+        const user = window.auth.getCurrentUser();
         updateUIAfterLogin(user);
+        console.log('✅ User is logged in:', user.email);
     } else {
         updateUIAfterLogout();
+        console.log('❌ User is not logged in');
     }
 }
 
-// Handle logout
+// Handle unified logout
 function handleLogout() {
-    auth.logout();
+    console.log('🚪 Unified logout from components...');
+    if (window.auth) {
+        window.auth.logout();
+    }
     updateUIAfterLogout();
     showLoginNotification('Đã đăng xuất thành công!', 'success');
 }
@@ -518,12 +553,23 @@ function updateUIAfterLogin(user) {
     const logoutBtn = document.getElementById('logoutBtn');
     const userDisplay = document.getElementById('userDisplay');
     const userName = document.getElementById('userName');
+    const mobileUserDisplay = document.getElementById('mobileUserDisplay');
+    const mobileUserName = document.getElementById('mobileUserName');
+    const invoiceHistoryBtn = document.getElementById('invoiceHistoryBtn');
+    const mobileInvoiceHistoryContainer = document.getElementById('mobileInvoiceHistoryContainer');
+
 
     if (loginBtn) loginBtn.style.display = 'none';
     if (mobileLoginBtn) mobileLoginBtn.style.display = 'none';
     if (logoutBtn) logoutBtn.style.display = 'block';
     if (userDisplay) userDisplay.classList.remove('hidden');
     if (userName) userName.textContent = user.full_name;
+    if (mobileUserDisplay) mobileUserDisplay.classList.remove('hidden');
+    if (mobileUserName) mobileUserName.textContent = user.full_name;
+    if (invoiceHistoryBtn) invoiceHistoryBtn.classList.remove('hidden');
+    if (mobileInvoiceHistoryContainer) mobileInvoiceHistoryContainer.classList.remove('hidden');
+
+
 }
 
 // Update UI after logout
@@ -532,11 +578,23 @@ function updateUIAfterLogout() {
     const mobileLoginBtn = document.getElementById('mobileLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const userDisplay = document.getElementById('userDisplay');
+    const mobileUserDisplay = document.getElementById('mobileUserDisplay');
+    const userName = document.getElementById('userName');
+    const mobileUserName = document.getElementById('mobileUserName');
+    const invoiceHistoryBtn = document.getElementById('invoiceHistoryBtn');
+    const mobileInvoiceHistoryContainer = document.getElementById('mobileInvoiceHistoryContainer');
+
 
     if (loginBtn) loginBtn.style.display = 'block';
     if (mobileLoginBtn) mobileLoginBtn.style.display = 'block';
     if (logoutBtn) logoutBtn.style.display = 'none';
     if (userDisplay) userDisplay.classList.add('hidden');
+    if (mobileUserDisplay) mobileUserDisplay.classList.add('hidden');
+    if (invoiceHistoryBtn) invoiceHistoryBtn.classList.add('hidden');
+    if (mobileInvoiceHistoryContainer) mobileInvoiceHistoryContainer.classList.add('hidden');
+
+
+
 }
 
 // Show notification for login/register
@@ -559,10 +617,14 @@ function showLoginNotification(message, type = 'info') {
 function setupCartManager() {
     // Initialize cart manager if CartManager class is available
     if (window.CartManager) {
-        window.cartManager = new CartManager();
-        console.log('🛒 CartManager initialized');
+        if (!window.cartManager) {
+            window.cartManager = new CartManager();
+            console.log('🛒 CartManager initialized from components');
+        } else {
+            console.log('🛒 CartManager already exists');
+        }
     } else {
-        console.warn('⚠️ CartManager class not found');
+        console.log('ℹ️ CartManager class not available (cart.js not loaded)');
     }
 
     // Update cart counter styling
@@ -583,6 +645,8 @@ function updateCartCounterStyling() {
         }
     });
 }
+
+
 
 // Export classes for global use
 window.ComponentLoader = ComponentLoader;

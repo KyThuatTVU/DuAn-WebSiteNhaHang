@@ -1,121 +1,214 @@
 const API_BASE_URL = 'http://localhost:3000/api';
 
-// Auth state management
+// Unified Auth System - Hệ thống xác thực đồng nhất
 const auth = {
     isAuthenticated: false,
     user: null,
     activityTimer: null,
     warningTimer: null,
     refreshTimer: null,
-    INACTIVITY_TIMEOUT: 3 * 60 * 1000, // 3 phút
-    WARNING_TIME: 30 * 1000, // 30 giây trước khi đăng xuất
-    TOKEN_REFRESH_INTERVAL: 4 * 60 * 1000, // 4 phút (trước khi token hết hạn)
+    INACTIVITY_TIMEOUT: 15 * 60 * 1000, // 15 phút
+    WARNING_TIME: 60 * 1000, // 1 phút trước khi đăng xuất
+    TOKEN_REFRESH_INTERVAL: 20 * 60 * 1000, // 20 phút (trước khi token hết hạn)
+    TOKEN_EXPIRY: 24 * 60 * 60 * 1000, // 24 giờ
 
     // Initialize auth state from localStorage
     init() {
-        const user = localStorage.getItem('user');
+        console.log('🔧 Initializing unified auth system...');
+        const user = localStorage.getItem('user') || localStorage.getItem('userData');
         const token = localStorage.getItem('token');
+        const tokenTimestamp = localStorage.getItem('tokenTimestamp');
+
         if (user && token) {
+            // Kiểm tra token có hết hạn không
+            if (this.isTokenExpired(tokenTimestamp)) {
+                console.log('⚠️ Token expired, clearing auth data');
+                this.clearAuthData();
+                return;
+            }
+
             this.isAuthenticated = true;
             this.user = JSON.parse(user);
+            console.log('✅ User authenticated:', this.user.email);
             this.startActivityTracking();
             this.startTokenRefresh();
+        } else {
+            console.log('❌ No valid auth data found');
         }
     },
 
-    // Login
-    async login(email, password) {
-        try {
-            console.log('Attempting login for:', email);
-            
-            const response = await fetch(`${API_BASE_URL}/khach_hang/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
-            
-            if (!response.ok) {
-                console.error('Login failed:', data);
-                throw new Error(data.error || 'Đăng nhập thất bại');
-            }
-
-            // Store user data
-            localStorage.setItem('user', JSON.stringify(data.khach_hang));
-            if (data.token) {
-                localStorage.setItem('token', data.token);
-            }
-            if (data.refreshToken) {
-                localStorage.setItem('refreshToken', data.refreshToken);
-            }
-            this.isAuthenticated = true;
-            this.user = data.khach_hang;
-
-            // Bắt đầu theo dõi hoạt động và refresh token
-            this.startActivityTracking();
-            this.startTokenRefresh();
-
-            // Xử lý redirect sau khi đăng nhập
-            this.handlePostLoginRedirect();
-
-            return data;
-        } catch (error) {
-            console.error('Login error:', error);
-            throw new Error(error.message || 'Lỗi kết nối máy chủ');
-        }
+    // Kiểm tra token có hết hạn không
+    isTokenExpired(tokenTimestamp) {
+        if (!tokenTimestamp) return true;
+        const now = Date.now();
+        const tokenAge = now - parseInt(tokenTimestamp);
+        return tokenAge > this.TOKEN_EXPIRY;
     },
 
-    // Logout
-    logout() {
+    // Xóa tất cả dữ liệu auth
+    clearAuthData() {
         localStorage.removeItem('user');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('authTimestamp');
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
+        localStorage.removeItem('tokenTimestamp');
         this.isAuthenticated = false;
         this.user = null;
-
-        // Dừng tất cả timers
         this.stopActivityTracking();
         this.stopTokenRefresh();
     },
 
+    // Lưu user data (không cần token nữa)
+    saveUserData(userData) {
+        const timestamp = Date.now().toString();
+        // Lưu cả 2 format để tương thích với tất cả components
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('userData', JSON.stringify(userData));
+        localStorage.setItem('authTimestamp', timestamp);
+        console.log('💾 User data saved with timestamp:', timestamp);
+        console.log('💾 User data saved for ThanhToan.html compatibility (NO TOKEN)');
+    },
+
+    // Lưu auth data với timestamp (unified format) - DEPRECATED
+    saveAuthData(userData, token, refreshToken = null) {
+        // Chỉ lưu user data, bỏ qua token
+        this.saveUserData(userData);
+    },
+
+    // Unified Login - Đăng nhập đồng nhất
+    async login(email, password) {
+        try {
+            console.log('🔐 Attempting unified login for:', email);
+            console.log('🌐 API URL:', `${API_BASE_URL}/khach_hang/login`);
+
+            const response = await fetch(`${API_BASE_URL}/khach_hang/login?t=${Date.now()}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            console.log('📡 Response status:', response.status, 'OK:', response.ok);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ HTTP Error:', response.status, errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log('📥 Response data:', data);
+
+            if (!data.success) {
+                console.error('❌ Login failed:', data);
+                throw new Error(data.error || 'Đăng nhập thất bại');
+            }
+
+            // Lưu user data (không cần token nữa)
+            this.saveUserData(data.khach_hang);
+            this.isAuthenticated = true;
+            this.user = data.khach_hang;
+
+            // Bắt đầu theo dõi hoạt động (không cần refresh token)
+            this.startActivityTracking();
+
+            // Broadcast login event cho tất cả components
+            this.broadcastAuthChange('login', this.user);
+
+            // Xử lý redirect sau khi đăng nhập
+            this.handlePostLoginRedirect();
+
+            console.log('✅ Unified login successful for:', this.user.email);
+            return data;
+        } catch (error) {
+            console.error('❌ Login error:', error);
+            throw new Error(error.message || 'Lỗi kết nối máy chủ');
+        }
+    },
+
+    // Unified Logout - Đăng xuất đồng nhất
+    logout() {
+        console.log('🚪 Unified logout initiated');
+
+        // Broadcast logout event trước khi clear data
+        this.broadcastAuthChange('logout', null);
+
+        // Clear tất cả auth data
+        this.clearAuthData();
+
+        console.log('✅ Unified logout completed');
+
+        // Redirect về trang chủ nếu cần
+        if (window.location.pathname.includes('ThanhToan') ||
+            window.location.pathname.includes('HoaDon') ||
+            window.location.pathname.includes('DanhSach')) {
+            window.location.href = 'Index-new.html';
+        }
+    },
+
+    // Broadcast auth changes to all components
+    broadcastAuthChange(type, userData) {
+        const event = new CustomEvent('authStateChanged', {
+            detail: { type, user: userData }
+        });
+        window.dispatchEvent(event);
+        console.log('📢 Auth state broadcasted:', type, userData?.email || 'none');
+    },
+
+    // Unified Register - Đăng ký đồng nhất
     async register(userData) {
         try {
+            console.log('📝 Attempting unified registration for:', userData.email);
+
+            // Map old field names to new structure
+            const registerData = {
+                full_name: userData.ho_ten || userData.full_name,
+                email: userData.email,
+                password: userData.mat_khau || userData.password,
+                phone: userData.so_dien_thoai || userData.phone
+            };
+
             const registerUrl = `${API_BASE_URL}/khach_hang/register`;
             const response = await fetch(registerUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(userData)
+                body: JSON.stringify(registerData)
             });
 
             const data = await response.json();
+            console.log('📥 Registration response:', data);
+
             if (!response.ok) {
-                // Ném lỗi với thông điệp từ server nếu có, nếu không thì thông điệp mặc định
+                console.error('❌ Registration failed:', data);
                 throw new Error(data.error || 'Đăng ký thất bại. Vui lòng thử lại.');
             }
+
             // Tự động đăng nhập sau khi đăng ký thành công
-            if (data.token && data.refreshToken) {
-                localStorage.setItem('user', JSON.stringify(data.khach_hang));
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('refreshToken', data.refreshToken);
+            if (data.khach_hang) {
+                this.saveUserData(data.khach_hang);
                 this.isAuthenticated = true;
                 this.user = data.khach_hang;
 
-                // Bắt đầu theo dõi hoạt động và refresh token
+                // Bắt đầu theo dõi hoạt động (không cần token)
                 this.startActivityTracking();
-                this.startTokenRefresh();
+
+                // Broadcast register event
+                this.broadcastAuthChange('register', this.user);
 
                 // Xử lý redirect sau khi đăng ký
                 this.handlePostLoginRedirect();
+
+                console.log('✅ Unified registration successful for:', this.user.email);
             }
 
             return data;
         } catch (error) {
-            console.error('Registration error:', error.message);
+            console.error('❌ Registration error:', error.message);
             throw error;
         }
     },
@@ -297,13 +390,16 @@ const auth = {
             if (response.ok) {
                 localStorage.setItem('token', data.token);
                 console.log('Token refreshed successfully');
+                return true;
             } else {
                 console.error('Token refresh failed:', data.error);
                 this.autoLogout();
+                return false;
             }
         } catch (error) {
             console.error('Token refresh error:', error);
             this.autoLogout();
+            return false;
         }
     },
 
@@ -351,6 +447,8 @@ const auth = {
             return true;
         }
 
+        console.log('🔒 Login required, redirecting...');
+
         // Lưu redirect target
         if (redirectTo) {
             localStorage.setItem('redirectAfterLogin', redirectTo);
@@ -366,6 +464,76 @@ const auth = {
         }
 
         return false;
+    },
+
+    // Unified API Call với auto token refresh
+    async apiCall(url, options = {}) {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            throw new Error('No authentication token available');
+        }
+
+        // Thêm Authorization header
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            ...options.headers
+        };
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                headers
+            });
+
+            // Nếu 401, thử refresh token
+            if (response.status === 401) {
+                console.log('🔄 Token expired, attempting refresh...');
+                const refreshed = await this.refreshToken();
+
+                if (refreshed) {
+                    // Retry với token mới
+                    const newToken = localStorage.getItem('token');
+                    headers.Authorization = `Bearer ${newToken}`;
+
+                    return await fetch(url, {
+                        ...options,
+                        headers
+                    });
+                } else {
+                    // Refresh thất bại, logout
+                    this.logout();
+                    throw new Error('Session expired. Please login again.');
+                }
+            }
+
+            return response;
+        } catch (error) {
+            console.error('❌ API call failed:', error);
+            throw error;
+        }
+    },
+
+    // Get current user info
+    getCurrentUser() {
+        return this.user;
+    },
+
+    // Check if user is authenticated
+    isLoggedIn() {
+        return this.isAuthenticated && this.user;
+    },
+
+    // Get auth headers for manual API calls
+    getAuthHeaders() {
+        const token = localStorage.getItem('token');
+        return token ? {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        } : {
+            'Content-Type': 'application/json'
+        };
     }
 };
 
@@ -397,13 +565,34 @@ function getUserId() {
 // Hàm test kết nối backend
 async function testBackendConnection() {
   try {
-    console.log('Testing backend connection...');
+    console.log('🔍 Testing backend connection...');
+    console.log('🌐 API URL:', `${API_BASE_URL}/test`);
     const response = await fetch(`${API_BASE_URL}/test`);
+    console.log('📡 Test response status:', response.status, 'OK:', response.ok);
     const data = await response.json();
-    console.log('Backend connection test:', data);
+    console.log('✅ Backend connection test successful:', data);
   } catch (error) {
-    console.error('Backend connection failed:', error);
+    console.error('❌ Backend connection failed:', error);
+    console.error('❌ Error details:', error.message);
   }
+}
+
+// Expose auth object to global scope
+window.auth = auth;
+
+// Initialize auth system when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🔧 Initializing auth system...');
+    auth.init();
+});
+
+// Also initialize immediately if DOM is already loaded
+if (document.readyState === 'loading') {
+    // DOM is still loading, wait for DOMContentLoaded
+} else {
+    // DOM is already loaded
+    console.log('🔧 DOM already loaded, initializing auth system...');
+    auth.init();
 }
 
 // Gọi hàm test khi auth.js được tải

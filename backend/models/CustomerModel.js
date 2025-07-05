@@ -1,219 +1,214 @@
-const { pool } = require('../config/database');
-const bcrypt = require('bcryptjs');
+// Customer Model - User Management
+const mysql = require('mysql2/promise');
+const { logger } = require('../utils/logger');
+
+// Database configuration
+const dbConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'restaurant_db',
+    charset: 'utf8mb4'
+};
 
 class CustomerModel {
-    // Tạo bảng khách hàng nếu chưa tồn tại (theo cấu trúc có sẵn)
+    // Create database connection
+    static async getConnection() {
+        try {
+            const connection = await mysql.createConnection(dbConfig);
+            return connection;
+        } catch (error) {
+            logger.error('Database connection failed:', error);
+            throw error;
+        }
+    }
+
+    // Create khach_hang table
     static async createTable() {
-        const query = `
-            CREATE TABLE IF NOT EXISTS khach_hang (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                full_name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL UNIQUE,
-                phone VARCHAR(20) NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB
-        `;
+        const connection = await this.getConnection();
 
         try {
-            await pool.execute(query);
-            console.log('✅ Bảng khách hàng đã được tạo/kiểm tra');
-        } catch (error) {
-            console.error('❌ Lỗi tạo bảng khách hàng:', error);
-            throw error;
-        }
-    }
-
-    // Đăng ký khách hàng mới
-    static async register(customerData) {
-        const { full_name, email, phone, password } = customerData;
-
-        try {
-            // Kiểm tra email đã tồn tại chưa
-            const existingCustomer = await this.findByEmail(email);
-            if (existingCustomer) {
-                throw new Error('Email đã được sử dụng');
-            }
-
-            // Mã hóa mật khẩu
-            const hashedPassword = await bcrypt.hash(password, 12);
-
-            const query = `
-                INSERT INTO khach_hang (full_name, email, phone, password)
-                VALUES (?, ?, ?, ?)
+            const createTableQuery = `
+                CREATE TABLE IF NOT EXISTS khach_hang (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    full_name VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    phone VARCHAR(20) NOT NULL,
+                    password VARCHAR(255) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_email (email)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             `;
 
-            const [result] = await pool.execute(query, [
-                full_name, email, phone, hashedPassword
-            ]);
-
-            // Lấy thông tin khách hàng vừa tạo (không bao gồm mật khẩu)
-            const newCustomer = await this.findById(result.insertId);
-            return newCustomer;
-
+            await connection.execute(createTableQuery);
+            console.log('✅ khach_hang table created/verified successfully');
         } catch (error) {
-            console.error('❌ Lỗi đăng ký khách hàng:', error);
+            console.error('❌ Error creating khach_hang table:', error);
             throw error;
+        } finally {
+            await connection.end();
         }
     }
 
-    // Đăng nhập
-    static async login(email, password) {
+    // Find user by email
+    static async findByEmail(email) {
+        const connection = await this.getConnection();
+        
         try {
-            const customer = await this.findByEmail(email, true); // Include password
-            if (!customer) {
-                throw new Error('Email hoặc mật khẩu không đúng');
-            }
-
-            // Kiểm tra mật khẩu
-            const isValidPassword = await bcrypt.compare(password, customer.password);
-            if (!isValidPassword) {
-                throw new Error('Email hoặc mật khẩu không đúng');
-            }
-
-            // Trả về thông tin khách hàng (không bao gồm mật khẩu)
-            delete customer.password;
-            return customer;
-
+            const [rows] = await connection.execute(
+                'SELECT * FROM khach_hang WHERE email = ?',
+                [email]
+            );
+            return rows[0] || null;
         } catch (error) {
-            console.error('❌ Lỗi đăng nhập:', error);
+            logger.error('Error finding user by email:', error);
             throw error;
+        } finally {
+            await connection.end();
         }
     }
 
-    // Tìm khách hàng theo email
-    static async findByEmail(email, includePassword = false) {
-        try {
-            const fields = includePassword
-                ? '*'
-                : 'id, full_name, email, phone, created_at';
-
-            const query = `SELECT ${fields} FROM khach_hang WHERE email = ?`;
-            const [rows] = await pool.execute(query, [email]);
-
-            return rows.length > 0 ? rows[0] : null;
-        } catch (error) {
-            console.error('❌ Lỗi tìm khách hàng theo email:', error);
-            throw error;
-        }
-    }
-
-    // Tìm khách hàng theo ID
+    // Find user by ID
     static async findById(id) {
-        try {
-            const query = `
-                SELECT id, full_name, email, phone, created_at
-                FROM khach_hang
-                WHERE id = ?
-            `;
-            const [rows] = await pool.execute(query, [id]);
+        const connection = await this.getConnection();
 
-            return rows.length > 0 ? rows[0] : null;
+        try {
+            const [rows] = await connection.execute(
+                'SELECT id, full_name, email, phone, created_at FROM khach_hang WHERE id = ?',
+                [id]
+            );
+            return rows[0] || null;
         } catch (error) {
-            console.error('❌ Lỗi tìm khách hàng theo ID:', error);
+            console.error('Error finding user by ID:', error);
             throw error;
+        } finally {
+            await connection.end();
         }
     }
 
-    // Cập nhật thông tin khách hàng
-    static async updateById(id, updateData) {
+    // Create new user
+    static async create(userData) {
+        const connection = await this.getConnection();
+
         try {
-            const allowedFields = ['full_name', 'phone'];
-            const updateFields = [];
-            const updateValues = [];
+            const { full_name, email, password, phone } = userData;
 
-            // Chỉ cập nhật các trường được phép
-            for (const [key, value] of Object.entries(updateData)) {
-                if (allowedFields.includes(key) && value !== undefined) {
-                    updateFields.push(`${key} = ?`);
-                    updateValues.push(value);
-                }
-            }
+            const [result] = await connection.execute(
+                `INSERT INTO khach_hang (full_name, email, password, phone, created_at)
+                 VALUES (?, ?, ?, ?, NOW())`,
+                [full_name, email, password, phone]
+            );
 
-            if (updateFields.length === 0) {
-                throw new Error('Không có dữ liệu để cập nhật');
-            }
+            // Get the created user
+            const [newUser] = await connection.execute(
+                'SELECT id, full_name, email, phone, created_at FROM khach_hang WHERE id = ?',
+                [result.insertId]
+            );
 
-            updateValues.push(id);
-            const query = `UPDATE khach_hang SET ${updateFields.join(', ')} WHERE id = ?`;
+            return newUser[0];
+        } catch (error) {
+            console.error('Error creating user:', error);
+            throw error;
+        } finally {
+            await connection.end();
+        }
+    }
 
-            const [result] = await pool.execute(query, updateValues);
+    // Update user
+    static async update(id, userData) {
+        const connection = await this.getConnection();
 
-            if (result.affectedRows === 0) {
-                throw new Error('Không tìm thấy khách hàng để cập nhật');
-            }
+        try {
+            const { full_name, phone } = userData;
 
+            await connection.execute(
+                'UPDATE khach_hang SET full_name = ?, phone = ? WHERE id = ?',
+                [full_name, phone, id]
+            );
+
+            // Get updated user
             return await this.findById(id);
         } catch (error) {
-            console.error('❌ Lỗi cập nhật khách hàng:', error);
+            console.error('Error updating user:', error);
             throw error;
+        } finally {
+            await connection.end();
         }
     }
 
-    // Đổi mật khẩu
-    static async changePassword(id, oldPassword, newPassword) {
+    // Get all users (admin function)
+    static async getAll(limit = 50, offset = 0) {
+        const connection = await this.getConnection();
+
         try {
-            // Lấy thông tin khách hàng bao gồm mật khẩu
-            const query = `SELECT * FROM khach_hang WHERE id = ?`;
-            const [rows] = await pool.execute(query, [id]);
-
-            if (rows.length === 0) {
-                throw new Error('Không tìm thấy khách hàng');
-            }
-
-            const customer = rows[0];
-
-            // Kiểm tra mật khẩu cũ
-            const isValidOldPassword = await bcrypt.compare(oldPassword, customer.password);
-            if (!isValidOldPassword) {
-                throw new Error('Mật khẩu cũ không đúng');
-            }
-
-            // Mã hóa mật khẩu mới
-            const hashedNewPassword = await bcrypt.hash(newPassword, 12);
-
-            // Cập nhật mật khẩu
-            const updateQuery = `UPDATE khach_hang SET password = ? WHERE id = ?`;
-            await pool.execute(updateQuery, [hashedNewPassword, id]);
-
-            return { success: true, message: 'Đổi mật khẩu thành công' };
+            const [rows] = await connection.execute(
+                'SELECT id, full_name, email, phone, created_at FROM khach_hang ORDER BY created_at DESC LIMIT ? OFFSET ?',
+                [limit, offset]
+            );
+            return rows;
         } catch (error) {
-            console.error('❌ Lỗi đổi mật khẩu:', error);
+            console.error('Error getting all users:', error);
             throw error;
+        } finally {
+            await connection.end();
         }
     }
 
-    // Lấy danh sách tất cả khách hàng (cho admin)
-    static async getAll(page = 1, limit = 10) {
+    // Count total users
+    static async count() {
+        const connection = await this.getConnection();
+        
         try {
-            const offset = (page - 1) * limit;
-
-            const query = `
-                SELECT id, full_name, email, phone, created_at
-                FROM khach_hang
-                ORDER BY created_at DESC
-                LIMIT ? OFFSET ?
-            `;
-
-            const [rows] = await pool.execute(query, [limit, offset]);
-
-            // Đếm tổng số khách hàng
-            const countQuery = `SELECT COUNT(*) as total FROM khach_hang`;
-            const [countResult] = await pool.execute(countQuery);
-            const total = countResult[0].total;
-
-            return {
-                customers: rows,
-                pagination: {
-                    page,
-                    limit,
-                    total,
-                    totalPages: Math.ceil(total / limit)
-                }
-            };
+            const [rows] = await connection.execute(
+                'SELECT COUNT(*) as total FROM khach_hang'
+            );
+            return rows[0].total;
         } catch (error) {
-            console.error('❌ Lỗi lấy danh sách khách hàng:', error);
+            console.error('Error counting users:', error);
             throw error;
+        } finally {
+            await connection.end();
+        }
+    }
+
+    // Delete user (hard delete)
+    static async delete(id) {
+        const connection = await this.getConnection();
+
+        try {
+            await connection.execute(
+                'DELETE FROM khach_hang WHERE id = ?',
+                [id]
+            );
+            return true;
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            throw error;
+        } finally {
+            await connection.end();
+        }
+    }
+
+    // Check if email exists
+    static async emailExists(email, excludeId = null) {
+        const connection = await this.getConnection();
+        
+        try {
+            let query = 'SELECT id FROM khach_hang WHERE email = ?';
+            let params = [email];
+            
+            if (excludeId) {
+                query += ' AND id != ?';
+                params.push(excludeId);
+            }
+            
+            const [rows] = await connection.execute(query, params);
+            return rows.length > 0;
+        } catch (error) {
+            console.error('Error checking email existence:', error);
+            throw error;
+        } finally {
+            await connection.end();
         }
     }
 }
