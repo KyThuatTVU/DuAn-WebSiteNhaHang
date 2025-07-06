@@ -323,9 +323,9 @@ class MenuManager {
     renderMenuItems() {
         const container = document.getElementById('menuItemsContainer');
         const emptyState = document.getElementById('emptyState');
-        
+
         if (!container) return;
-        
+
         if (this.filteredData.length === 0) {
             container.innerHTML = '';
             if (emptyState) emptyState.classList.remove('hidden');
@@ -333,8 +333,27 @@ class MenuManager {
         }
 
         if (emptyState) emptyState.classList.add('hidden');
+
+        // Debug log để kiểm tra dữ liệu
+        console.log('🔍 Rendering menu items:', this.filteredData.slice(0, 3).map(item => {
+            const actualStock = typeof item.stock === 'number' ? item.stock : 999;
+            const actualIsAvailable = item.isAvailable !== false && actualStock > 0;
+            return {
+                name: item.name,
+                original_stock: item.stock,
+                original_isAvailable: item.isAvailable,
+                calculated_stock: actualStock,
+                calculated_isAvailable: actualIsAvailable,
+                price: item.price
+            };
+        }));
         
-        container.innerHTML = this.filteredData.map(item => `
+        container.innerHTML = this.filteredData.map(item => {
+            // Tính toán trạng thái thực tế cho UI
+            const actualStock = typeof item.stock === 'number' ? item.stock : 999;
+            const actualIsAvailable = item.isAvailable !== false && actualStock > 0;
+
+            return `
             <div class="menu-item bg-white rounded-lg overflow-hidden shadow-md stagger-item hover-lift"
                  data-category="${item.category}"
                  data-item-id="${item.id}"
@@ -349,14 +368,21 @@ class MenuManager {
                          onerror="this.src='${this.apiService.getPlaceholderImage()}'; this.onerror=null;"
                          loading="lazy">
                     <div class="absolute top-2 right-2">
-                        <span class="px-2 py-1 text-xs rounded-full ${item.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                            ${item.isAvailable ? 'Còn hàng' : 'Hết hàng'}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full ${actualIsAvailable ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}">
+                            ${actualIsAvailable ? '✅ Còn hàng' : '❌ Hết hàng'}
                         </span>
                     </div>
-                    ${item.stock && item.stock < 10 ? `
+                    ${actualStock > 0 && actualStock < 10 ? `
                         <div class="absolute top-2 left-2">
-                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
-                                Còn ${item.stock} phần
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">
+                                ⚠️ Còn ${actualStock} phần
+                            </span>
+                        </div>
+                    ` : ''}
+                    ${actualStock > 0 && actualStock >= 10 ? `
+                        <div class="absolute top-2 left-2">
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                📦 Còn ${actualStock} phần
                             </span>
                         </div>
                     ` : ''}
@@ -376,7 +402,8 @@ class MenuManager {
                     ${this.createAddToCartButton(item)}
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
         // Setup add to cart buttons
         this.setupAddToCartButtons();
@@ -386,20 +413,9 @@ class MenuManager {
     }
 
     createAddToCartButton(item) {
-        // Cải thiện logic kiểm tra tồn kho
-        let stock, isAvailable;
-
-        if (typeof item.stock === 'number') {
-            stock = item.stock;
-            isAvailable = stock > 0;
-        } else if (item.isAvailable === false) {
-            stock = 0;
-            isAvailable = false;
-        } else {
-            // Mặc định có hàng nếu không có thông tin rõ ràng
-            stock = 999;
-            isAvailable = true;
-        }
+        // Đơn giản hóa logic kiểm tra tồn kho
+        const stock = typeof item.stock === 'number' ? item.stock : 999;
+        const isAvailable = item.isAvailable !== false && stock > 0;
 
         const isLowStock = stock > 0 && stock <= 5;
         const isOutOfStock = !isAvailable || stock <= 0;
@@ -416,17 +432,13 @@ class MenuManager {
         if (isOutOfStock) {
             return `
                 <div class="relative">
-                    <button class="add-to-cart-btn bg-gray-400 text-white py-3 px-6 rounded-lg w-full font-semibold cursor-not-allowed opacity-75 relative overflow-hidden"
+                    <button class="add-to-cart-btn bg-red-400 text-white py-3 px-6 rounded-lg w-full font-semibold cursor-not-allowed opacity-75 relative overflow-hidden border-2 border-red-300"
                             data-id="${item.id}" disabled>
                         <div class="flex items-center justify-center">
-                            <i class="fas fa-times-circle mr-2 text-red-200"></i>
-                            <span>Hết hàng</span>
+                            <i class="fas fa-times-circle mr-2"></i>
+                            <span>❌ Hết hàng</span>
                         </div>
-                        <div class="absolute inset-0 bg-gradient-to-r from-red-500/20 to-red-600/20"></div>
                     </button>
-                    <div class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full shadow-lg">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Hết
-                    </div>
                 </div>
             `;
         }
@@ -434,26 +446,23 @@ class MenuManager {
         if (isLowStock) {
             return `
                 <div class="relative">
-                    <button class="add-to-cart add-to-cart-btn bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white py-3 px-6 rounded-lg transition-all duration-300 w-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+                    <button class="add-to-cart add-to-cart-btn bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white py-3 px-6 rounded-lg transition-all duration-300 w-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-orange-300"
                             data-id="${item.id}">
                         <div class="flex items-center justify-center">
                             <i class="fas fa-cart-plus mr-2"></i>
-                            <span>Thêm vào giỏ</span>
+                            <span>⚠️ Thêm vào giỏ (Còn ${stock})</span>
                         </div>
                     </button>
-                    <div class="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-pulse">
-                        <i class="fas fa-exclamation mr-1"></i>Còn ${stock}
-                    </div>
                 </div>
             `;
         }
 
         return `
-            <button class="add-to-cart add-to-cart-btn bg-gradient-to-r from-primary to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 px-6 rounded-lg transition-all duration-300 w-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+            <button class="add-to-cart add-to-cart-btn bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-3 px-6 rounded-lg transition-all duration-300 w-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-green-300"
                     data-id="${item.id}">
                 <div class="flex items-center justify-center">
                     <i class="fas fa-cart-plus mr-2"></i>
-                    <span>Thêm vào giỏ</span>
+                    <span>✅ Thêm vào giỏ hàng</span>
                 </div>
             </button>
         `;
@@ -478,15 +487,18 @@ class MenuManager {
 
         // Use CartManager if available, otherwise fallback to legacy method
         if (window.cartManager) {
-            // Convert menu item to cart format với thông tin tồn kho chính xác
+            // Convert menu item to cart format với logic đồng bộ với createAddToCartButton
+            const stockValue = typeof item.stock === 'number' ? item.stock : 999;
+            const isAvailable = item.isAvailable !== false && stockValue > 0;
+
             const cartItem = {
                 id_mon: item.id,
                 ten_mon: item.name,
                 gia: item.price,
                 hinh_anh: item.image,
                 mo_ta: item.description || 'Món ăn ngon đặc trưng miền Nam',
-                so_luong: typeof item.stock === 'number' ? item.stock : (item.isAvailable !== false ? 999 : 0),
-                isAvailable: item.isAvailable,
+                so_luong: stockValue,
+                isAvailable: isAvailable,
                 category: item.category,
                 categoryName: item.categoryName
             };
