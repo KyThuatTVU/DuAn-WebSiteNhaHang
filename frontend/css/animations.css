@@ -13,7 +13,8 @@
 }
 
 .fade-in {
-    animation: fadeIn 0.6s ease-out;
+    animation: fadeIn 0.6s ease-out forwards;
+    animation-fill-mode: both;
 }
 
 /* Slide In From Left */
@@ -29,7 +30,8 @@
 }
 
 .slide-in-left {
-    animation: slideInLeft 0.8s ease-out;
+    animation: slideInLeft 0.8s ease-out forwards;
+    animation-fill-mode: both;
 }
 
 /* Slide In From Right */
@@ -45,7 +47,8 @@
 }
 
 .slide-in-right {
-    animation: slideInRight 0.8s ease-out;
+    animation: slideInRight 0.8s ease-out forwards;
+    animation-fill-mode: both;
 }
 
 /* Scale In Animation */

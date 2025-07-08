@@ -33,12 +33,15 @@
             border: 1px solid #f59e0b;
         }
         
-        .contact-item {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
+       .contact-item {
+            background: #ffffff; 
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            padding: 1rem;
             transition: all 0.3s ease;
+            opacity: 1 !important;
         }
-        
+
         .contact-item:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
@@ -234,71 +237,54 @@
                     <!-- Contact Information & Map -->
                     <div class="space-y-8 slide-in-right">
                         <!-- Contact Information -->
-                        <div class="contact-info-card p-8 rounded-xl">
+                        <div class="contact-info-card px-8 pt-8 pb-10 rounded-xl bg-white border border-yellow-300">
                             <h3 class="text-2xl font-bold mb-6 text-gray-800 text-center">
-                                <i class="fas fa-address-book text-primary mr-2"></i>
+                                <i class="fas fa-address-book text-red-500 mr-2"></i>
                                 Thông Tin Liên Hệ
                             </h3>
+
                             <div class="space-y-4">
-                                <div class="contact-item p-4 rounded-lg shadow-sm">
+                                <!-- Địa chỉ -->
+                                <div class="contact-item p-4 rounded-lg shadow-md bg-white text-gray-800">
                                     <div class="flex items-start">
-                                        <div class="text-primary text-2xl mr-4 pt-1">
+                                        <div class="text-red-500 text-2xl mr-4 pt-1">
                                             <i class="fas fa-map-marker-alt"></i>
                                         </div>
                                         <div>
                                             <h4 class="font-bold mb-1 text-lg">Địa Chỉ</h4>
-                                            <p class="text-gray-600">123 Nguyễn Văn Linh, Quận 7, TP. Hồ Chí Minh</p>
-                                            <p class="text-sm text-gray-500 mt-1">Gần chợ Tân Mỹ, dễ dàng tìm thấy</p>
+                                            <p>Đ. Trương Văn Kĩnh/258 Phú Hòa, Long Đức, Trà Vinh</p>
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <div class="contact-item p-4 rounded-lg shadow-sm">
+
+                                <!-- Điện thoại -->
+                                <div class="contact-item p-4 rounded-lg shadow-md bg-white text-gray-800">
                                     <div class="flex items-start">
-                                        <div class="text-primary text-2xl mr-4 pt-1">
+                                        <div class="text-orange-500 text-2xl mr-4 pt-1">
                                             <i class="fas fa-phone-alt"></i>
                                         </div>
                                         <div>
                                             <h4 class="font-bold mb-1 text-lg">Điện Thoại</h4>
-                                            <p class="text-gray-600">
-                                                <a href="tel:02812345678" class="hover:text-primary transition">028 1234 5678</a>
-                                            </p>
-                                            <p class="text-gray-600">
-                                                <a href="tel:0901234567" class="hover:text-primary transition">0901 234 567</a>
-                                            </p>
+                                            <p><a href="tel:02812345678" class="hover:text-orange-500 transition">028 1234 5678</a></p>
+                                            <p><a href="tel:0901234567" class="hover:text-orange-500 transition">0901 234 567</a></p>
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <div class="contact-item p-4 rounded-lg shadow-sm">
+
+                                <!-- Email -->
+                                <div class="contact-item p-4 rounded-lg shadow-md bg-white text-gray-800">
                                     <div class="flex items-start">
-                                        <div class="text-primary text-2xl mr-4 pt-1">
+                                        <div class="text-yellow-500 text-2xl mr-4 pt-1">
                                             <i class="fas fa-envelope"></i>
                                         </div>
                                         <div>
                                             <h4 class="font-bold mb-1 text-lg">Email</h4>
-                                            <p class="text-gray-600">
-                                                <a href="mailto:contact@phuongnam.com" class="text-primary hover:underline transition">contact@phuongnam.com</a>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="contact-item p-4 rounded-lg shadow-sm">
-                                    <div class="flex items-start">
-                                        <div class="text-primary text-2xl mr-4 pt-1">
-                                            <i class="fas fa-clock"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold mb-1 text-lg">Giờ Mở Cửa</h4>
-                                            <p class="text-gray-600">Thứ 2 - Chủ Nhật: 10:00 - 22:00</p>
-                                            <p class="text-sm text-gray-500 mt-1">Giờ cao điểm: 11:30 - 13:30 và 18:00 - 20:00</p>
+                                            <p><a href="mailto:contact@phuongnam.com" class="hover:text-yellow-500 transition">contact@phuongnam.com</a></p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
                         <!-- Map -->
                         <div class="map-container p-8 rounded-xl">
                             <h3 class="text-2xl font-bold mb-6 text-gray-800 text-center">
