@@ -10,7 +10,10 @@ class CartManager {
 
     init() {
         if (this.isInitialized) return;
-        
+
+        // Clear any existing notifications from previous sessions
+        this.clearAllNotifications();
+
         this.setupEventListeners();
         this.updateCartUI();
         this.isInitialized = true;
@@ -319,6 +322,18 @@ class CartManager {
     }
 
     performAddToCart(item, buttonElement = null, quantity = 1) {
+        // Debug: Log dữ liệu đầu vào cho món có vấn đề
+        if (item?.name?.includes('Bánh Hỏi') || item?.ten_mon?.includes('Bánh Hỏi')) {
+            console.log('🔍 performAddToCart called for Bánh Hỏi:', {
+                item,
+                buttonElement,
+                quantity,
+                item_so_luong: item?.so_luong,
+                item_stock: item?.stock,
+                item_isAvailable: item?.isAvailable
+            });
+        }
+
         // Kiểm tra dữ liệu đầu vào
         if (!item || typeof item !== 'object') {
             console.error('❌ Invalid item data:', item);
@@ -344,13 +359,14 @@ class CartManager {
         let maxStock, isAvailable;
 
         // Kiểm tra tồn kho từ nhiều nguồn với logic cải thiện
-        if (typeof item.so_luong === 'number' && item.so_luong >= 0) {
-            // Có dữ liệu tồn kho từ API (bao gồm cả 0)
-            maxStock = item.so_luong;
-            isAvailable = maxStock > 0;
-        } else if (typeof item.stock === 'number' && item.stock >= 0) {
-            // Có dữ liệu tồn kho từ legacy format (bao gồm cả 0)
+        // Ưu tiên stock (từ formatFoodItem) trước so_luong (từ API gốc)
+        if (typeof item.stock === 'number' && item.stock >= 0) {
+            // Có dữ liệu tồn kho từ formatted data (ưu tiên)
             maxStock = item.stock;
+            isAvailable = maxStock > 0;
+        } else if (typeof item.so_luong === 'number' && item.so_luong >= 0) {
+            // Có dữ liệu tồn kho từ API gốc (fallback)
+            maxStock = item.so_luong;
             isAvailable = maxStock > 0;
         } else if (item.isAvailable === false) {
             // Được đánh dấu rõ ràng là hết hàng
@@ -374,8 +390,8 @@ class CartManager {
             }
         }
 
-        // Log debug info (chỉ trong development)
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        // Log debug info cho món có vấn đề
+        if (itemName?.includes('Bánh Hỏi')) {
             console.log(`🔍 Stock check for "${itemName}":`, {
                 so_luong: item.so_luong,
                 stock: item.stock,
@@ -385,9 +401,8 @@ class CartManager {
             });
         }
 
-        // Kiểm tra tồn kho
+        // Kiểm tra tồn kho - bỏ qua thông báo lỗi, chỉ return false
         if (!isAvailable || maxStock <= 0) {
-            this.showStockErrorNotification(itemName, maxStock, item);
             return false;
         }
 
@@ -920,40 +935,32 @@ class CartManager {
         }, duration);
     }
 
-    // Hiển thị thông báo lỗi tồn kho chi tiết
-    showStockErrorNotification(itemName, maxStock, item) {
-        let message;
+    // Clear tất cả notifications hiện tại
+    clearAllNotifications() {
+        // Tìm tất cả các loại notification có thể có
+        const selectors = [
+            '.notification',
+            '.fixed.top-4.right-4',
+            '.fixed.top-4.right-4.z-50',
+            '[class*="notification"]',
+            '[class*="toast"]',
+            '.bg-red-500.text-white',
+            '.bg-green-500.text-white'
+        ];
 
-        // Xác định thông báo phù hợp cho user
-        if (maxStock === 0) {
-            message = `"${itemName}" hiện đang hết hàng`;
-        } else if (maxStock < 0) {
-            message = `"${itemName}" không có sẵn`;
-        } else {
-            message = `Không thể thêm "${itemName}" vào giỏ hàng`;
-        }
-
-        // Hiển thị thông báo user-friendly (không có debug info)
-        this.showNotification(message, 'error', 4000);
-
-        // Log chi tiết cho developer (chỉ trong console)
-        console.error('❌ Stock Error Details:', {
-            itemName,
-            calculatedMaxStock: maxStock,
-            originalItem: item,
-            stockSources: {
-                so_luong: item.so_luong,
-                stock: item.stock,
-                isAvailable: item.isAvailable
-            },
-            itemType: typeof item,
-            hasRequiredFields: {
-                hasId: !!(item.id_mon || item.id),
-                hasName: !!(item.ten_mon || item.name),
-                hasPrice: !!(item.gia || item.price)
-            }
+        selectors.forEach(selector => {
+            const notifications = document.querySelectorAll(selector);
+            notifications.forEach(notification => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            });
         });
+
+        console.log('🧹 Cleared all notifications');
     }
+
+
 
     checkout() {
         // Không cần kiểm tra đăng nhập nữa

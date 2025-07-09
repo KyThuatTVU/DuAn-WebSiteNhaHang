@@ -249,20 +249,32 @@ class MenuAPIService {
      * Format food item for display
      */
     formatFoodItem(item) {
+        // Đảm bảo so_luong là số hợp lệ
+        const stock = typeof item.so_luong === 'number' ? item.so_luong :
+                     (item.so_luong ? parseInt(item.so_luong) : 0);
+
+        // Debug log để kiểm tra dữ liệu từ API
+        console.log(`🔍 formatFoodItem for "${item.ten_mon}":`, {
+            original_so_luong: item.so_luong,
+            calculated_stock: stock,
+            type_of_so_luong: typeof item.so_luong,
+            isAvailable: stock > 0
+        });
+
         return {
             id: item.id_mon,
             name: item.ten_mon,
             price: item.gia,
-            priceFormatted: item.gia_formatted,
+            priceFormatted: item.gia_formatted || this.formatPrice(item.gia),
             image: this.getValidImageUrl(item.hinh_anh),
             description: item.mo_ta,
             category: this.mapCategoryIdToName(item.id_loai),
             categoryId: item.id_loai,
             categoryName: item.ten_loai,
-            stock: item.so_luong,
-            stockDisplay: item.so_luong_display,
-            status: item.tinh_trang,
-            isAvailable: item.so_luong > 0
+            stock: stock,
+            stockDisplay: item.so_luong_display || (stock > 0 ? `Còn ${stock} phần` : 'Hết hàng'),
+            status: item.tinh_trang || (stock > 0 ? 'Còn hàng' : 'Hết hàng'),
+            isAvailable: stock > 0
         };
     }
 
@@ -331,6 +343,20 @@ class MenuAPIService {
         };
         
         return categoryMap[categoryName] || null;
+    }
+
+    /**
+     * Format price to Vietnamese currency
+     */
+    formatPrice(price) {
+        if (typeof price !== 'number' || isNaN(price)) {
+            return '0 ₫';
+        }
+
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(price);
     }
 
     /**

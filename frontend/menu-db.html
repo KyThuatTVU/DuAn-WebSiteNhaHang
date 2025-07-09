@@ -104,13 +104,20 @@
         // Fetch menu
         async function fetchMenu(searchTerm = '') {
           try {
-            const response = await fetch(`http://localhost:3000/api/mon_an?search=${encodeURIComponent(searchTerm)}`);
-            
+            const response = await fetch(`http://localhost:3000/api/foods?search=${encodeURIComponent(searchTerm)}`);
+
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
-            return await response.json();
+
+            const result = await response.json();
+
+            // Transform API response to expected format
+            if (result.success && result.data) {
+              return result.data;
+            } else {
+              throw new Error('Invalid API response format');
+            }
           } catch (error) {
             console.error('Error fetching menu:', error);
             throw error;

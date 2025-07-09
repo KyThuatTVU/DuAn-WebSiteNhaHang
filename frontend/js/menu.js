@@ -349,9 +349,8 @@ class MenuManager {
         }));
         
         container.innerHTML = this.filteredData.map(item => {
-            // Tính toán trạng thái thực tế cho UI
-            const actualStock = typeof item.stock === 'number' ? item.stock : 999;
-            const actualIsAvailable = item.isAvailable !== false && actualStock > 0;
+            // Sử dụng function chung để tính toán trạng thái
+            const { stock, isAvailable, isLowStock } = this.calculateStockStatus(item);
 
             return `
             <div class="menu-item bg-white rounded-lg overflow-hidden shadow-md stagger-item hover-lift"
@@ -368,21 +367,21 @@ class MenuManager {
                          onerror="this.src='${this.apiService.getPlaceholderImage()}'; this.onerror=null;"
                          loading="lazy">
                     <div class="absolute top-2 right-2">
-                        <span class="px-3 py-1 text-xs font-semibold rounded-full ${actualIsAvailable ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}">
-                            ${actualIsAvailable ? '✅ Còn hàng' : '❌ Hết hàng'}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full ${isAvailable ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}">
+                            ${isAvailable ? '✅ Còn hàng' : '❌ Hết hàng'}
                         </span>
                     </div>
-                    ${actualStock > 0 && actualStock < 10 ? `
+                    ${stock > 0 && stock < 10 ? `
                         <div class="absolute top-2 left-2">
                             <span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">
-                                ⚠️ Còn ${actualStock} phần
+                                ⚠️ Còn ${stock} phần
                             </span>
                         </div>
                     ` : ''}
-                    ${actualStock > 0 && actualStock >= 10 ? `
+                    ${stock >= 10 ? `
                         <div class="absolute top-2 left-2">
                             <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
-                                📦 Còn ${actualStock} phần
+                                📦 Còn ${stock} phần
                             </span>
                         </div>
                     ` : ''}
@@ -412,15 +411,18 @@ class MenuManager {
         this.triggerAnimations();
     }
 
-    createAddToCartButton(item) {
-        // Đơn giản hóa logic kiểm tra tồn kho
+    // Function chung để tính toán trạng thái stock
+    calculateStockStatus(item) {
+        // Ưu tiên sử dụng stock từ API, fallback về 999 nếu không có
         const stock = typeof item.stock === 'number' ? item.stock : 999;
-        const isAvailable = item.isAvailable !== false && stock > 0;
+
+        // Kiểm tra available dựa trên stock thực tế
+        const isAvailable = stock > 0;
 
         const isLowStock = stock > 0 && stock <= 5;
-        const isOutOfStock = !isAvailable || stock <= 0;
+        const isOutOfStock = stock <= 0;
 
-        console.log(`🔍 Button stock check for "${item.name}":`, {
+        console.log(`🔍 Stock status for "${item.name}":`, {
             original_stock: item.stock,
             original_isAvailable: item.isAvailable,
             calculated_stock: stock,
@@ -428,6 +430,17 @@ class MenuManager {
             isLowStock,
             isOutOfStock
         });
+
+        return {
+            stock,
+            isAvailable,
+            isLowStock,
+            isOutOfStock
+        };
+    }
+
+    createAddToCartButton(item) {
+        const { stock, isAvailable, isLowStock, isOutOfStock } = this.calculateStockStatus(item);
 
         if (isOutOfStock) {
             return `
