@@ -89,6 +89,32 @@ app.get('/api/foods', (req, res) => {
             tinh_trang: "Còn hàng",
             id_loai: 1,
             ten_loai: "Món Khai Vị"
+        },
+        {
+            id_mon: 4,
+            ten_mon: "Bánh Mì Thịt Nướng",
+            gia: 35000,
+            gia_formatted: "35.000đ",
+            hinh_anh: "http://localhost:3000/images/banhmi.jpg",
+            mo_ta: "Bánh mì thịt nướng với pate, rau thơm và nước sốt đặc biệt.",
+            so_luong: 0,
+            so_luong_display: "Hết hàng",
+            tinh_trang: "Hết hàng",
+            id_loai: 1,
+            ten_loai: "Món Khai Vị"
+        },
+        {
+            id_mon: 5,
+            ten_mon: "Chả Cá Lá Vọng",
+            gia: 120000,
+            gia_formatted: "120.000đ",
+            hinh_anh: "http://localhost:3000/images/chaca.jpg",
+            mo_ta: "Chả cá lá vọng truyền thống với nghệ và lá vọng thơm.",
+            so_luong: 3,
+            so_luong_display: "Còn 3 phần",
+            tinh_trang: "Sắp hết",
+            id_loai: 2,
+            ten_loai: "Món Nướng"
         }
     ];
 
