@@ -322,17 +322,7 @@ class CartManager {
     }
 
     performAddToCart(item, buttonElement = null, quantity = 1) {
-        // Debug: Log dữ liệu đầu vào cho món có vấn đề
-        if (item?.name?.includes('Bánh Hỏi') || item?.ten_mon?.includes('Bánh Hỏi')) {
-            console.log('🔍 performAddToCart called for Bánh Hỏi:', {
-                item,
-                buttonElement,
-                quantity,
-                item_so_luong: item?.so_luong,
-                item_stock: item?.stock,
-                item_isAvailable: item?.isAvailable
-            });
-        }
+
 
         // Kiểm tra dữ liệu đầu vào
         if (!item || typeof item !== 'object') {
@@ -390,16 +380,7 @@ class CartManager {
             }
         }
 
-        // Log debug info cho món có vấn đề
-        if (itemName?.includes('Bánh Hỏi')) {
-            console.log(`🔍 Stock check for "${itemName}":`, {
-                so_luong: item.so_luong,
-                stock: item.stock,
-                isAvailable: item.isAvailable,
-                calculated_maxStock: maxStock,
-                calculated_isAvailable: isAvailable
-            });
-        }
+
 
         // Kiểm tra tồn kho - bỏ qua thông báo lỗi, chỉ return false
         if (!isAvailable || maxStock <= 0) {
