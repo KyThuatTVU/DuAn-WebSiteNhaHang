@@ -45,6 +45,61 @@ app.get('/api/test', authEndpoints.test);
 // Protected routes
 app.get('/api/profile', authenticateToken, authEndpoints.profile);
 
+// Simple foods endpoint with mock data
+app.get('/api/foods', (req, res) => {
+    console.log('📥 GET /api/foods called');
+
+    // Mock data với so_luong > 0
+    const mockFoods = [
+        {
+            id_mon: 1,
+            ten_mon: "Cá Lóc Nướng Trui",
+            gia: 185000,
+            gia_formatted: "185.000đ",
+            hinh_anh: "http://localhost:3000/images/calocnuongtrui.jpg",
+            mo_ta: "Cá lóc tươi nướng trui trên than hoa, phết mỡ hành và ăn kèm với các loại rau thơm đặc trưng miền Nam.",
+            so_luong: 10,
+            so_luong_display: "Còn 10 phần",
+            tinh_trang: "Còn hàng",
+            id_loai: 2,
+            ten_loai: "Món Nướng"
+        },
+        {
+            id_mon: 2,
+            ten_mon: "Bánh Xèo",
+            gia: 65000,
+            gia_formatted: "65.000đ",
+            hinh_anh: "http://localhost:3000/images/banhxeo.jpg",
+            mo_ta: "Bánh xèo giòn rụm với nhân tôm thịt, ăn kèm rau sống và nước chấm đặc biệt.",
+            so_luong: 15,
+            so_luong_display: "Còn 15 phần",
+            tinh_trang: "Còn hàng",
+            id_loai: 1,
+            ten_loai: "Món Khai Vị"
+        },
+        {
+            id_mon: 3,
+            ten_mon: "Gỏi Cuốn",
+            gia: 45000,
+            gia_formatted: "45.000đ",
+            hinh_anh: "http://localhost:3000/images/goicuon.jpg",
+            mo_ta: "Gỏi cuốn tươi với tôm, thịt heo và rau thơm, chấm nước mắm chua ngọt.",
+            so_luong: 20,
+            so_luong_display: "Còn 20 phần",
+            tinh_trang: "Còn hàng",
+            id_loai: 1,
+            ten_loai: "Món Khai Vị"
+        }
+    ];
+
+    res.json({
+        success: true,
+        data: mockFoods,
+        total: mockFoods.length,
+        message: 'Mock data from simple server'
+    });
+});
+
 
 
 // Start server with database detection
