@@ -682,5 +682,57 @@
             loadInvoices();
         });
     </script>
+
+    <!-- Floating Contact Buttons -->
+    <div id="floatingContact" class="fixed left-4 bottom-20 z-50 flex flex-col space-y-8">
+        <!-- Zalo Button -->
+        <div class="floating-btn zalo-btn group">
+            <a href="https://zalo.me/0374514494" target="_blank" class="relative block">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-2xl transform transition-all duration-500 group-hover:scale-125 group-hover:shadow-blue-500/50 group-hover:shadow-2xl border-2 border-blue-300/30">
+                    <div class="text-white font-bold text-lg tracking-wide drop-shadow-lg">
+                        Zalo
+                    </div>
+                </div>
+                <div class="absolute inset-0 rounded-full bg-blue-400 opacity-40 animate-ping"></div>
+                <div class="absolute inset-0 rounded-full bg-blue-300 opacity-25 animate-ping" style="animation-delay: 0.7s;"></div>
+            </a>
+        </div>
+
+        <!-- Phone Button -->
+        <div class="floating-btn phone-btn group">
+            <a href="tel:0374514494" class="relative block">
+                <div class="w-16 h-16 bg-gradient-to-br from-red-400 via-red-500 to-red-600 rounded-full flex items-center justify-center shadow-2xl transform transition-all duration-500 group-hover:scale-125 group-hover:shadow-red-500/50 group-hover:shadow-2xl border-2 border-red-300/30">
+                    <svg class="w-9 h-9 text-white drop-shadow-lg transform group-hover:rotate-12 group-hover:scale-110 transition-all duration-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                    </svg>
+                </div>
+                <div class="absolute inset-0 rounded-full bg-red-400 opacity-40 animate-ping"></div>
+                <div class="absolute inset-0 rounded-full bg-red-300 opacity-25 animate-ping" style="animation-delay: 0.6s;"></div>
+            </a>
+        </div>
+    </div>
+
+    <style>
+    .floating-btn {
+        position: relative;
+        animation: float 4s ease-in-out infinite;
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.15));
+    }
+    .floating-btn:nth-child(1) { animation-delay: -0.5s; }
+    .floating-btn:nth-child(2) { animation-delay: -2s; }
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        25% { transform: translateY(-8px) rotate(1deg); }
+        50% { transform: translateY(-15px) rotate(0deg); }
+        75% { transform: translateY(-8px) rotate(-1deg); }
+    }
+    .zalo-btn:hover .w-16 {
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.8), 0 0 60px rgba(59, 130, 246, 0.4);
+    }
+    .phone-btn:hover .w-16 {
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4);
+    }
+    </style>
+
 </body>
 </html>

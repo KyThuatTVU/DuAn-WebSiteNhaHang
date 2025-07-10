@@ -31,7 +31,8 @@ class ComponentLoader {
             { name: 'chatbot', target: '#chatbot-placeholder' },
             { name: 'login-modal', target: '#login-modal-placeholder' },
             { name: 'cart-modal', target: '#cart-modal-placeholder' },
-            { name: 'customer-info-modal', target: '#customer-info-placeholder' }
+            { name: 'customer-info-modal', target: '#customer-info-placeholder' },
+            { name: 'floating-contact', target: '#floating-contact-placeholder' }
         ];
 
         for (const component of components) {
