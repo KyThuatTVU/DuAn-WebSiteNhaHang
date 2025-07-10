@@ -1,0 +1,404 @@
+<!-- Customer Info Modal Component -->
+<div id="customerInfoModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0" id="customerInfoModalContent">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-t-2xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-user-edit mr-3"></i>
+                        Thông Tin Khách Hàng
+                    </h3>
+                    <p class="text-red-100 text-sm mt-1">Vui lòng nhập thông tin để đặt món</p>
+                </div>
+                <button id="closeCustomerInfoModal" class="text-white hover:text-red-200 transition-colors duration-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Form Content -->
+        <div class="p-6">
+            <form id="customerInfoForm" class="space-y-4">
+                <!-- Full Name -->
+                <div>
+                    <label for="customerName" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2 text-red-500"></i>
+                        Họ và Tên *
+                    </label>
+                    <input 
+                        type="text" 
+                        id="customerName" 
+                        name="customerName" 
+                        required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
+                        placeholder="Nhập họ và tên của bạn"
+                    >
+                </div>
+
+                <!-- Phone Number -->
+                <div>
+                    <label for="customerPhone" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-phone mr-2 text-red-500"></i>
+                        Số Điện Thoại *
+                    </label>
+                    <input 
+                        type="tel" 
+                        id="customerPhone" 
+                        name="customerPhone" 
+                        required
+                        pattern="[0-9]{10,11}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
+                        placeholder="Nhập số điện thoại (10-11 số)"
+                    >
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="customerEmail" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-envelope mr-2 text-red-500"></i>
+                        Email
+                    </label>
+                    <input 
+                        type="email" 
+                        id="customerEmail" 
+                        name="customerEmail"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
+                        placeholder="Nhập email của bạn (tùy chọn)"
+                    >
+                </div>
+
+                <!-- Order Type -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        <i class="fas fa-utensils mr-2 text-red-500"></i>
+                        Loại Đơn Hàng *
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors duration-200">
+                            <input type="radio" name="orderType" value="dine-in" class="text-red-500 focus:ring-red-500" checked>
+                            <div class="ml-3">
+                                <div class="text-sm font-medium text-gray-900">
+                                    <i class="fas fa-chair mr-2"></i>Tại Chỗ
+                                </div>
+                                <div class="text-xs text-gray-500">Ăn tại nhà hàng</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors duration-200">
+                            <input type="radio" name="orderType" value="takeaway" class="text-red-500 focus:ring-red-500">
+                            <div class="ml-3">
+                                <div class="text-sm font-medium text-gray-900">
+                                    <i class="fas fa-shopping-bag mr-2"></i>Mang Về
+                                </div>
+                                <div class="text-xs text-gray-500">Đóng gói mang đi</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Delivery Address (shown when takeaway is selected) -->
+                <div id="deliveryAddressSection" class="hidden">
+                    <label for="deliveryAddress" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>
+                        Địa Chỉ Giao Hàng
+                    </label>
+                    <textarea 
+                        id="deliveryAddress" 
+                        name="deliveryAddress"
+                        rows="3"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
+                        placeholder="Nhập địa chỉ giao hàng chi tiết"
+                    ></textarea>
+                </div>
+
+                <!-- Special Notes -->
+                <div>
+                    <label for="specialNotes" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-sticky-note mr-2 text-red-500"></i>
+                        Ghi Chú Đặc Biệt
+                    </label>
+                    <textarea 
+                        id="specialNotes" 
+                        name="specialNotes"
+                        rows="3"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
+                        placeholder="Ghi chú về món ăn, độ cay, không hành, v.v... (tùy chọn)"
+                    ></textarea>
+                </div>
+
+                <!-- Table Number (for dine-in) -->
+                <div id="tableNumberSection">
+                    <label for="tableNumber" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-table mr-2 text-red-500"></i>
+                        Số Bàn (Tùy Chọn)
+                    </label>
+                    <select 
+                        id="tableNumber" 
+                        name="tableNumber"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
+                    >
+                        <option value="">Chọn số bàn (nếu đã đặt trước)</option>
+                        <option value="1">Bàn 1</option>
+                        <option value="2">Bàn 2</option>
+                        <option value="3">Bàn 3</option>
+                        <option value="4">Bàn 4</option>
+                        <option value="5">Bàn 5</option>
+                        <option value="6">Bàn 6</option>
+                        <option value="7">Bàn 7</option>
+                        <option value="8">Bàn 8</option>
+                        <option value="9">Bàn 9</option>
+                        <option value="10">Bàn 10</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+            <button 
+                type="button" 
+                id="cancelCustomerInfo"
+                class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200 font-medium"
+            >
+                <i class="fas fa-times mr-2"></i>
+                Hủy
+            </button>
+            <button 
+                type="submit" 
+                form="customerInfoForm"
+                id="confirmCustomerInfo"
+                class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 font-medium shadow-lg"
+            >
+                <i class="fas fa-check mr-2"></i>
+                Xác Nhận
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Customer Info Modal Styles */
+#customerInfoModal.show #customerInfoModalContent {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Radio button custom styles */
+input[type="radio"]:checked + div {
+    color: #dc2626;
+}
+
+input[type="radio"]:checked {
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+/* Form validation styles */
+.form-error {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.error-message {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Loading state */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading button {
+    position: relative;
+}
+
+.loading button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top: 2px solid #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+// Customer Info Modal JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('customerInfoModal');
+    const modalContent = document.getElementById('customerInfoModalContent');
+    const closeBtn = document.getElementById('closeCustomerInfoModal');
+    const cancelBtn = document.getElementById('cancelCustomerInfo');
+    const form = document.getElementById('customerInfoForm');
+    const orderTypeRadios = document.querySelectorAll('input[name="orderType"]');
+    const deliverySection = document.getElementById('deliveryAddressSection');
+    const tableSection = document.getElementById('tableNumberSection');
+
+    // Show/hide sections based on order type
+    orderTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'takeaway') {
+                deliverySection.classList.remove('hidden');
+                tableSection.classList.add('hidden');
+            } else {
+                deliverySection.classList.add('hidden');
+                tableSection.classList.remove('hidden');
+            }
+        });
+    });
+
+    // Close modal functions
+    function closeModal() {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            form.reset();
+            // Reset sections visibility
+            deliverySection.classList.add('hidden');
+            tableSection.classList.remove('hidden');
+            // Clear any error states
+            clearFormErrors();
+        }, 300);
+    }
+
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    // Close on backdrop click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Form validation
+    function validateForm() {
+        clearFormErrors();
+        let isValid = true;
+
+        const name = document.getElementById('customerName');
+        const phone = document.getElementById('customerPhone');
+        const orderType = document.querySelector('input[name="orderType"]:checked');
+
+        if (!name.value.trim()) {
+            showFieldError(name, 'Vui lòng nhập họ và tên');
+            isValid = false;
+        }
+
+        if (!phone.value.trim()) {
+            showFieldError(phone, 'Vui lòng nhập số điện thoại');
+            isValid = false;
+        } else if (!/^[0-9]{10,11}$/.test(phone.value.trim())) {
+            showFieldError(phone, 'Số điện thoại phải có 10-11 chữ số');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    function showFieldError(field, message) {
+        field.classList.add('form-error');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        field.parentNode.appendChild(errorDiv);
+    }
+
+    function clearFormErrors() {
+        document.querySelectorAll('.form-error').forEach(field => {
+            field.classList.remove('form-error');
+        });
+        document.querySelectorAll('.error-message').forEach(error => {
+            error.remove();
+        });
+    }
+
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!validateForm()) {
+            return;
+        }
+
+        // Get form data
+        const formData = new FormData(form);
+        const customerInfo = {
+            name: formData.get('customerName'),
+            phone: formData.get('customerPhone'),
+            email: formData.get('customerEmail'),
+            orderType: formData.get('orderType'),
+            deliveryAddress: formData.get('deliveryAddress'),
+            specialNotes: formData.get('specialNotes'),
+            tableNumber: formData.get('tableNumber')
+        };
+
+        // Store customer info for later use
+        localStorage.setItem('customerInfo', JSON.stringify(customerInfo));
+
+        // Show success message
+        showSuccessMessage();
+
+        // Close modal
+        setTimeout(() => {
+            closeModal();
+            // Trigger custom event for other components
+            window.dispatchEvent(new CustomEvent('customerInfoSubmitted', { 
+                detail: customerInfo 
+            }));
+        }, 1500);
+    });
+
+    function showSuccessMessage() {
+        const confirmBtn = document.getElementById('confirmCustomerInfo');
+        const originalText = confirmBtn.innerHTML;
+        confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Đã Lưu!';
+        confirmBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        confirmBtn.classList.remove('bg-gradient-to-r', 'from-red-500', 'to-red-600');
+        
+        setTimeout(() => {
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            confirmBtn.classList.add('bg-gradient-to-r', 'from-red-500', 'to-red-600');
+        }, 1500);
+    }
+
+    // Global function to show modal
+    window.showCustomerInfoModal = function() {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 10);
+    };
+
+    // Auto-fill form if customer info exists
+    const savedInfo = localStorage.getItem('customerInfo');
+    if (savedInfo) {
+        const info = JSON.parse(savedInfo);
+        document.getElementById('customerName').value = info.name || '';
+        document.getElementById('customerPhone').value = info.phone || '';
+        document.getElementById('customerEmail').value = info.email || '';
+        if (info.orderType) {
+            document.querySelector(`input[name="orderType"][value="${info.orderType}"]`).checked = true;
+            // Trigger change event
+            document.querySelector(`input[name="orderType"][value="${info.orderType}"]`).dispatchEvent(new Event('change'));
+        }
+        document.getElementById('deliveryAddress').value = info.deliveryAddress || '';
+        document.getElementById('specialNotes').value = info.specialNotes || '';
+        document.getElementById('tableNumber').value = info.tableNumber || '';
+    }
+});
+</script>
