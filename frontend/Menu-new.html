@@ -178,6 +178,60 @@
         #floatingCheckoutBtn.pulse {
             animation: pulse 2s infinite;
         }
+
+        /* Quantity Controls Styling */
+        .quantity-cart-container {
+            transition: all 0.3s ease;
+        }
+
+        .quantity-btn {
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .quantity-btn:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .quantity-btn:active {
+            transform: scale(0.95);
+        }
+
+        .quantity-display {
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        /* Shake animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+            20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+
+        /* Improved hover effects for menu items */
+        .menu-item:hover .quantity-cart-container {
+            transform: translateY(-2px);
+        }
+
+        /* Warning notification styling */
+        .notification-warning {
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+        }
+
+        /* Responsive quantity controls */
+        @media (max-width: 640px) {
+            .quantity-btn {
+                width: 2rem;
+                height: 2rem;
+            }
+
+            .quantity-display {
+                min-width: 2.5rem;
+                padding: 0.25rem 0.5rem;
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100">

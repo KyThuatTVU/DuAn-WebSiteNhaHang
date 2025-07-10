@@ -456,42 +456,138 @@ class MenuManager {
             `;
         }
 
-        if (isLowStock) {
-            return `
-                <div class="relative">
-                    <button class="add-to-cart add-to-cart-btn bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white py-3 px-6 rounded-lg transition-all duration-300 w-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-orange-300"
-                            data-id="${item.id}">
-                        <div class="flex items-center justify-center">
-                            <i class="fas fa-cart-plus mr-2"></i>
-                            <span>⚠️ Thêm vào giỏ (Còn ${stock})</span>
-                        </div>
-                    </button>
-                </div>
-            `;
-        }
-
+        // Improved UI with quantity controls
         return `
-            <button class="add-to-cart add-to-cart-btn bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-3 px-6 rounded-lg transition-all duration-300 w-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-green-300"
-                    data-id="${item.id}">
-                <div class="flex items-center justify-center">
-                    <i class="fas fa-cart-plus mr-2"></i>
-                    <span>✅ Thêm vào giỏ hàng</span>
+            <div class="quantity-cart-container" data-item-id="${item.id}">
+                <!-- Quantity Controls -->
+                <div class="flex items-center justify-between mb-3 bg-gray-50 rounded-lg p-2">
+                    <span class="text-sm font-medium text-gray-700">Số lượng:</span>
+                    <div class="flex items-center space-x-3">
+                        <button class="quantity-btn minus-btn bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 shadow-md"
+                                data-id="${item.id}" data-action="minus">
+                            <i class="fas fa-minus text-xs"></i>
+                        </button>
+                        <span class="quantity-display bg-white px-3 py-1 rounded-md border-2 border-gray-200 font-bold text-lg min-w-[3rem] text-center"
+                              data-id="${item.id}">1</span>
+                        <button class="quantity-btn plus-btn bg-green-500 hover:bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 shadow-md"
+                                data-id="${item.id}" data-action="plus" data-max-stock="${stock}">
+                            <i class="fas fa-plus text-xs"></i>
+                        </button>
+                    </div>
                 </div>
-            </button>
+
+                <!-- Add to Cart Button -->
+                <button class="add-to-cart add-to-cart-btn bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg transition-all duration-300 w-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-blue-300"
+                        data-id="${item.id}">
+                    <div class="flex items-center justify-center">
+                        <i class="fas fa-cart-plus mr-2"></i>
+                        <span class="add-to-cart-text">
+                            ${isLowStock ? `⚠️ Thêm vào giỏ (Còn ${stock})` : '✅ Thêm vào giỏ hàng'}
+                        </span>
+                    </div>
+                </button>
+
+                <!-- Stock Info -->
+                ${stock < 999 ? `
+                    <div class="text-center mt-2">
+                        <span class="text-xs ${isLowStock ? 'text-orange-600' : 'text-green-600'} font-medium">
+                            ${isLowStock ? `⚠️ Chỉ còn ${stock} phần` : `📦 Còn ${stock} phần`}
+                        </span>
+                    </div>
+                ` : ''}
+            </div>
         `;
     }
 
     setupAddToCartButtons() {
+        // Setup quantity control buttons
+        const quantityButtons = document.querySelectorAll('.quantity-btn');
+        quantityButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const itemId = parseInt(btn.dataset.id);
+                const action = btn.dataset.action;
+                const maxStock = parseInt(btn.dataset.maxStock) || 999;
+                this.handleQuantityChange(itemId, action, maxStock);
+            });
+        });
+
+        // Setup add to cart buttons
         const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
         addToCartButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
+                e.preventDefault();
                 const itemId = parseInt(btn.dataset.id);
-                this.addToCart(itemId, btn);
+                const quantity = this.getSelectedQuantity(itemId);
+                this.addToCart(itemId, btn, quantity);
             });
         });
     }
 
-    addToCart(itemId, buttonElement) {
+    handleQuantityChange(itemId, action, maxStock) {
+        const quantityDisplay = document.querySelector(`[data-id="${itemId}"].quantity-display`);
+        if (!quantityDisplay) return;
+
+        let currentQuantity = parseInt(quantityDisplay.textContent) || 1;
+
+        if (action === 'plus') {
+            if (currentQuantity < maxStock) {
+                currentQuantity++;
+                this.animateQuantityChange(quantityDisplay, 'increase');
+            } else {
+                this.showNotification(`Chỉ còn ${maxStock} phần trong kho!`, 'warning');
+                this.shakeElement(quantityDisplay);
+            }
+        } else if (action === 'minus') {
+            if (currentQuantity > 1) {
+                currentQuantity--;
+                this.animateQuantityChange(quantityDisplay, 'decrease');
+            } else {
+                this.shakeElement(quantityDisplay);
+            }
+        }
+
+        quantityDisplay.textContent = currentQuantity;
+        this.updateAddToCartButtonText(itemId, currentQuantity);
+    }
+
+    getSelectedQuantity(itemId) {
+        const quantityDisplay = document.querySelector(`[data-id="${itemId}"].quantity-display`);
+        return quantityDisplay ? parseInt(quantityDisplay.textContent) || 1 : 1;
+    }
+
+    updateAddToCartButtonText(itemId, quantity) {
+        const addToCartBtn = document.querySelector(`[data-id="${itemId}"].add-to-cart-btn .add-to-cart-text`);
+        if (addToCartBtn) {
+            const item = this.menuData.find(item => item.id === itemId);
+            if (item) {
+                const { isLowStock, stock } = this.calculateStockStatus(item);
+                const baseText = isLowStock ? `⚠️ Thêm vào giỏ (Còn ${stock})` : '✅ Thêm vào giỏ hàng';
+                addToCartBtn.textContent = quantity > 1 ? `${baseText} (${quantity})` : baseText;
+            }
+        }
+    }
+
+    animateQuantityChange(element, type) {
+        element.classList.add('animate-pulse');
+        element.style.transform = type === 'increase' ? 'scale(1.2)' : 'scale(0.8)';
+        element.style.color = type === 'increase' ? '#10b981' : '#ef4444';
+
+        setTimeout(() => {
+            element.style.transform = 'scale(1)';
+            element.style.color = '';
+            element.classList.remove('animate-pulse');
+        }, 200);
+    }
+
+    shakeElement(element) {
+        element.style.animation = 'shake 0.5s ease-in-out';
+        setTimeout(() => {
+            element.style.animation = '';
+        }, 500);
+    }
+
+    addToCart(itemId, buttonElement, quantity = 1) {
         const item = this.menuData.find(item => item.id === itemId);
         if (!item) {
             console.error('Item not found:', itemId);
@@ -521,20 +617,35 @@ class MenuManager {
                 converted: { so_luong: cartItem.so_luong, isAvailable: cartItem.isAvailable }
             });
 
-            window.cartManager.addToCart(cartItem, buttonElement);
+            // Add multiple quantities if specified
+            for (let i = 0; i < quantity; i++) {
+                window.cartManager.addToCart(cartItem, buttonElement);
+            }
+
+            // Reset quantity display to 1 after adding to cart
+            this.resetQuantityDisplay(itemId);
         } else {
             // Legacy cart handling
             const existingItem = this.cart.find(cartItem => cartItem.id === itemId);
             if (existingItem) {
-                existingItem.quantity += 1;
+                existingItem.quantity += quantity;
             } else {
-                this.cart.push({ ...item, quantity: 1 });
+                this.cart.push({ ...item, quantity: quantity });
             }
 
             localStorage.setItem('cart', JSON.stringify(this.cart));
             this.updateCartCounter();
             this.showButtonFeedback(buttonElement);
-            this.showNotification(`Đã thêm ${item.name} vào giỏ hàng!`, 'success');
+            this.showNotification(`Đã thêm ${quantity} ${item.name} vào giỏ hàng!`, 'success');
+            this.resetQuantityDisplay(itemId);
+        }
+    }
+
+    resetQuantityDisplay(itemId) {
+        const quantityDisplay = document.querySelector(`[data-id="${itemId}"].quantity-display`);
+        if (quantityDisplay) {
+            quantityDisplay.textContent = '1';
+            this.updateAddToCartButtonText(itemId, 1);
         }
     }
 
@@ -747,19 +858,25 @@ class MenuManager {
 
     showNotification(message, type = 'info') {
         const notification = document.createElement('div');
-        notification.className = `fixed top-20 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 ${
-            type === 'success' ? 'bg-green-500 text-white' : 
-            type === 'error' ? 'bg-red-500 text-white' : 
+        const iconClass = type === 'success' ? 'fa-check-circle' :
+                         type === 'error' ? 'fa-times-circle' :
+                         type === 'warning' ? 'fa-exclamation-triangle' :
+                         'fa-info-circle';
+
+        notification.className = `fixed top-20 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 transform translate-x-full ${
+            type === 'success' ? 'bg-green-500 text-white' :
+            type === 'error' ? 'bg-red-500 text-white' :
+            type === 'warning' ? 'notification-warning text-white' :
             'bg-blue-500 text-white'
         }`;
-        notification.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${message}`;
+        notification.innerHTML = `<i class="fas ${iconClass} mr-2"></i>${message}`;
         document.body.appendChild(notification);
-        
+
         // Animate in
         setTimeout(() => {
             notification.style.transform = 'translateX(0)';
         }, 100);
-        
+
         // Animate out and remove
         setTimeout(() => {
             notification.style.transform = 'translateX(100%)';
