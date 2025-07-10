@@ -456,42 +456,42 @@ class MenuManager {
             `;
         }
 
-        // Improved UI with quantity controls
+        // Improved UI with quantity controls - Enhanced clarity and contrast
         return `
             <div class="quantity-cart-container" data-item-id="${item.id}">
                 <!-- Quantity Controls -->
-                <div class="flex items-center justify-between mb-3 bg-gray-50 rounded-lg p-2">
-                    <span class="text-sm font-medium text-gray-700">Số lượng:</span>
-                    <div class="flex items-center space-x-3">
-                        <button class="quantity-btn minus-btn bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 shadow-md"
+                <div class="flex items-center justify-between mb-4 bg-white rounded-xl p-4 border-2 border-gray-300 shadow-sm">
+                    <span class="text-base font-bold text-gray-800">Số lượng:</span>
+                    <div class="flex items-center space-x-4">
+                        <button class="quantity-btn minus-btn bg-red-600 hover:bg-red-700 active:bg-red-800 text-white w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-150 transform hover:scale-105 active:scale-95 shadow-lg border-2 border-red-700"
                                 data-id="${item.id}" data-action="minus">
-                            <i class="fas fa-minus text-xs"></i>
+                            <i class="fas fa-minus text-sm font-bold"></i>
                         </button>
-                        <span class="quantity-display bg-white px-3 py-1 rounded-md border-2 border-gray-200 font-bold text-lg min-w-[3rem] text-center"
+                        <span class="quantity-display bg-gray-100 px-4 py-2 rounded-lg border-3 border-gray-400 font-black text-xl min-w-[4rem] text-center text-gray-900 shadow-inner"
                               data-id="${item.id}">1</span>
-                        <button class="quantity-btn plus-btn bg-green-500 hover:bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 shadow-md"
+                        <button class="quantity-btn plus-btn bg-green-600 hover:bg-green-700 active:bg-green-800 text-white w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-150 transform hover:scale-105 active:scale-95 shadow-lg border-2 border-green-700"
                                 data-id="${item.id}" data-action="plus" data-max-stock="${stock}">
-                            <i class="fas fa-plus text-xs"></i>
+                            <i class="fas fa-plus text-sm font-bold"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- Add to Cart Button -->
-                <button class="add-to-cart add-to-cart-btn bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg transition-all duration-300 w-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-blue-300"
+                <button class="add-to-cart add-to-cart-btn bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 active:from-orange-700 active:to-red-800 text-white py-4 px-6 rounded-xl transition-all duration-200 w-full font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-102 active:scale-98 border-2 border-red-700"
                         data-id="${item.id}">
                     <div class="flex items-center justify-center">
-                        <i class="fas fa-cart-plus mr-2"></i>
+                        <i class="fas fa-cart-plus mr-3 text-lg"></i>
                         <span class="add-to-cart-text">
-                            ${isLowStock ? `⚠️ Thêm vào giỏ (Còn ${stock})` : '✅ Thêm vào giỏ hàng'}
+                            ${isLowStock ? `⚠️ THÊM VÀO GIỎ (Còn ${stock})` : '🛒 THÊM VÀO GIỎ HÀNG'}
                         </span>
                     </div>
                 </button>
 
                 <!-- Stock Info -->
                 ${stock < 999 ? `
-                    <div class="text-center mt-2">
-                        <span class="text-xs ${isLowStock ? 'text-orange-600' : 'text-green-600'} font-medium">
-                            ${isLowStock ? `⚠️ Chỉ còn ${stock} phần` : `📦 Còn ${stock} phần`}
+                    <div class="text-center mt-3">
+                        <span class="text-sm ${isLowStock ? 'text-orange-700 bg-orange-100' : 'text-green-700 bg-green-100'} font-bold px-3 py-1 rounded-full border-2 ${isLowStock ? 'border-orange-300' : 'border-green-300'}">
+                            ${isLowStock ? `⚠️ CHỈ CÒN ${stock} PHẦN` : `📦 CÒN ${stock} PHẦN`}
                         </span>
                     </div>
                 ` : ''}
@@ -569,22 +569,34 @@ class MenuManager {
     }
 
     animateQuantityChange(element, type) {
-        element.classList.add('animate-pulse');
-        element.style.transform = type === 'increase' ? 'scale(1.2)' : 'scale(0.8)';
-        element.style.color = type === 'increase' ? '#10b981' : '#ef4444';
+        // Enhanced animation with better visibility
+        element.style.transition = 'all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+        element.style.transform = type === 'increase' ? 'scale(1.3)' : 'scale(0.7)';
+        element.style.color = type === 'increase' ? '#059669' : '#dc2626';
+        element.style.fontWeight = '900';
+        element.style.textShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        element.style.background = type === 'increase' ? 'linear-gradient(145deg, #d1fae5, #a7f3d0)' : 'linear-gradient(145deg, #fee2e2, #fecaca)';
+        element.style.borderColor = type === 'increase' ? '#059669' : '#dc2626';
+        element.style.borderWidth = '3px';
 
         setTimeout(() => {
             element.style.transform = 'scale(1)';
-            element.style.color = '';
-            element.classList.remove('animate-pulse');
-        }, 200);
+            element.style.color = '#111827';
+            element.style.fontWeight = '800';
+            element.style.textShadow = '0 1px 2px rgba(0,0,0,0.1)';
+            element.style.background = 'linear-gradient(145deg, #f3f4f6, #e5e7eb)';
+            element.style.borderColor = '#9ca3af';
+            element.style.borderWidth = '3px';
+        }, 250);
     }
 
     shakeElement(element) {
-        element.style.animation = 'shake 0.5s ease-in-out';
+        element.style.animation = 'shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97)';
+        element.style.filter = 'brightness(1.2) saturate(1.3)';
         setTimeout(() => {
             element.style.animation = '';
-        }, 500);
+            element.style.filter = '';
+        }, 600);
     }
 
     addToCart(itemId, buttonElement, quantity = 1) {
