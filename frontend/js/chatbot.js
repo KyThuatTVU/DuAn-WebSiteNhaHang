@@ -138,10 +138,10 @@ class Chatbot {
 
     async sendMessageToAPI(message, history) {
         try {
-            const response = await fetch('http://localhost:3001/api/chat', {
+            const response = await fetch('http://localhost:3000/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     messages: [
                         ...history.map(msg => ({ role: msg.role, content: msg.content })),
                         { role: 'user', content: message }

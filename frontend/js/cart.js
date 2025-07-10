@@ -177,7 +177,7 @@ class CartManager {
                 id_mon: itemId,
                 ten_mon: itemName,
                 gia: itemPrice,
-                hinh_anh: itemElement.dataset.itemImage || 'http://localhost:3001/images/placeholder.png',
+                hinh_anh: itemElement.dataset.itemImage || 'http://localhost:3000/images/placeholder.png',
                 mo_ta: itemElement.dataset.itemDescription || 'Món ăn ngon đặc trưng miền Nam',
                 so_luong: stockInfo.stock,
                 category: itemElement.dataset.category || 'other',
@@ -207,7 +207,7 @@ class CartManager {
             gia = parseInt(priceText) || 0;
         }
 
-        let hinh_anh = 'http://localhost:3001/images/placeholder.png';
+        let hinh_anh = 'http://localhost:3000/images/placeholder.png';
         if (imageElement && imageElement.src && !imageElement.src.includes('placeholder')) {
             hinh_anh = imageElement.src;
         }
@@ -406,7 +406,7 @@ class CartManager {
                     id_mon: itemId,
                     ten_mon: itemName,
                     gia: itemPrice,
-                    hinh_anh: item.hinh_anh || item.image || 'http://localhost:3001/images/placeholder.png',
+                    hinh_anh: item.hinh_anh || item.image || 'http://localhost:3000/images/placeholder.png',
                     mo_ta: item.mo_ta || item.description || 'Món ăn ngon đặc trưng miền Nam',
                     so_luong: maxStock,
                     qty: quantity,
@@ -747,7 +747,7 @@ class CartManager {
         const itemId = item.id_mon || item.id;
         const itemName = item.ten_mon || item.name || 'Món ăn';
         const itemPrice = item.gia || item.price || 0;
-        const itemImage = item.hinh_anh || item.image || 'http://localhost:3001/images/placeholder.png';
+        const itemImage = item.hinh_anh || item.image || 'http://localhost:3000/images/placeholder.png';
         const itemDescription = item.mo_ta || item.description || 'Chưa có mô tả';
         const itemQuantity = item.qty || item.quantity || 1;
         const itemStock = item.so_luong || 999;

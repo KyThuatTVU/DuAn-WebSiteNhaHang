@@ -198,11 +198,14 @@ class App {
 
   async start() {
     try {
-      // Initialize database connection
-      await initDatabase();
-
-      // Initialize database tables
-      await CustomerModel.createTable();
+      // Try to initialize database connection (optional for AI testing)
+      try {
+        await initDatabase();
+        await CustomerModel.createTable();
+        logger.info('✅ Database connected successfully');
+      } catch (dbError) {
+        logger.warn('⚠️ Database connection failed, continuing without database for AI testing:', dbError.message);
+      }
 
       // Start server
       const server = this.app.listen(this.port, () => {
@@ -212,6 +215,7 @@ class App {
         logger.info(`📚 Documentation: http://localhost:${this.port}/api/docs`);
         logger.info(`📖 Swagger UI: http://localhost:${this.port}/api-docs`);
         logger.info(`❤️  Health Check: http://localhost:${this.port}/api/health`);
+        logger.info(`🤖 AI Chat Status: http://localhost:${this.port}/api/chat/status`);
       });
 
       // Graceful shutdown

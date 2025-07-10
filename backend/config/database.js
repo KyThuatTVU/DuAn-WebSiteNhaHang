@@ -41,8 +41,7 @@ const testConnection = async () => {
 const initDatabase = async () => {
   const isConnected = await testConnection();
   if (!isConnected) {
-    console.error('Database connection failed. Exiting...');
-    process.exit(1);
+    throw new Error('Database connection failed');
   }
 };
 
