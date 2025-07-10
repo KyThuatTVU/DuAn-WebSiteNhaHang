@@ -8,29 +8,49 @@ class Chatbot {
     }
 
     init() {
+        console.log('🤖 Chatbot initializing...');
         this.setupEventListeners();
         this.initializeChat();
+        console.log('✅ Chatbot initialized successfully');
     }
 
     setupEventListeners() {
         // Wait for DOM to be ready and components to be loaded
         setTimeout(() => {
+            console.log('🔍 Setting up chatbot event listeners...');
             const btnOpen = document.getElementById('chatbotButton');
             const btnClose = document.getElementById('closeChatbot');
             const sendButton = document.getElementById('sendMessage');
             const inputField = document.getElementById('chatbotInput');
             const suggestion = document.querySelector('#suggestionBox .cursor-pointer');
 
+            console.log('🔍 Chatbot elements found:', {
+                btnOpen: !!btnOpen,
+                btnClose: !!btnClose,
+                sendButton: !!sendButton,
+                inputField: !!inputField,
+                suggestion: !!suggestion
+            });
+
             if (btnOpen) {
                 btnOpen.addEventListener('click', () => this.toggleChat());
+                console.log('✅ Open button listener added');
+            } else {
+                console.error('❌ Chatbot open button not found');
             }
 
             if (btnClose) {
                 btnClose.addEventListener('click', () => this.toggleChat());
+                console.log('✅ Close button listener added');
+            } else {
+                console.error('❌ Chatbot close button not found');
             }
 
             if (sendButton) {
                 sendButton.addEventListener('click', () => this.sendMessage());
+                console.log('✅ Send button listener added');
+            } else {
+                console.error('❌ Send button not found');
             }
 
             if (inputField) {
@@ -101,11 +121,20 @@ class Chatbot {
     }
 
     async sendMessage() {
+        console.log('📤 Sending message...');
         const inputField = document.getElementById('chatbotInput');
-        if (!inputField) return;
+        if (!inputField) {
+            console.error('❌ Input field not found');
+            return;
+        }
 
         const message = inputField.value.trim();
-        if (!message) return;
+        console.log('📝 Message content:', message);
+
+        if (!message) {
+            console.log('⚠️ Empty message, skipping');
+            return;
+        }
 
         // Add user message
         this.addMessageToChat('user', message);
@@ -119,25 +148,35 @@ class Chatbot {
         this.showTypingIndicator();
 
         try {
+            console.log('🌐 Calling API...');
             // Send to API
             const response = await this.sendMessageToAPI(message, this.chatHistory);
-            
+            console.log('✅ API response received:', response);
+
             // Remove typing indicator
             this.hideTypingIndicator();
-            
+
             // Add bot response
             this.addMessageToChat('assistant', response.message);
             this.chatHistory.push({ role: 'assistant', content: response.message });
 
         } catch (error) {
+            console.error('❌ Chatbot error:', error);
             this.hideTypingIndicator();
             this.addMessageToChat('assistant', 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.');
-            console.error('Chatbot error:', error);
         }
     }
 
     async sendMessageToAPI(message, history) {
         try {
+            console.log('🔗 Making API request to:', 'http://localhost:3000/api/chat');
+            console.log('📦 Request payload:', {
+                messages: [
+                    ...history.map(msg => ({ role: msg.role, content: msg.content })),
+                    { role: 'user', content: message }
+                ]
+            });
+
             const response = await fetch('http://localhost:3000/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -148,16 +187,21 @@ class Chatbot {
                     ]
                 })
             });
-            
+
+            console.log('📡 Response status:', response.status, response.statusText);
+
             if (!response.ok) {
-                throw new Error('API request failed');
+                throw new Error(`API request failed: ${response.status} ${response.statusText}`);
             }
-            
-            return await response.json();
+
+            const result = await response.json();
+            console.log('✅ API response:', result);
+            return result;
         } catch (error) {
-            console.error('API Error:', error);
-            
+            console.error('❌ API Error:', error);
+
             // Fallback responses
+            console.log('🔄 Using fallback response');
             return this.getFallbackResponse(message);
         }
     }
