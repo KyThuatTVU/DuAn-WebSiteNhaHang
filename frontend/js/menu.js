@@ -120,6 +120,11 @@ class MenuManager {
         this.cart = JSON.parse(localStorage.getItem('cart')) || [];
         this.isLoading = false;
         this.searchTimeout = null;
+
+        // Lightbox properties
+        this.currentLightboxItem = null;
+        this.currentImageIndex = -1;
+
         this.init();
     }
 
@@ -406,7 +411,10 @@ class MenuManager {
 
         // Setup add to cart buttons
         this.setupAddToCartButtons();
-        
+
+        // Setup image lightbox
+        this.setupImageLightbox();
+
         // Trigger animations
         this.triggerAnimations();
     }
@@ -658,6 +666,165 @@ class MenuManager {
         if (quantityDisplay) {
             quantityDisplay.textContent = '1';
             this.updateAddToCartButtonText(itemId, 1);
+        }
+    }
+
+    setupImageLightbox() {
+        // Setup click handlers for menu item images
+        const menuImages = document.querySelectorAll('.menu-item img');
+        menuImages.forEach((img, index) => {
+            img.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openLightbox(index);
+            });
+        });
+
+        // Setup lightbox controls
+        const lightbox = document.getElementById('imageLightbox');
+        const closeLightbox = document.getElementById('closeLightbox');
+        const prevImage = document.getElementById('prevImage');
+        const nextImage = document.getElementById('nextImage');
+        const lightboxAddToCart = document.getElementById('lightboxAddToCart');
+
+        if (closeLightbox) {
+            closeLightbox.addEventListener('click', () => this.closeLightbox());
+        }
+
+        if (prevImage) {
+            prevImage.addEventListener('click', () => this.showPreviousImage());
+        }
+
+        if (nextImage) {
+            nextImage.addEventListener('click', () => this.showNextImage());
+        }
+
+        if (lightbox) {
+            // Close on background click
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) {
+                    this.closeLightbox();
+                }
+            });
+
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (lightbox.classList.contains('hidden')) return;
+
+                switch(e.key) {
+                    case 'Escape':
+                        this.closeLightbox();
+                        break;
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        this.showPreviousImage();
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        this.showNextImage();
+                        break;
+                    case ' ':
+                    case 'Enter':
+                        e.preventDefault();
+                        if (this.currentLightboxItem) {
+                            this.addToCart(this.currentLightboxItem.id, lightboxAddToCart);
+                            this.closeLightbox();
+                        }
+                        break;
+                }
+            });
+        }
+
+        if (lightboxAddToCart) {
+            lightboxAddToCart.addEventListener('click', () => {
+                if (this.currentLightboxItem) {
+                    this.addToCart(this.currentLightboxItem.id, lightboxAddToCart);
+                    this.closeLightbox();
+                }
+            });
+        }
+
+        console.log('✅ Image lightbox setup completed');
+    }
+
+    openLightbox(imageIndex) {
+        const lightbox = document.getElementById('imageLightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const lightboxTitle = document.getElementById('lightboxTitle');
+        const lightboxDescription = document.getElementById('lightboxDescription');
+        const lightboxPrice = document.getElementById('lightboxPrice');
+
+        if (!lightbox || !lightboxImage) return;
+
+        // Get current item data
+        const item = this.filteredData[imageIndex];
+        if (!item) return;
+
+        this.currentLightboxItem = item;
+        this.currentImageIndex = imageIndex;
+
+        // Update lightbox content with loading state
+        lightboxImage.style.opacity = '0.5';
+        lightboxImage.src = item.image;
+        lightboxImage.alt = item.name;
+
+        // Handle image loading
+        lightboxImage.onload = () => {
+            lightboxImage.style.opacity = '1';
+        };
+
+        lightboxImage.onerror = () => {
+            lightboxImage.src = this.apiService.getPlaceholderImage();
+            lightboxImage.style.opacity = '1';
+        };
+
+        if (lightboxTitle) lightboxTitle.textContent = item.name;
+        if (lightboxDescription) lightboxDescription.textContent = item.description || 'Món ăn ngon đặc trưng miền Nam';
+        if (lightboxPrice) lightboxPrice.textContent = item.priceFormatted || this.formatPrice(item.price);
+
+        // Show lightbox
+        lightbox.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+        // Add fade in animation
+        setTimeout(() => {
+            lightbox.style.opacity = '1';
+        }, 10);
+
+        console.log('🖼️ Lightbox opened for:', item.name);
+    }
+
+    closeLightbox() {
+        const lightbox = document.getElementById('imageLightbox');
+        if (!lightbox) return;
+
+        // Add fade out animation
+        lightbox.style.opacity = '0';
+
+        setTimeout(() => {
+            lightbox.classList.add('hidden');
+            document.body.style.overflow = ''; // Restore scrolling
+            this.currentLightboxItem = null;
+            this.currentImageIndex = -1;
+        }, 300);
+
+        console.log('✅ Lightbox closed');
+    }
+
+    showPreviousImage() {
+        if (this.currentImageIndex > 0) {
+            this.openLightbox(this.currentImageIndex - 1);
+        } else {
+            // Loop to last image
+            this.openLightbox(this.filteredData.length - 1);
+        }
+    }
+
+    showNextImage() {
+        if (this.currentImageIndex < this.filteredData.length - 1) {
+            this.openLightbox(this.currentImageIndex + 1);
+        } else {
+            // Loop to first image
+            this.openLightbox(0);
         }
     }
 
