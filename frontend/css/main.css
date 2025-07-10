@@ -41,20 +41,29 @@ body {
 
 /* Banner styles */
 .banner {
-    background-image: url('https://cdn.jsdelivr.net/gh/codediodeio/code-snippets/nba-trader/wood.jpg');
+    position: relative;
     background-size: cover;
     background-position: center;
-    position: relative;
+    color: white;
 }
 
 .banner::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5); /* tăng độ tối */
+    z-index: 1; /* lớp overlay nằm dưới chữ */
+}
+
+/* Đảm bảo phần chữ nằm trên overlay */
+.banner .container {
+    position: relative;
+    z-index: 2;
+}
+
+/* Tăng độ nổi bật chữ */
+.banner h1, .banner p {
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.9);
 }
 
 /* Navigation styles */
