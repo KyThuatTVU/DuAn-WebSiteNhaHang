@@ -120,10 +120,26 @@ class MenuManager {
         this.cart = JSON.parse(localStorage.getItem('cart')) || [];
         this.isLoading = false;
         this.searchTimeout = null;
+        this.menuDescriptions = {};
 
         // Lightbox properties
         this.currentLightboxItem = null;
         this.currentImageIndex = -1;
+
+        // Image quality settings
+        this.imageQualities = {
+            thumbnail: { suffix: '_thumb', width: 300, height: 200 },
+            medium: { suffix: '_med', width: 800, height: 600 },
+            high: { suffix: '_high', width: 1920, height: 1440 },
+            ultra: { suffix: '_4k', width: 3840, height: 2880 }
+        };
+        this.currentImageQuality = 'medium';
+        this.preloadedImages = new Map();
+
+        // Zoom properties
+        this.isZoomed = false;
+        this.zoomLevel = 1;
+        this.maxZoom = 3;
 
         this.init();
     }
@@ -141,7 +157,10 @@ class MenuManager {
         this.setupEventListeners();
 
         // Try to load data (with fallback)
-        await this.loadInitialData();
+        await Promise.all([
+            this.loadInitialData(),
+            this.loadMenuDescriptions()
+        ]);
 
         // Update cart UI
         this.updateCartCounter();
@@ -366,9 +385,11 @@ class MenuManager {
                  data-item-image="${item.image}"
                  data-item-description="${item.description || 'Món ăn ngon đặc trưng miền Nam'}">
                 <div class="h-64 overflow-hidden relative">
-                    <img src="${item.image}"
+                    <img src="${this.getImageUrl(item.image, 'thumbnail')}"
                          alt="${item.name}"
-                         class="w-full h-full object-cover hover-scale"
+                         class="w-full h-full object-cover hover-scale progressive-image"
+                         data-original="${item.image}"
+                         data-item-id="${item.id}"
                          onerror="this.src='${this.apiService.getPlaceholderImage()}'; this.onerror=null;"
                          loading="lazy">
                     <div class="absolute top-2 right-2">
@@ -396,7 +417,18 @@ class MenuManager {
                         <h3 class="item-name font-bold text-xl">${item.name}</h3>
                         <span class="price-tag" data-price="${item.price}">${item.priceFormatted || this.formatPrice(item.price)}</span>
                     </div>
-                    <p class="text-gray-600 mb-4 leading-relaxed description">${item.description || 'Món ăn ngon đặc trưng miền Nam'}</p>
+                    <p class="text-gray-600 mb-3 leading-relaxed description">${this.getItemDescription(item.id).description || item.description || 'Món ăn ngon đặc trưng miền Nam'}</p>
+
+                    <!-- View Details Link -->
+                    <div class="mb-3">
+                        <button class="view-details-btn text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center transition-colors"
+                                data-item-id="${item.id}">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Xem chi tiết món ăn
+                            <i class="fas fa-chevron-right ml-1 text-xs"></i>
+                        </button>
+                    </div>
+
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-sm text-gray-500">
                             <i class="fas fa-tag mr-1"></i>${item.categoryName || 'Món ăn'}
@@ -411,6 +443,9 @@ class MenuManager {
 
         // Setup add to cart buttons
         this.setupAddToCartButtons();
+
+        // Setup view details buttons
+        this.setupViewDetailsButtons();
 
         // Setup image lightbox
         this.setupImageLightbox();
@@ -670,6 +705,9 @@ class MenuManager {
     }
 
     setupImageLightbox() {
+        // Setup progressive loading for menu images
+        this.setupProgressiveLoading();
+
         // Setup click handlers for menu item images
         const menuImages = document.querySelectorAll('.menu-item img');
         menuImages.forEach((img, index) => {
@@ -743,7 +781,162 @@ class MenuManager {
             });
         }
 
+        // Setup zoom functionality
+        this.setupImageZoom();
+
+        // Setup detailed info modal
+        this.setupDetailedInfoModal();
+
         console.log('✅ Image lightbox setup completed');
+    }
+
+    setupImageZoom() {
+        const lightboxImage = document.getElementById('lightboxImage');
+        const zoomContainer = document.getElementById('imageZoomContainer');
+
+        if (!lightboxImage || !zoomContainer) return;
+
+        // Click to zoom
+        lightboxImage.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleZoom(e);
+        });
+
+        // Mouse wheel zoom
+        zoomContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.2 : 0.2;
+            this.adjustZoom(delta, e);
+        });
+
+        // Touch gestures for mobile
+        let initialDistance = 0;
+        let initialZoom = 1;
+
+        zoomContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                initialDistance = this.getTouchDistance(e.touches);
+                initialZoom = this.zoomLevel;
+            }
+        });
+
+        zoomContainer.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const currentDistance = this.getTouchDistance(e.touches);
+                const scale = currentDistance / initialDistance;
+                const newZoom = Math.max(1, Math.min(this.maxZoom, initialZoom * scale));
+                this.setZoom(newZoom);
+            }
+        });
+
+        console.log('✅ Image zoom functionality setup completed');
+    }
+
+    toggleZoom(event) {
+        if (this.isZoomed) {
+            this.resetZoom();
+        } else {
+            this.zoomToPoint(event, 2);
+        }
+    }
+
+    zoomToPoint(event, zoomLevel) {
+        const lightboxImage = document.getElementById('lightboxImage');
+        const rect = lightboxImage.getBoundingClientRect();
+
+        // Calculate zoom center point
+        const x = (event.clientX - rect.left) / rect.width;
+        const y = (event.clientY - rect.top) / rect.height;
+
+        this.setZoom(zoomLevel, x, y);
+    }
+
+    adjustZoom(delta, event) {
+        const newZoom = Math.max(1, Math.min(this.maxZoom, this.zoomLevel + delta));
+
+        if (newZoom !== this.zoomLevel) {
+            this.zoomToPoint(event, newZoom);
+        }
+    }
+
+    setZoom(level, centerX = 0.5, centerY = 0.5) {
+        const lightboxImage = document.getElementById('lightboxImage');
+        const zoomContainer = document.getElementById('imageZoomContainer');
+
+        if (!lightboxImage || !zoomContainer) return;
+
+        this.zoomLevel = level;
+        this.isZoomed = level > 1;
+
+        // Apply zoom transform
+        const translateX = (0.5 - centerX) * (level - 1) * 100;
+        const translateY = (0.5 - centerY) * (level - 1) * 100;
+
+        lightboxImage.style.transform = `scale(${level}) translate(${translateX}%, ${translateY}%)`;
+
+        // Update cursor
+        zoomContainer.style.cursor = this.isZoomed ? 'zoom-out' : 'zoom-in';
+
+        // Update zoom indicator
+        this.updateZoomIndicator(level);
+    }
+
+    resetZoom() {
+        this.setZoom(1);
+    }
+
+    getTouchDistance(touches) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    updateZoomIndicator(level) {
+        const zoomContainer = document.getElementById('imageZoomContainer');
+        if (!zoomContainer) return;
+
+        // Remove existing zoom indicator
+        const existingIndicator = zoomContainer.querySelector('.zoom-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+
+        if (level > 1) {
+            const indicator = document.createElement('div');
+            indicator.className = 'zoom-indicator absolute top-4 left-4 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm font-bold';
+            indicator.textContent = `${Math.round(level * 100)}%`;
+            zoomContainer.appendChild(indicator);
+        }
+    }
+
+    setupProgressiveLoading() {
+        // Use Intersection Observer for lazy loading high quality images
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    const originalUrl = img.dataset.original;
+
+                    if (originalUrl && !img.dataset.loaded) {
+                        img.dataset.loaded = 'true';
+                        this.loadProgressiveImage(img, originalUrl, 'high');
+                        observer.unobserve(img);
+                    }
+                }
+            });
+        }, {
+            rootMargin: '50px 0px',
+            threshold: 0.1
+        });
+
+        // Observe all progressive images
+        const progressiveImages = document.querySelectorAll('.progressive-image');
+        progressiveImages.forEach(img => {
+            imageObserver.observe(img);
+        });
+
+        console.log(`🖼️ Progressive loading setup for ${progressiveImages.length} images`);
     }
 
     openLightbox(imageIndex) {
@@ -762,23 +955,14 @@ class MenuManager {
         this.currentLightboxItem = item;
         this.currentImageIndex = imageIndex;
 
-        // Update lightbox content with loading state
-        lightboxImage.style.opacity = '0.5';
-        lightboxImage.src = item.image;
-        lightboxImage.alt = item.name;
-
-        // Handle image loading
-        lightboxImage.onload = () => {
-            lightboxImage.style.opacity = '1';
-        };
-
-        lightboxImage.onerror = () => {
-            lightboxImage.src = this.apiService.getPlaceholderImage();
-            lightboxImage.style.opacity = '1';
-        };
+        // Load 4K quality image in lightbox with progressive enhancement
+        this.loadLightboxImage(lightboxImage, item.image, item.name);
 
         if (lightboxTitle) lightboxTitle.textContent = item.name;
-        if (lightboxDescription) lightboxDescription.textContent = item.description || 'Món ăn ngon đặc trưng miền Nam';
+        if (lightboxDescription) {
+            const description = this.getItemDescription(item.id);
+            lightboxDescription.textContent = description.description || item.description || 'Món ăn ngon đặc trưng miền Nam';
+        }
         if (lightboxPrice) lightboxPrice.textContent = item.priceFormatted || this.formatPrice(item.price);
 
         // Show lightbox
@@ -796,6 +980,9 @@ class MenuManager {
     closeLightbox() {
         const lightbox = document.getElementById('imageLightbox');
         if (!lightbox) return;
+
+        // Reset zoom before closing
+        this.resetZoom();
 
         // Add fade out animation
         lightbox.style.opacity = '0';
@@ -826,6 +1013,241 @@ class MenuManager {
             // Loop to first image
             this.openLightbox(0);
         }
+    }
+
+    /**
+     * Generate image URL with specified quality
+     */
+    getImageUrl(originalUrl, quality = 'medium') {
+        if (!originalUrl) return this.apiService.getPlaceholderImage();
+
+        const qualityConfig = this.imageQualities[quality];
+        if (!qualityConfig) return originalUrl;
+
+        // Extract file extension and name
+        const lastDotIndex = originalUrl.lastIndexOf('.');
+        const extension = lastDotIndex > -1 ? originalUrl.substring(lastDotIndex) : '.jpg';
+        const baseName = lastDotIndex > -1 ? originalUrl.substring(0, lastDotIndex) : originalUrl;
+
+        // Generate quality-specific URL
+        return `${baseName}${qualityConfig.suffix}${extension}`;
+    }
+
+    /**
+     * Preload high quality image
+     */
+    preloadHighQualityImage(originalUrl, quality = 'high') {
+        const highQualityUrl = this.getImageUrl(originalUrl, quality);
+
+        if (this.preloadedImages.has(highQualityUrl)) {
+            return Promise.resolve(highQualityUrl);
+        }
+
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                this.preloadedImages.set(highQualityUrl, img);
+                resolve(highQualityUrl);
+            };
+            img.onerror = () => {
+                // Fallback to original image if high quality fails
+                resolve(originalUrl);
+            };
+            img.src = highQualityUrl;
+        });
+    }
+
+    /**
+     * Progressive image loading with quality upgrade
+     */
+    async loadProgressiveImage(imgElement, originalUrl, targetQuality = 'ultra') {
+        // Start with medium quality for fast loading
+        const mediumUrl = this.getImageUrl(originalUrl, 'medium');
+        imgElement.src = mediumUrl;
+        imgElement.style.filter = 'blur(1px)';
+
+        try {
+            // Preload high quality image
+            const highQualityUrl = await this.preloadHighQualityImage(originalUrl, targetQuality);
+
+            // Smooth transition to high quality
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                imgElement.style.transition = 'filter 0.5s ease';
+                imgElement.src = highQualityUrl;
+                imgElement.style.filter = 'none';
+
+                // Add 4K quality indicator
+                this.addQualityIndicator(imgElement, targetQuality);
+            };
+            tempImg.src = highQualityUrl;
+
+        } catch (error) {
+            console.warn('Failed to load high quality image:', error);
+            imgElement.style.filter = 'none';
+        }
+    }
+
+    /**
+     * Add quality indicator badge
+     */
+    addQualityIndicator(imgElement, quality) {
+        const container = imgElement.closest('.h-64');
+        if (!container) return;
+
+        // Remove existing quality indicator
+        const existingIndicator = container.querySelector('.quality-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+
+        const qualityLabels = {
+            medium: 'HD',
+            high: 'FHD',
+            ultra: '4K'
+        };
+
+        const indicator = document.createElement('div');
+        indicator.className = 'quality-indicator absolute bottom-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs font-bold';
+        indicator.textContent = qualityLabels[quality] || 'HD';
+
+        container.appendChild(indicator);
+    }
+
+    /**
+     * Load high quality image in lightbox with progressive enhancement
+     */
+    async loadLightboxImage(imgElement, originalUrl, altText) {
+        imgElement.alt = altText;
+
+        // Start with medium quality for immediate display
+        const mediumUrl = this.getImageUrl(originalUrl, 'medium');
+        imgElement.style.opacity = '0.7';
+        imgElement.style.filter = 'blur(2px)';
+        imgElement.src = mediumUrl;
+
+        // Add loading indicator
+        this.showImageLoadingIndicator(imgElement, true);
+
+        try {
+            // Load 4K quality image
+            const ultraUrl = this.getImageUrl(originalUrl, 'ultra');
+
+            const highQualityImg = new Image();
+            highQualityImg.onload = () => {
+                // Smooth transition to 4K
+                imgElement.style.transition = 'all 0.8s ease';
+                imgElement.src = ultraUrl;
+                imgElement.style.opacity = '1';
+                imgElement.style.filter = 'none';
+
+                // Add 4K quality badge
+                this.showImageQualityBadge(imgElement, '4K ULTRA');
+                this.showImageLoadingIndicator(imgElement, false);
+
+                console.log('✅ 4K image loaded successfully');
+            };
+
+            highQualityImg.onerror = () => {
+                // Fallback to high quality if 4K fails
+                this.loadFallbackQuality(imgElement, originalUrl);
+            };
+
+            highQualityImg.src = ultraUrl;
+
+        } catch (error) {
+            console.warn('Failed to load 4K image:', error);
+            this.loadFallbackQuality(imgElement, originalUrl);
+        }
+    }
+
+    /**
+     * Load fallback quality when 4K fails
+     */
+    async loadFallbackQuality(imgElement, originalUrl) {
+        try {
+            const highUrl = this.getImageUrl(originalUrl, 'high');
+            const fallbackImg = new Image();
+
+            fallbackImg.onload = () => {
+                imgElement.style.transition = 'all 0.5s ease';
+                imgElement.src = highUrl;
+                imgElement.style.opacity = '1';
+                imgElement.style.filter = 'none';
+
+                this.showImageQualityBadge(imgElement, 'FULL HD');
+                this.showImageLoadingIndicator(imgElement, false);
+            };
+
+            fallbackImg.onerror = () => {
+                // Final fallback to original
+                imgElement.src = originalUrl;
+                imgElement.style.opacity = '1';
+                imgElement.style.filter = 'none';
+                this.showImageLoadingIndicator(imgElement, false);
+            };
+
+            fallbackImg.src = highUrl;
+
+        } catch (error) {
+            imgElement.src = originalUrl;
+            imgElement.style.opacity = '1';
+            imgElement.style.filter = 'none';
+            this.showImageLoadingIndicator(imgElement, false);
+        }
+    }
+
+    /**
+     * Show/hide image loading indicator
+     */
+    showImageLoadingIndicator(imgElement, show) {
+        const container = imgElement.parentElement;
+        if (!container) return;
+
+        let indicator = container.querySelector('.image-loading-indicator');
+
+        if (show && !indicator) {
+            indicator = document.createElement('div');
+            indicator.className = 'image-loading-indicator absolute inset-0 flex items-center justify-center bg-black bg-opacity-50';
+            indicator.innerHTML = `
+                <div class="text-white text-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
+                    <div class="text-sm">Loading 4K...</div>
+                </div>
+            `;
+            container.appendChild(indicator);
+        } else if (!show && indicator) {
+            indicator.remove();
+        }
+    }
+
+    /**
+     * Show image quality badge
+     */
+    showImageQualityBadge(imgElement, qualityText) {
+        const container = imgElement.parentElement;
+        if (!container) return;
+
+        // Remove existing badge
+        const existingBadge = container.querySelector('.lightbox-quality-badge');
+        if (existingBadge) {
+            existingBadge.remove();
+        }
+
+        const badge = document.createElement('div');
+        badge.className = 'lightbox-quality-badge absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg';
+        badge.textContent = qualityText;
+
+        container.appendChild(badge);
+
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            if (badge.parentElement) {
+                badge.style.transition = 'opacity 0.5s ease';
+                badge.style.opacity = '0';
+                setTimeout(() => badge.remove(), 500);
+            }
+        }, 3000);
     }
 
     showButtonFeedback(buttonElement) {
@@ -1100,6 +1522,138 @@ class MenuManager {
         this.cart = this.cart.filter(item => item.id !== itemId);
         localStorage.setItem('cart', JSON.stringify(this.cart));
         this.updateCartCounter();
+    }
+
+    async loadMenuDescriptions() {
+        try {
+            const response = await fetch('./data/menu-descriptions.json');
+            if (!response.ok) {
+                throw new Error('Failed to load menu descriptions');
+            }
+            const data = await response.json();
+            this.menuDescriptions = data.menu_descriptions;
+            console.log('✅ Menu descriptions loaded successfully');
+        } catch (error) {
+            console.warn('Failed to load menu descriptions:', error);
+            this.menuDescriptions = {};
+        }
+    }
+
+    getItemDescription(itemId) {
+        const description = this.menuDescriptions[itemId.toString()];
+
+        if (!description) {
+            return {
+                description: 'Món ăn ngon đặc trưng miền Nam với hương vị truyền thống.',
+                detailed_description: 'Món ăn ngon đặc trưng miền Nam với hương vị truyền thống.',
+                ingredients: [],
+                cooking_method: 'Đang cập nhật thông tin...',
+                taste_profile: 'Đang cập nhật thông tin...',
+                serving_suggestion: 'Đang cập nhật thông tin...',
+                nutritional_info: 'Đang cập nhật thông tin...',
+                origin: 'Đang cập nhật thông tin...'
+            };
+        }
+
+        return description;
+    }
+
+    setupDetailedInfoModal() {
+        const showDetailBtn = document.getElementById('showDetailedInfo');
+        const detailModal = document.getElementById('detailedInfoModal');
+        const closeDetailModal = document.getElementById('closeDetailModal');
+        const closeDetailModalBtn = document.getElementById('closeDetailModalBtn');
+        const detailAddToCart = document.getElementById('detailAddToCart');
+
+        if (showDetailBtn) {
+            showDetailBtn.addEventListener('click', () => {
+                if (this.currentLightboxItem) {
+                    this.showDetailedInfo(this.currentLightboxItem);
+                }
+            });
+        }
+
+        if (closeDetailModal) {
+            closeDetailModal.addEventListener('click', () => this.hideDetailedInfo());
+        }
+
+        if (closeDetailModalBtn) {
+            closeDetailModalBtn.addEventListener('click', () => this.hideDetailedInfo());
+        }
+
+        if (detailModal) {
+            detailModal.addEventListener('click', (e) => {
+                if (e.target === detailModal) {
+                    this.hideDetailedInfo();
+                }
+            });
+        }
+
+        if (detailAddToCart) {
+            detailAddToCart.addEventListener('click', () => {
+                if (this.currentLightboxItem) {
+                    this.addToCart(this.currentLightboxItem.id, detailAddToCart);
+                    this.hideDetailedInfo();
+                    this.closeLightbox();
+                }
+            });
+        }
+    }
+
+    showDetailedInfo(item) {
+        const modal = document.getElementById('detailedInfoModal');
+        const description = this.getItemDescription(item.id);
+
+        // Update modal content
+        document.getElementById('detailModalTitle').textContent = item.name;
+        document.getElementById('detailDescription').textContent = description.detailed_description;
+        document.getElementById('detailCookingMethod').textContent = description.cooking_method;
+        document.getElementById('detailTasteProfile').textContent = description.taste_profile;
+        document.getElementById('detailServingSuggestion').textContent = description.serving_suggestion;
+        document.getElementById('detailNutritionalInfo').textContent = description.nutritional_info;
+        document.getElementById('detailOrigin').textContent = description.origin;
+        document.getElementById('detailPrice').textContent = item.priceFormatted || this.formatPrice(item.price);
+
+        // Update ingredients list
+        const ingredientsList = document.getElementById('detailIngredients');
+        ingredientsList.innerHTML = '';
+        if (description.ingredients && description.ingredients.length > 0) {
+            description.ingredients.forEach(ingredient => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center text-gray-600 text-sm';
+                li.innerHTML = `<i class="fas fa-check text-green-500 mr-2"></i>${ingredient}`;
+                ingredientsList.appendChild(li);
+            });
+        } else {
+            ingredientsList.innerHTML = '<li class="text-gray-500 text-sm">Thông tin nguyên liệu đang được cập nhật</li>';
+        }
+
+        // Show modal
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    hideDetailedInfo() {
+        const modal = document.getElementById('detailedInfoModal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    setupViewDetailsButtons() {
+        const viewDetailsButtons = document.querySelectorAll('.view-details-btn');
+        viewDetailsButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const itemId = parseInt(button.getAttribute('data-item-id'));
+                const item = this.filteredData.find(item => item.id === itemId);
+
+                if (item) {
+                    this.showDetailedInfo(item);
+                }
+            });
+        });
     }
 }
 

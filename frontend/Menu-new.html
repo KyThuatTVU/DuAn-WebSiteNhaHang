@@ -346,6 +346,173 @@
             to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
 
+        /* 4K Image Quality Enhancements */
+        .progressive-image {
+            transition: filter 0.5s ease, opacity 0.3s ease;
+        }
+
+        .quality-indicator {
+            backdrop-filter: blur(4px);
+            animation: qualityBadgeSlideIn 0.5s ease-out;
+        }
+
+        .lightbox-quality-badge {
+            animation: qualityBadgeSlideIn 0.5s ease-out;
+            backdrop-filter: blur(8px);
+        }
+
+        @keyframes qualityBadgeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        /* Image loading states */
+        .image-loading-indicator {
+            backdrop-filter: blur(4px);
+        }
+
+        /* Enhanced image quality display */
+        .menu-item img[data-loaded="true"] {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 4K quality enhancement effects */
+        .ultra-quality {
+            filter: contrast(1.05) saturate(1.1) brightness(1.02);
+        }
+
+        /* Lightbox image enhancements */
+        #lightboxImage {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            max-width: 100%;
+            max-height: 85vh;
+        }
+
+        /* Quality badge animations */
+        .quality-indicator, .lightbox-quality-badge {
+            user-select: none;
+            pointer-events: none;
+        }
+
+        /* Progressive loading blur effect */
+        .progressive-image[data-loading="true"] {
+            filter: blur(3px);
+            opacity: 0.8;
+        }
+
+        /* Detailed Info Modal Styles */
+        #detailedInfoModal {
+            backdrop-filter: blur(8px);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        #detailedInfoModal.hidden {
+            animation: modalFadeOut 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes modalFadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+        }
+
+        /* Detailed info sections */
+        #detailedInfoModal h3 {
+            border-left: 4px solid;
+            padding-left: 1rem;
+        }
+
+        #detailedInfoModal h3:nth-of-type(1) { border-color: #f97316; }
+        #detailedInfoModal h3:nth-of-type(2) { border-color: #10b981; }
+        #detailedInfoModal h3:nth-of-type(3) { border-color: #ef4444; }
+        #detailedInfoModal h3:nth-of-type(4) { border-color: #ec4899; }
+        #detailedInfoModal h3:nth-of-type(5) { border-color: #3b82f6; }
+        #detailedInfoModal h3:nth-of-type(6) { border-color: #16a34a; }
+        #detailedInfoModal h3:nth-of-type(7) { border-color: #8b5cf6; }
+
+        /* Ingredients grid */
+        #detailIngredients li {
+            background: #f8fafc;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Scroll styling */
+        #detailedInfoModal::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #detailedInfoModal::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        #detailedInfoModal::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        #detailedInfoModal::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* View Details Button */
+        .view-details-btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .view-details-btn:hover {
+            transform: translateX(2px);
+        }
+
+        .view-details-btn::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: currentColor;
+            transition: width 0.3s ease;
+        }
+
+        .view-details-btn:hover::before {
+            width: 100%;
+        }
+
+        .view-details-btn i.fa-chevron-right {
+            transition: transform 0.2s ease;
+        }
+
+        .view-details-btn:hover i.fa-chevron-right {
+            transform: translateX(2px);
+        }
+
         /* Navigation arrows */
         #prevImage, #nextImage {
             background: rgba(0, 0, 0, 0.5);
@@ -521,13 +688,21 @@
 
             <!-- Image Container -->
             <div class="relative bg-white rounded-lg overflow-hidden shadow-2xl">
-                <img id="lightboxImage" src="" alt="" class="max-w-full max-h-[80vh] object-contain">
+                <div id="imageZoomContainer" class="relative overflow-hidden cursor-zoom-in">
+                    <img id="lightboxImage" src="" alt="" class="max-w-full max-h-[80vh] object-contain transition-transform duration-300">
+                </div>
 
                 <!-- Image Info Overlay -->
-                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6">
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-6">
                     <h3 id="lightboxTitle" class="text-white text-2xl font-bold mb-2"></h3>
-                    <p id="lightboxDescription" class="text-gray-200 text-sm leading-relaxed"></p>
-                    <div class="flex items-center justify-between mt-4">
+                    <p id="lightboxDescription" class="text-gray-200 text-sm leading-relaxed mb-3"></p>
+
+                    <!-- Detailed Info Button -->
+                    <button id="showDetailedInfo" class="text-blue-300 hover:text-blue-200 text-sm mb-3 flex items-center">
+                        <i class="fas fa-info-circle mr-1"></i>Xem thông tin chi tiết
+                    </button>
+
+                    <div class="flex items-center justify-between">
                         <span id="lightboxPrice" class="text-yellow-400 text-xl font-bold"></span>
                         <button id="lightboxAddToCart" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">
                             <i class="fas fa-cart-plus mr-2"></i>Thêm vào giỏ
@@ -543,6 +718,91 @@
             <button id="nextImage" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-3xl hover:text-gray-300 transition-colors">
                 <i class="fas fa-chevron-right"></i>
             </button>
+        </div>
+    </div>
+
+    <!-- Detailed Info Modal -->
+    <div id="detailedInfoModal" class="fixed inset-0 bg-black bg-opacity-75 z-60 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <!-- Header -->
+            <div class="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+                <h2 id="detailModalTitle" class="text-2xl font-bold text-gray-800"></h2>
+                <button id="closeDetailModal" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6">
+                <!-- Main Description -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-utensils mr-2 text-orange-500"></i>Mô tả chi tiết
+                    </h3>
+                    <p id="detailDescription" class="text-gray-600 leading-relaxed"></p>
+                </div>
+
+                <!-- Ingredients -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-list-ul mr-2 text-green-500"></i>Nguyên liệu
+                    </h3>
+                    <ul id="detailIngredients" class="grid grid-cols-1 md:grid-cols-2 gap-2"></ul>
+                </div>
+
+                <!-- Cooking Method -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-fire mr-2 text-red-500"></i>Cách chế biến
+                    </h3>
+                    <p id="detailCookingMethod" class="text-gray-600 leading-relaxed"></p>
+                </div>
+
+                <!-- Taste Profile -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-heart mr-2 text-pink-500"></i>Hương vị đặc trưng
+                    </h3>
+                    <p id="detailTasteProfile" class="text-gray-600 leading-relaxed"></p>
+                </div>
+
+                <!-- Serving Suggestion -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-concierge-bell mr-2 text-blue-500"></i>Cách thưởng thức
+                    </h3>
+                    <p id="detailServingSuggestion" class="text-gray-600 leading-relaxed"></p>
+                </div>
+
+                <!-- Nutritional Info -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-leaf mr-2 text-green-600"></i>Giá trị dinh dưỡng
+                    </h3>
+                    <p id="detailNutritionalInfo" class="text-gray-600 leading-relaxed"></p>
+                </div>
+
+                <!-- Origin -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-map-marker-alt mr-2 text-purple-500"></i>Nguồn gốc
+                    </h3>
+                    <p id="detailOrigin" class="text-gray-600 leading-relaxed"></p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                    <div class="text-2xl font-bold text-orange-600" id="detailPrice"></div>
+                    <div class="flex space-x-3">
+                        <button id="detailAddToCart" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                            <i class="fas fa-cart-plus mr-2"></i>Thêm vào giỏ hàng
+                        </button>
+                        <button id="closeDetailModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                            Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
