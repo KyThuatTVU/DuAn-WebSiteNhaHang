@@ -169,65 +169,172 @@
                         <!-- Success/Error Messages -->
                         <div id="formMessages"></div>
                         
-                        <form id="reservationForm" class="space-y-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="name" class="block text-gray-700 mb-2 font-semibold">
-                                        <i class="fas fa-user mr-1"></i>Họ và tên 
-                                    </label>
-                                    <input type="text" id="name" class="form-input w-full px-4 py-3 rounded-lg focus:outline-none" placeholder="Nguyễn Văn A" required>
+                        <form id="reservationForm" class="space-y-6" method="POST">
+                            <!-- Thông tin khách hàng -->
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="text-lg font-semibold mb-4 text-gray-800">
+                                    <i class="fas fa-user-circle mr-2 text-primary"></i>Thông Tin Khách Hàng
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="ten_khach" class="block text-gray-700 mb-2 font-semibold">
+                                            <i class="fas fa-user mr-1"></i>Họ và tên <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="ten_khach"
+                                            name="ten_khach"
+                                            class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                            placeholder="Nhập họ và tên đầy đủ"
+                                            maxlength="100"
+                                            required>
+                                        <div class="text-red-500 text-sm mt-1 hidden" id="ten_khach_error"></div>
+                                    </div>
+                                    <div>
+                                        <label for="sdt" class="block text-gray-700 mb-2 font-semibold">
+                                            <i class="fas fa-phone mr-1"></i>Số điện thoại <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            id="sdt"
+                                            name="sdt"
+                                            class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                            placeholder="0901234567"
+                                            pattern="[0-9]{10,11}"
+                                            maxlength="20"
+                                            required>
+                                        <div class="text-red-500 text-sm mt-1 hidden" id="sdt_error"></div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label for="phone" class="block text-gray-700 mb-2 font-semibold">
-                                        <i class="fas fa-phone mr-1"></i>Số điện thoại 
+
+                                <div class="mt-4">
+                                    <label for="email" class="block text-gray-700 mb-2 font-semibold">
+                                        <i class="fas fa-envelope mr-1"></i>Email (tùy chọn)
                                     </label>
-                                    <input type="tel" id="phone" class="form-input w-full px-4 py-3 rounded-lg focus:outline-none" placeholder="0901234567" required>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                        placeholder="example@email.com"
+                                        maxlength="100">
+                                    <div class="text-red-500 text-sm mt-1 hidden" id="email_error"></div>
                                 </div>
                             </div>
-                            
-                            <div>
-                                <label for="email" class="block text-gray-700 mb-2 font-semibold">
-                                    <i class="fas fa-envelope mr-1"></i>Email
-                                </label>
-                                <input type="email" id="email" class="form-input w-full px-4 py-3 rounded-lg focus:outline-none" placeholder="example@email.com">
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label for="date" class="block text-gray-700 mb-2 font-semibold">
-                                        <i class="fas fa-calendar mr-1"></i>Ngày 
-                                    </label>
-                                    <input type="date" id="date" class="form-input w-full px-4 py-3 rounded-lg focus:outline-none" required>
+
+                            <!-- Thông tin đặt bàn -->
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <h4 class="text-lg font-semibold mb-4 text-gray-800">
+                                    <i class="fas fa-calendar-check mr-2 text-primary"></i>Thông Tin Đặt Bàn
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label for="ngay" class="block text-gray-700 mb-2 font-semibold">
+                                            <i class="fas fa-calendar mr-1"></i>Ngày đặt <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            id="ngay"
+                                            name="ngay"
+                                            class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                            required>
+                                        <div class="text-red-500 text-sm mt-1 hidden" id="ngay_error"></div>
+                                    </div>
+                                    <div>
+                                        <label for="gio" class="block text-gray-700 mb-2 font-semibold">
+                                            <i class="fas fa-clock mr-1"></i>Giờ đặt <span class="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            id="gio"
+                                            name="gio"
+                                            class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                            required>
+                                            <option value="">Chọn giờ</option>
+                                            <option value="10:00">10:00 - Sáng</option>
+                                            <option value="10:30">10:30 - Sáng</option>
+                                            <option value="11:00">11:00 - Sáng</option>
+                                            <option value="11:30">11:30 - Sáng</option>
+                                            <option value="12:00">12:00 - Trưa</option>
+                                            <option value="12:30">12:30 - Trưa</option>
+                                            <option value="13:00">13:00 - Trưa</option>
+                                            <option value="13:30">13:30 - Trưa</option>
+                                            <option value="17:00">17:00 - Chiều</option>
+                                            <option value="17:30">17:30 - Chiều</option>
+                                            <option value="18:00">18:00 - Tối</option>
+                                            <option value="18:30">18:30 - Tối</option>
+                                            <option value="19:00" selected>19:00 - Tối</option>
+                                            <option value="19:30">19:30 - Tối</option>
+                                            <option value="20:00">20:00 - Tối</option>
+                                            <option value="20:30">20:30 - Tối</option>
+                                            <option value="21:00">21:00 - Tối</option>
+                                        </select>
+                                        <div class="text-red-500 text-sm mt-1 hidden" id="gio_error"></div>
+                                    </div>
+                                    <div>
+                                        <label for="so_luong_khach" class="block text-gray-700 mb-2 font-semibold">
+                                            <i class="fas fa-users mr-1"></i>Số lượng khách <span class="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            id="so_luong_khach"
+                                            name="so_luong_khach"
+                                            class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                            required>
+                                            <option value="">Chọn số khách</option>
+                                            <option value="1">1 người</option>
+                                            <option value="2" selected>2 người</option>
+                                            <option value="3">3 người</option>
+                                            <option value="4">4 người</option>
+                                            <option value="5">5 người</option>
+                                            <option value="6">6 người</option>
+                                            <option value="7">7 người</option>
+                                            <option value="8">8 người</option>
+                                            <option value="9">9 người</option>
+                                            <option value="10">10 người</option>
+                                            <option value="12">12 người</option>
+                                            <option value="15">15 người</option>
+                                            <option value="20">20 người</option>
+                                        </select>
+                                        <div class="text-red-500 text-sm mt-1 hidden" id="so_luong_khach_error"></div>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <!-- Ghi chú -->
+                            <div class="bg-yellow-50 p-4 rounded-lg">
+                                <h4 class="text-lg font-semibold mb-4 text-gray-800">
+                                    <i class="fas fa-sticky-note mr-2 text-primary"></i>Ghi Chú Đặc Biệt
+                                </h4>
                                 <div>
-                                    <label for="time" class="block text-gray-700 mb-2 font-semibold">
-                                        <i class="fas fa-clock mr-1"></i>Giờ 
+                                    <label for="ghi_chu" class="block text-gray-700 mb-2 font-semibold">
+                                        <i class="fas fa-comment mr-1"></i>Yêu cầu đặc biệt (tùy chọn)
                                     </label>
-                                    <input type="time" id="time" class="form-input w-full px-4 py-3 rounded-lg focus:outline-none" required>
-                                </div>
-                                <div>
-                                    <label for="guests" class="block text-gray-700 mb-2 font-semibold">
-                                        <i class="fas fa-users mr-1"></i>Số khách 
-                                    </label>
-                                    <input type="number" id="guests" min="1" max="20" class="form-input w-full px-4 py-3 rounded-lg focus:outline-none" placeholder="2" required>
+                                    <textarea
+                                        id="ghi_chu"
+                                        name="ghi_chu"
+                                        rows="4"
+                                        class="form-input w-full px-4 py-3 rounded-lg focus:outline-none resize-none"
+                                        placeholder="Ví dụ: Bàn gần cửa sổ, kỷ niệm sinh nhật, dị ứng thực phẩm, yêu cầu đặc biệt khác..."
+                                        maxlength="500"></textarea>
+                                    <div class="text-gray-500 text-sm mt-1">
+                                        <span id="ghi_chu_count">0</span>/500 ký tự
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <div>
-                                <label for="notes" class="block text-gray-700 mb-2 font-semibold">
-                                    <i class="fas fa-sticky-note mr-1"></i>Ghi chú đặc biệt
-                                </label>
-                                <textarea id="notes" rows="4" class="form-input w-full px-4 py-3 rounded-lg focus:outline-none resize-none" placeholder="Yêu cầu đặc biệt, dị ứng thực phẩm, kỷ niệm đặc biệt..."></textarea>
+
+                            <!-- Trạng thái ẩn -->
+                            <input type="hidden" id="trang_thai" name="trang_thai" value="cho_xac_nhan">
+
+                            <!-- Submit button -->
+                            <div class="pt-4">
+                                <button type="submit" id="submitBtn" class="submit-btn w-full text-white font-bold py-4 px-6 rounded-lg transition duration-300">
+                                    <span id="submitText">
+                                        <i class="fas fa-utensils mr-2"></i>Gửi Yêu Cầu Đặt Bàn
+                                    </span>
+                                    <span id="submitLoading" class="hidden">
+                                        <span class="loading-spinner mr-2"></span>Đang xử lý...
+                                    </span>
+                                </button>
                             </div>
-                            
-                            <button type="submit" id="submitBtn" class="submit-btn w-full text-white font-bold py-4 px-6 rounded-lg transition duration-300">
-                                <span id="submitText">
-                                    <i class="fas fa-utensils mr-2"></i>Đặt Bàn Ngay
-                                </span>
-                                <span id="submitLoading" class="hidden">
-                                    <span class="loading-spinner mr-2"></span>Đang xử lý...
-                                </span>
-                            </button>
                         </form>
                         
                         <div class="mt-6 text-center text-sm text-gray-600">
@@ -342,21 +449,7 @@
         // Initialize reservation when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Lienhe&datban-new.html loaded successfully!');
-            
-            // Set minimum date to today
-            const dateInput = document.getElementById('date');
-            if (dateInput) {
-                const today = new Date().toISOString().split('T')[0];
-                dateInput.min = today;
-                dateInput.value = today;
-            }
-            
-            // Set default time
-            const timeInput = document.getElementById('time');
-            if (timeInput) {
-                timeInput.value = '19:00';
-            }
-            
+
             // Initialize reservation manager after components are loaded
             setTimeout(() => {
                 if (window.ReservationManager) {
