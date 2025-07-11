@@ -28,9 +28,9 @@
             <!-- Thông tin khách hàng -->
             <div class="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
                 <h2 class="text-xl font-semibold text-indigo-700 mb-2">Thông Tin Khách Hàng</h2>
-                <p><strong>Tên:</strong> <span id="customerName">Nguyễn Huỳnh Kỳ Nhật Nhật</span></p>
-                <p><strong>Email:</strong> <span id="customerEmail">nguyenhuynhkithuat84tv@gmail.com</span></p>
-                <p><strong>ID Khách hàng:</strong> <span id="customerId">#6</span></p>
+                <p><strong>Tên:</strong> <span id="customerName">Đang tải...</span></p>
+                <p><strong>Email:</strong> <span id="customerEmail">Đang tải...</span></p>
+                <p><strong>ID Khách hàng:</strong> <span id="customerId">Đang tải...</span></p>
                 <div class="mt-2 p-2 bg-green-100 border border-green-300 rounded">
                     <i class="fas fa-info-circle text-green-600"></i>
                     <span class="text-green-700 text-sm">Thông tin này sẽ được sử dụng tự động cho hóa đơn</span>
@@ -108,6 +108,40 @@
         </div>
     </div>
 
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
+            <div class="mb-6">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check text-green-600 text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Đặt Hàng Thành Công!</h2>
+                <p class="text-gray-600 mb-4">Mã hóa đơn: <span id="invoiceNumber" class="font-semibold text-blue-600">#HD000001</span></p>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-center mb-2">
+                    <i class="fas fa-phone text-blue-600 mr-2"></i>
+                    <span class="font-semibold text-blue-800">Chúng tôi sẽ liên hệ với bạn sớm nhất!</span>
+                </div>
+                <p class="text-sm text-blue-700">
+                    Nhà hàng sẽ gọi điện xác nhận đơn hàng và thông báo thời gian chuẩn bị trong vòng 5-10 phút.
+                </p>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="closeSuccessModal()"
+                        class="w-full bg-red-600 text-white py-3 px-4 rounded-md hover:bg-red-700 transition-colors duration-300 font-semibold">
+                    <i class="fas fa-home mr-2"></i>
+                    Quay về Thực đơn
+                </button>
+                <div class="text-sm text-gray-500">
+                    <p>Cảm ơn bạn đã tin tưởng nhà hàng!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Floating contact buttons -->
     <div class="fixed left-4 bottom-4 space-y-4 z-50">
         <div class="floating-btn">
@@ -146,67 +180,223 @@
     .phone-btn:hover .w-16 {
         box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4);
     }
+
+    /* Modal animations */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+            transform: scale(1);
+        }
+        to {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+    }
+
+    /* Success modal styling */
+    #successModal {
+        backdrop-filter: blur(5px);
+    }
+
+    #successModal .bg-white {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        animation: slideInUp 0.4s ease-out;
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
     </style>
 
-    <script>
-        // Mock cart data
-        const mockCartItems = [
-            {
-                id: 1,
-                name: 'Cơm Tấm Sườn Nướng',
-                price: 45000,
-                quantity: 2,
-                image: 'img/comtam.webp'
-            },
-            {
-                id: 2,
-                name: 'Phở Bò Tái',
-                price: 50000,
-                quantity: 1,
-                image: 'img/pho-bo.jpg'
-            },
-            {
-                id: 8,
-                name: 'Trà Đá',
-                price: 10000,
-                quantity: 3,
-                image: 'img/tratac.jpg'
-            }
-        ];
+    <!-- Load cart system -->
+    <script src="js/cart.js"></script>
+    <script src="js/user-cart-integration.js"></script>
 
-        // Load cart items
+    <script>
+        // Real cart data from CartManager
+        let cartItems = [];
+        let customerInfo = null;
+
+        // Load real customer info from CartManager
+        function loadCustomerInfo() {
+            console.log('🔍 Loading customer info...');
+
+            // Get customer info from CartManager
+            if (window.cartManager) {
+                customerInfo = window.cartManager.customerInfo;
+                console.log('✅ Got customer info from CartManager:', customerInfo);
+            } else {
+                // Fallback to localStorage
+                try {
+                    customerInfo = JSON.parse(localStorage.getItem('customerInfo'));
+                    console.log('✅ Got customer info from localStorage:', customerInfo);
+                } catch (error) {
+                    console.warn('⚠️ Error loading customer info from localStorage:', error);
+                }
+            }
+
+            // If we have customer info, try to get more details from API
+            if (customerInfo && customerInfo.id) {
+                fetchCustomerDetailsFromAPI(customerInfo.id);
+            } else {
+                // Show default guest info
+                document.getElementById('customerName').textContent = 'Khách hàng';
+                document.getElementById('customerEmail').textContent = 'guest@restaurant.com';
+                document.getElementById('customerId').textContent = 'N/A';
+
+                // Set default customer info for payment
+                customerInfo = {
+                    id: 6, // Default to customer ID 6
+                    full_name: 'Nguyễn Huỳnh Kỳ Thuật Thuật',
+                    email: 'nguyenhuynhkithuat84tv@gmail.com',
+                    phone: '0123456789'
+                };
+
+                // Try to fetch details for default customer
+                fetchCustomerDetailsFromAPI(6);
+            }
+        }
+
+        // Fetch customer details from API
+        async function fetchCustomerDetailsFromAPI(customerId) {
+            try {
+                console.log('🌐 Fetching customer details from API for ID:', customerId);
+                const response = await fetch(`http://localhost:3000/api/khachhang/${customerId}`);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        // Update customer info with API data
+                        customerInfo = {
+                            id: result.data.id,
+                            full_name: result.data.full_name,
+                            email: result.data.email,
+                            phone: result.data.phone,
+                            address: result.data.address
+                        };
+
+                        console.log('✅ Customer details loaded from API:', customerInfo);
+
+                        // Update UI with fresh data
+                        document.getElementById('customerName').textContent = customerInfo.full_name || 'N/A';
+                        document.getElementById('customerEmail').textContent = customerInfo.email || 'N/A';
+                        document.getElementById('customerId').textContent = customerInfo.id ? `#${customerInfo.id}` : 'N/A';
+
+                    } else {
+                        console.log('⚠️ API returned no customer data');
+                        updateUIWithCurrentCustomerInfo();
+                    }
+                } else {
+                    console.log('⚠️ API call failed with status:', response.status);
+                    updateUIWithCurrentCustomerInfo();
+                }
+            } catch (error) {
+                console.error('❌ Error fetching customer details from API:', error);
+                updateUIWithCurrentCustomerInfo();
+            }
+        }
+
+        // Update UI with current customer info
+        function updateUIWithCurrentCustomerInfo() {
+            if (customerInfo) {
+                document.getElementById('customerName').textContent = customerInfo.full_name || customerInfo.name || 'N/A';
+                document.getElementById('customerEmail').textContent = customerInfo.email || 'N/A';
+                document.getElementById('customerId').textContent = customerInfo.id ? `#${customerInfo.id}` : 'N/A';
+            }
+        }
+
+        // Load real cart items from CartManager
         function loadCartItems() {
+            console.log('🔍 Loading cart items...');
+
+            // Get cart data from CartManager
+            if (window.cartManager) {
+                cartItems = window.cartManager.getCart();
+                console.log('✅ Got cart from CartManager:', cartItems);
+            } else {
+                // Fallback to localStorage
+                cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+                console.log('✅ Got cart from localStorage:', cartItems);
+            }
+
             const cartContainer = document.getElementById('cartItems');
             cartContainer.innerHTML = '';
 
-            mockCartItems.forEach(item => {
+            if (cartItems.length === 0) {
+                cartContainer.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-shopping-cart text-4xl mb-4"></i>
+                        <p>Giỏ hàng trống</p>
+                        <a href="Menu-new.html" class="text-red-600 hover:underline mt-2 inline-block">
+                            <i class="fas fa-arrow-left mr-1"></i> Quay lại thực đơn
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            cartItems.forEach(item => {
+                // Handle different data formats from cart
+                const itemName = item.ten_mon || item.name || 'Món ăn';
+                const itemPrice = item.gia || item.price || 0;
+                const itemQuantity = item.qty || item.quantity || item.so_luong || 1;
+                const itemImage = item.hinh_anh || item.image || 'img/no-image.png';
+                const itemId = item.id_mon || item.id || 'unknown';
+
+                console.log('📦 Processing item:', {itemName, itemPrice, itemQuantity, itemImage});
+
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0';
                 itemDiv.innerHTML = `
                     <div class="flex items-center">
                         <div class="w-12 h-12 bg-gray-200 rounded mr-3 flex items-center justify-center overflow-hidden">
-                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" 
+                            <img src="${itemImage}" alt="${itemName}" class="w-full h-full object-cover"
                                  onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\\'text-xs text-gray-500\\'>🍽️</span>'">
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-800">${item.name}</p>
-                            <p class="text-sm text-gray-600">Số lượng: ${item.quantity}</p>
-                            <p class="text-sm text-blue-600">Đơn giá: ${item.price.toLocaleString('vi-VN')}đ</p>
+                            <p class="font-semibold text-gray-800">${itemName}</p>
+                            <p class="text-sm text-gray-600">Số lượng: ${itemQuantity}</p>
+                            <p class="text-sm text-blue-600">Đơn giá: ${itemPrice.toLocaleString('vi-VN')}đ</p>
                         </div>
                     </div>
                     <div class="text-right">
-                        <p class="font-semibold text-lg text-red-600">${(item.price * item.quantity).toLocaleString('vi-VN')}đ</p>
+                        <p class="font-semibold text-lg text-red-600">${(itemPrice * itemQuantity).toLocaleString('vi-VN')}đ</p>
                     </div>
                 `;
                 cartContainer.appendChild(itemDiv);
             });
         }
 
-        // Update totals
+        // Update totals with real cart data
         function updateTotals() {
             const selectedOrderType = document.querySelector('input[name="orderType"]:checked');
             const deliveryFee = (selectedOrderType && selectedOrderType.value === 'giao_hang') ? 20000 : 0;
-            const subtotal = mockCartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            // Calculate subtotal from real cart items
+            const subtotal = cartItems.reduce((sum, item) => {
+                const itemPrice = item.gia || item.price || 0;
+                const itemQuantity = item.qty || item.quantity || item.so_luong || 1;
+                return sum + (itemPrice * itemQuantity);
+            }, 0);
+
             const total = subtotal + deliveryFee;
 
             document.getElementById('subtotal').textContent = `${subtotal.toLocaleString('vi-VN')}đ`;
@@ -241,17 +431,30 @@
                 const deliveryAddress = formData.get('deliveryAddress');
                 const orderNotes = formData.get('orderNotes');
 
-                const subtotal = mockCartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                // Calculate totals from real cart data
+                const subtotal = cartItems.reduce((sum, item) => {
+                    const itemPrice = item.gia || item.price || 0;
+                    const itemQuantity = item.qty || item.quantity || item.so_luong || 1;
+                    return sum + (itemPrice * itemQuantity);
+                }, 0);
                 const deliveryFee = orderType === 'giao_hang' ? 20000 : 0;
                 const total = subtotal + deliveryFee;
 
+                // Prepare cart items for API (normalize format)
+                const normalizedCartItems = cartItems.map(item => ({
+                    id: item.id_mon || item.id,
+                    name: item.ten_mon || item.name,
+                    price: item.gia || item.price,
+                    quantity: item.qty || item.quantity || item.so_luong
+                }));
+
                 const paymentData = {
-                    id_khach: 6,
+                    id_khach: customerInfo.id || 1,
                     loai_don: orderType,
                     tong_tien: total,
                     dia_chi_giao_hang: deliveryAddress || null,
                     ghi_chu: orderNotes || null,
-                    cart_items: mockCartItems
+                    cart_items: normalizedCartItems
                 };
 
                 console.log('🚀 Submitting payment:', paymentData);
@@ -268,8 +471,27 @@
                     const result = await response.json();
                     console.log('✅ Payment successful:', result);
 
-                    alert('Thanh toán thành công! Mã hóa đơn: ' + result.data.id);
-                    window.location.href = 'Menu-new.html';
+                    // Lưu hóa đơn vào localStorage cho quản trị viên
+                    const invoiceData = {
+                        ...result.data,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    // Lấy danh sách hóa đơn hiện tại
+                    let invoiceList = JSON.parse(localStorage.getItem('invoiceList')) || [];
+                    invoiceList.unshift(invoiceData); // Thêm vào đầu danh sách
+                    localStorage.setItem('invoiceList', JSON.stringify(invoiceList));
+
+                    // Xóa giỏ hàng sau khi thanh toán thành công
+                    localStorage.removeItem('cart');
+                    localStorage.removeItem('cartData');
+                    if (window.cartManager) {
+                        window.cartManager.clearCart();
+                    }
+
+                    // Hiển thị hộp thoại thành công cho khách hàng
+                    showSuccessModal(result.data.id);
+
                 } else {
                     const errorText = await response.text();
                     console.error('❌ Payment failed:', errorText);
@@ -285,10 +507,61 @@
             }
         });
 
-        // Initialize
+        // Show success modal
+        function showSuccessModal(invoiceId) {
+            const modal = document.getElementById('successModal');
+            const invoiceNumberEl = document.getElementById('invoiceNumber');
+
+            if (invoiceNumberEl) {
+                invoiceNumberEl.textContent = `#HD${String(invoiceId).padStart(6, '0')}`;
+            }
+
+            if (modal) {
+                modal.classList.remove('hidden');
+                // Add animation
+                modal.style.animation = 'fadeIn 0.3s ease-out';
+            }
+        }
+
+        // Close success modal
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            if (modal) {
+                modal.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    // Redirect to menu
+                    window.location.href = 'Menu-new.html';
+                }, 300);
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('successModal');
+            if (e.target === modal) {
+                closeSuccessModal();
+            }
+        });
+
+        // Initialize with real data
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔍 Payment page initializing...');
+
+            // Wait for CartManager to be available
+            if (typeof CartManager !== 'undefined') {
+                if (!window.cartManager) {
+                    window.cartManager = new CartManager();
+                    console.log('✅ CartManager initialized');
+                }
+            }
+
+            // Load real data
+            loadCustomerInfo();
             loadCartItems();
             updateTotals();
+
+            console.log('✅ Payment page initialized with real data');
         });
     </script>
 </body>

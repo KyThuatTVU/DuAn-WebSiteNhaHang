@@ -9,6 +9,7 @@ const chatRoutes = require('./chatRoutes');
 const customerRoutes = require('./customerRoutes');
 const datbanRoutes = require('./datban');
 const hoadonRoutes = require('./hoadon');
+const khachhangRoutes = require('./khachhang');
 
 /**
  * @swagger
@@ -174,5 +175,7 @@ router.use('/datban', datbanRoutes);
 console.log('✅ Dat ban routes mounted');
 router.use('/hoadon', hoadonRoutes);
 console.log('✅ Hoa don routes mounted');
+router.use('/khachhang', khachhangRoutes);
+console.log('✅ Khach hang routes mounted');
 
 module.exports = router;

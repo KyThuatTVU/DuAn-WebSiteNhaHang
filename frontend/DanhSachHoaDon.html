@@ -226,6 +226,29 @@
     </div>
 
     <script>
+        // Admin protection - Check immediately
+        (function() {
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            const adminPassword = localStorage.getItem('adminPassword');
+
+            if (!isAdmin || adminPassword !== 'admin123') {
+                const password = prompt('🔒 TRANG QUẢN TRỊ\n\nTrang này chỉ dành cho quản trị viên.\nVui lòng nhập mật khẩu admin:');
+
+                if (password === 'admin123') {
+                    localStorage.setItem('isAdmin', 'true');
+                    localStorage.setItem('adminPassword', 'admin123');
+                    alert('✅ Đăng nhập thành công! Chào mừng Admin.');
+                } else if (password !== null) {
+                    alert('❌ Mật khẩu không đúng!\nBạn sẽ được chuyển về trang chủ.');
+                    window.location.href = 'Menu-new.html';
+                    return;
+                } else {
+                    window.location.href = 'Menu-new.html';
+                    return;
+                }
+            }
+        })();
+
         // Global variables
         let allInvoices = [];
         let filteredInvoices = [];
@@ -302,6 +325,47 @@
                     allInvoices = JSON.parse(storedInvoices);
                 } else {
                     allInvoices = [];
+                }
+
+                // Add invoices from payment flow
+                const paymentInvoices = localStorage.getItem('invoiceList');
+                if (paymentInvoices) {
+                    const invoicesFromPayment = JSON.parse(paymentInvoices);
+                    console.log('✅ Found invoices from payment:', invoicesFromPayment.length);
+
+                    // Convert payment invoices to display format
+                    invoicesFromPayment.forEach(paymentInvoice => {
+                        const invoice = paymentInvoice.invoice || paymentInvoice;
+                        const details = paymentInvoice.details || [];
+
+                        const displayInvoice = {
+                            id: invoice.id_hoa_don || invoice.id || generateInvoiceId(),
+                            invoiceNumber: `HD${String(invoice.id_hoa_don || invoice.id || Math.floor(Math.random() * 1000)).padStart(6, '0')}`,
+                            customerName: 'Nguyễn Huỳnh Kỳ Nhật Nhật',
+                            customerEmail: 'nguyenhuynhkithuat84tv@gmail.com',
+                            customerPhone: '0123456789',
+                            items: details.map(detail => ({
+                                name: detail.ten_mon || detail.name || 'Món ăn',
+                                quantity: detail.so_luong || detail.quantity || 1,
+                                price: detail.don_gia || detail.price || 0,
+                                total: detail.thanh_tien || (detail.don_gia * detail.so_luong) || 0
+                            })),
+                            total: invoice.tong_tien || invoice.total || 0,
+                            orderType: invoice.loai_don === 'giao_hang' ? 'delivery' : 'dine-in',
+                            status: invoice.trang_thai === 'cho_xac_nhan' ? 'confirmed' : 'pending',
+                            createdAt: invoice.ngay_tao || paymentInvoice.timestamp || new Date().toISOString(),
+                            address: invoice.dia_chi_giao_hang || null,
+                            notes: invoice.ghi_chu || null
+                        };
+
+                        // Check if not already exists
+                        const existingIndex = allInvoices.findIndex(inv => inv.id === displayInvoice.id);
+                        if (existingIndex === -1) {
+                            allInvoices.unshift(displayInvoice);
+                        }
+                    });
+
+                    saveInvoiceHistory();
                 }
 
                 // Add current order if exists and not already in history

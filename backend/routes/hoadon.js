@@ -49,42 +49,114 @@ const validateInvoiceData = (data) => {
   return errors;
 };
 
-// POST /api/hoadon - Create new invoice (SIMPLE VERSION)
-router.post('/', (req, res) => {
-  console.log('🔍 POST /api/hoadon called - SIMPLE VERSION');
+// POST /api/hoadon - Create new invoice (MOCK DATABASE VERSION)
+router.post('/', async (req, res) => {
+  console.log('🔍 POST /api/hoadon called - MOCK DATABASE VERSION');
   console.log('📨 Request body:', req.body);
 
-  // Generate mock invoice ID
-  const mockInvoiceId = Math.floor(Math.random() * 1000) + 1;
-  console.log('🎭 Generating mock invoice ID:', mockInvoiceId);
+  try {
+    const data = req.body;
 
-  // Simple mock response
-  const response = {
-    success: true,
-    message: 'Tạo hóa đơn thành công! (Simple Mock)',
-    data: {
-      invoice: {
-        id_hoa_don: mockInvoiceId,
-        id_khach: req.body.id_khach || 1,
-        loai_don: req.body.loai_don || 'tai_cho',
-        trang_thai: 'cho_xac_nhan',
-        tong_tien: req.body.tong_tien || 0,
-        ngay_tao: new Date().toISOString()
-      },
-      details: (req.body.cart_items || []).map((item, index) => ({
-        id_ct: index + 1,
-        id_hoa_don: mockInvoiceId,
-        id_mon: item.id || index + 1,
-        ten_mon: item.name || `Item ${index + 1}`,
-        so_luong: item.quantity || 1,
-        don_gia: item.price || 0
-      })),
-      id: mockInvoiceId
+    // Validate input data
+    const validationErrors = validateInvoiceData(data);
+    if (validationErrors.length > 0) {
+      console.log('❌ Validation errors:', validationErrors);
+      return res.status(400).json({
+        success: false,
+        message: 'Dữ liệu không hợp lệ',
+        errors: validationErrors
+      });
     }
-  };
 
-  console.log('✅ Sending response:', response);
-  res.status(201).json(response);
+    // Simulate database operations with mock data
+    console.log('🎭 Simulating database transaction...');
+
+    // Generate mock invoice ID (simulating AUTO_INCREMENT)
+    const mockHoaDonId = Math.floor(Math.random() * 1000) + 1;
+    console.log('✅ Mock hóa đơn created with ID:', mockHoaDonId);
+
+    // Simulate inserting cart items
+    const cartItems = data.cart_items || [];
+    const mockChiTietHoaDon = [];
+
+    for (let i = 0; i < cartItems.length; i++) {
+      const item = cartItems[i];
+      const itemPrice = item.price || 0;
+      const itemQuantity = item.quantity || 1;
+      const thanhTien = itemPrice * itemQuantity;
+
+      const mockChiTiet = {
+        id_ct: i + 1,
+        id_hoa_don: mockHoaDonId,
+        id_mon: item.id || 1,
+        so_luong: itemQuantity,
+        don_gia: itemPrice,
+        thanh_tien: thanhTien,
+        created_at: new Date().toISOString()
+      };
+
+      mockChiTietHoaDon.push(mockChiTiet);
+      console.log(`✅ Mock chi tiết created: ${item.name} x${itemQuantity} = ${thanhTien}đ`);
+    }
+
+    console.log('✅ Mock transaction completed successfully');
+
+    // Prepare response (simulating database structure)
+    const response = {
+      success: true,
+      message: 'Tạo hóa đơn thành công! (Mock Database)',
+      data: {
+        invoice: {
+          id_hoa_don: mockHoaDonId,
+          id_khach: data.id_khach || 1,
+          loai_don: data.loai_don || 'tai_cho',
+          trang_thai: 'cho_xac_nhan',
+          tong_tien: data.tong_tien || 0,
+          dia_chi_giao_hang: data.dia_chi_giao_hang || null,
+          ghi_chu: data.ghi_chu || null,
+          ngay_tao: new Date().toISOString()
+        },
+        details: cartItems.map((item, index) => ({
+          id_ct: index + 1,
+          id_hoa_don: mockHoaDonId,
+          id_mon: item.id || 1,
+          ten_mon: item.name || `Món ăn ${index + 1}`,
+          so_luong: item.quantity || 1,
+          don_gia: item.price || 0,
+          thanh_tien: (item.price || 0) * (item.quantity || 1)
+        })),
+        id: mockHoaDonId,
+        // Additional info for demo
+        database_simulation: {
+          hoa_don_table: {
+            id_hoa_don: mockHoaDonId,
+            id_khach: data.id_khach || 1,
+            ngay_tao: new Date().toISOString(),
+            loai_don: data.loai_don || 'tai_cho',
+            trang_thai: 'cho_xac_nhan',
+            tong_tien: data.tong_tien || 0,
+            dia_chi_giao_hang: data.dia_chi_giao_hang || null,
+            ghi_chu: data.ghi_chu || null
+          },
+          chi_tiet_hoa_don_table: mockChiTietHoaDon
+        }
+      }
+    };
+
+    console.log('✅ Mock database response prepared');
+    console.log('📊 Simulated hoa_don table insert:', response.data.database_simulation.hoa_don_table);
+    console.log('📊 Simulated chi_tiet_hoa_don table inserts:', response.data.database_simulation.chi_tiet_hoa_don_table.length, 'records');
+
+    res.status(201).json(response);
+
+  } catch (error) {
+    console.error('❌ Unexpected error in POST /api/hoadon:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server không xác định',
+      error: error.message
+    });
+  }
 });
 
 // GET /api/hoadon - Get all invoices with pagination and filters
