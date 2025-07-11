@@ -7,6 +7,7 @@ const categoryRoutes = require('./categoryRoutes');
 const foodRoutes = require('./foodRoutes');
 const chatRoutes = require('./chatRoutes');
 const customerRoutes = require('./customerRoutes');
+const datbanRoutes = require('./datban');
 
 /**
  * @swagger
@@ -168,5 +169,7 @@ router.use('/chat', chatRoutes);
 console.log('✅ Chat routes mounted');
 router.use('/khach_hang', customerRoutes);
 console.log('✅ Customer routes mounted');
+router.use('/datban', datbanRoutes);
+console.log('✅ Dat ban routes mounted');
 
 module.exports = router;
