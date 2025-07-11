@@ -8,6 +8,7 @@ const foodRoutes = require('./foodRoutes');
 const chatRoutes = require('./chatRoutes');
 const customerRoutes = require('./customerRoutes');
 const datbanRoutes = require('./datban');
+const hoadonRoutes = require('./hoadon');
 
 /**
  * @swagger
@@ -171,5 +172,7 @@ router.use('/khach_hang', customerRoutes);
 console.log('✅ Customer routes mounted');
 router.use('/datban', datbanRoutes);
 console.log('✅ Dat ban routes mounted');
+router.use('/hoadon', hoadonRoutes);
+console.log('✅ Hoa don routes mounted');
 
 module.exports = router;

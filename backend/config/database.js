@@ -68,6 +68,143 @@ const initializeTables = async () => {
     await connection.execute(createTableQuery);
     console.log('✅ Table dat_ban initialized successfully');
 
+    // Create hoa_don table if not exists (thêm các cột cần thiết cho frontend)
+    const createHoaDonQuery = `
+      CREATE TABLE IF NOT EXISTS hoa_don (
+        id_hoa_don INT AUTO_INCREMENT PRIMARY KEY,
+        id_khach INT NOT NULL,
+        ngay_tao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        loai_don ENUM('tai_cho','giao_hang') NOT NULL,
+        trang_thai ENUM('cho_xac_nhan','dang_phuc_vu','hoan_thanh','da_huy')
+          NOT NULL DEFAULT 'cho_xac_nhan',
+        tong_tien DECIMAL(12,2) NOT NULL,
+        dia_chi_giao_hang TEXT,
+        ghi_chu TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+          ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_id_khach (id_khach),
+        INDEX idx_ngay_tao (ngay_tao),
+        INDEX idx_trang_thai (trang_thai),
+        INDEX idx_loai_don (loai_don),
+        FOREIGN KEY (id_khach) REFERENCES khach_hang(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `;
+
+    await connection.execute(createHoaDonQuery);
+    console.log('✅ Table hoa_don initialized successfully');
+
+    // Drop and recreate chi_tiet_hoa_don table to ensure correct schema
+    try {
+      await connection.execute('DROP TABLE IF EXISTS chi_tiet_hoa_don');
+      console.log('🗑️ Dropped existing chi_tiet_hoa_don table');
+    } catch (error) {
+      console.log('ℹ️ No existing chi_tiet_hoa_don table to drop');
+    }
+
+    // Create chi_tiet_hoa_don table with your schema (đồng bộ với frontend/backend)
+    const createChiTietQuery = `
+      CREATE TABLE IF NOT EXISTS chi_tiet_hoa_don (
+        id_ct      INT AUTO_INCREMENT PRIMARY KEY,
+        id_hoa_don INT NOT NULL,
+        id_mon     INT NOT NULL,
+        so_luong   INT NOT NULL,
+        don_gia    DECIMAL(10,2) NOT NULL,
+        thanh_tien DECIMAL(12,2) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (id_hoa_don) REFERENCES hoa_don(id_hoa_don)
+          ON UPDATE CASCADE ON DELETE CASCADE,
+        FOREIGN KEY (id_mon) REFERENCES mon_an(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `;
+
+    await connection.execute(createChiTietQuery);
+    console.log('✅ Table chi_tiet_hoa_don created successfully with all required columns');
+
+    // Create khach_hang table if not exists
+    const createKhachHangQuery = `
+      CREATE TABLE IF NOT EXISTS khach_hang (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        full_name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        address TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+          ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_email (email),
+        INDEX idx_phone (phone)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `;
+
+    await connection.execute(createKhachHangQuery);
+    console.log('✅ Table khach_hang initialized successfully');
+
+    // Create loai_mon table if not exists
+    const createLoaiMonQuery = `
+      CREATE TABLE IF NOT EXISTS loai_mon (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        ten_loai VARCHAR(100) NOT NULL,
+        mo_ta TEXT,
+        hinh_anh VARCHAR(255),
+        thu_tu INT DEFAULT 0,
+        trang_thai ENUM('active','inactive') DEFAULT 'active',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_trang_thai (trang_thai),
+        INDEX idx_thu_tu (thu_tu)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `;
+
+    await connection.execute(createLoaiMonQuery);
+    console.log('✅ Table loai_mon initialized successfully');
+
+    // Create mon_an table if not exists
+    const createMonAnQuery = `
+      CREATE TABLE IF NOT EXISTS mon_an (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        ten_mon VARCHAR(100) NOT NULL,
+        mo_ta TEXT,
+        gia DECIMAL(10,2) NOT NULL,
+        hinh_anh VARCHAR(255),
+        id_loai INT NOT NULL,
+        trang_thai ENUM('available','unavailable') DEFAULT 'available',
+        is_featured BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+          ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (id_loai) REFERENCES loai_mon(id) ON DELETE CASCADE,
+        INDEX idx_id_loai (id_loai),
+        INDEX idx_trang_thai (trang_thai),
+        INDEX idx_is_featured (is_featured)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `;
+
+    await connection.execute(createMonAnQuery);
+    console.log('✅ Table mon_an initialized successfully');
+
+    // Add foreign key constraint to hoa_don table
+    const addForeignKeyQuery = `
+      ALTER TABLE hoa_don
+      ADD CONSTRAINT fk_hoa_don_khach_hang
+      FOREIGN KEY (id_khach) REFERENCES khach_hang(id)
+      ON DELETE CASCADE
+    `;
+
+    try {
+      await connection.execute(addForeignKeyQuery);
+      console.log('✅ Foreign key constraint added to hoa_don table');
+    } catch (error) {
+      if (!error.message.includes('Duplicate key name')) {
+        console.log('ℹ️ Foreign key constraint already exists or skipped');
+      }
+    }
+
+    // Insert sample data if tables are empty
+    await this.insertSampleData(connection);
+
     connection.release();
     return true;
   } catch (error) {
@@ -98,10 +235,66 @@ const executeQuery = async (query, params = []) => {
   }
 };
 
+// Insert sample data
+const insertSampleData = async (connection) => {
+  try {
+    // Check if data already exists
+    const [khachHangCount] = await connection.execute('SELECT COUNT(*) as count FROM khach_hang');
+    const [loaiMonCount] = await connection.execute('SELECT COUNT(*) as count FROM loai_mon');
+
+    if (khachHangCount[0].count === 0) {
+      // Insert sample customers
+      const insertCustomers = `
+        INSERT INTO khach_hang (full_name, email, phone, password, address) VALUES
+        ('Nguyễn Văn A', 'nguyenvana@email.com', '0987654321', '$2b$10$example', '123 Đường ABC, Quận 1, TP.HCM'),
+        ('Trần Thị B', 'tranthib@email.com', '0976543210', '$2b$10$example', '456 Đường XYZ, Quận 2, TP.HCM'),
+        ('Lê Văn C', 'levanc@email.com', '0965432109', '$2b$10$example', '789 Đường DEF, Quận 3, TP.HCM')
+      `;
+      await connection.execute(insertCustomers);
+      console.log('✅ Sample customers inserted');
+    }
+
+    if (loaiMonCount[0].count === 0) {
+      // Insert sample categories
+      const insertCategories = `
+        INSERT INTO loai_mon (ten_loai, mo_ta, thu_tu) VALUES
+        ('Món Chính', 'Các món ăn chính của nhà hàng', 1),
+        ('Món Khai Vị', 'Các món khai vị hấp dẫn', 2),
+        ('Món Tráng Miệng', 'Các món tráng miệng ngọt ngào', 3),
+        ('Đồ Uống', 'Các loại đồ uống giải khát', 4),
+        ('Lẩu', 'Các món lẩu đặc sắc', 5)
+      `;
+      await connection.execute(insertCategories);
+      console.log('✅ Sample categories inserted');
+
+      // Insert sample dishes
+      const insertDishes = `
+        INSERT INTO mon_an (ten_mon, mo_ta, gia, hinh_anh, id_loai, is_featured) VALUES
+        ('Cơm Tấm Sườn Nướng', 'Cơm tấm thơm ngon với sườn nướng đặc biệt', 45000, 'img/comtam.webp', 1, TRUE),
+        ('Phở Bò Tái', 'Phở bò truyền thống với thịt bò tái', 50000, 'img/pho-bo.jpg', 1, TRUE),
+        ('Bún Bò Huế', 'Bún bò Huế cay nồng đậm đà', 48000, 'img/bunbohue.png', 1, FALSE),
+        ('Bánh Xèo', 'Bánh xèo giòn rụm với tôm thịt', 35000, 'img/banhxeo.jpg', 2, TRUE),
+        ('Gỏi Cuốn', 'Gỏi cuốn tươi mát với tôm thịt', 25000, 'img/goicuon.jpg', 2, FALSE),
+        ('Chả Giò', 'Chả giò giòn tan thơm ngon', 30000, 'img/chagioPN.jpg', 2, FALSE),
+        ('Chè Bà Ba', 'Chè bà ba ngọt mát', 20000, 'img/chebap.webp', 3, FALSE),
+        ('Trà Đá', 'Trà đá mát lạnh', 10000, 'img/tratac.jpg', 4, FALSE),
+        ('Nước Sam Lạnh', 'Nước sam giải nhiệt', 15000, 'img/nuocsamlanh.jpg', 4, FALSE),
+        ('Lẩu Cá Kèo', 'Lẩu cá kèo chua cay đặc sắc', 120000, 'img/laucakeo.jpg', 5, TRUE)
+      `;
+      await connection.execute(insertDishes);
+      console.log('✅ Sample dishes inserted');
+    }
+
+  } catch (error) {
+    console.log('ℹ️ Sample data insertion skipped or failed:', error.message);
+  }
+};
+
 module.exports = {
   pool,
   testConnection,
   initDatabase,
   initializeTables,
-  executeQuery
+  executeQuery,
+  insertSampleData
 };

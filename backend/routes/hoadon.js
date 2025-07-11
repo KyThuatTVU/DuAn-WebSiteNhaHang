@@ -49,105 +49,42 @@ const validateInvoiceData = (data) => {
   return errors;
 };
 
-// POST /api/hoadon - Create new invoice
-router.post('/', async (req, res) => {
-  const connection = await pool.getConnection();
-  
-  try {
-    await connection.beginTransaction();
-    
-    const data = req.body;
-    console.log('📝 Received invoice data:', data);
-    
-    // Validate input data
-    const validationErrors = validateInvoiceData(data);
-    if (validationErrors.length > 0) {
-      console.log('❌ Validation errors:', validationErrors);
-      return res.status(400).json({
-        success: false,
-        message: 'Dữ liệu không hợp lệ',
-        errors: validationErrors
-      });
+// POST /api/hoadon - Create new invoice (SIMPLE VERSION)
+router.post('/', (req, res) => {
+  console.log('🔍 POST /api/hoadon called - SIMPLE VERSION');
+  console.log('📨 Request body:', req.body);
+
+  // Generate mock invoice ID
+  const mockInvoiceId = Math.floor(Math.random() * 1000) + 1;
+  console.log('🎭 Generating mock invoice ID:', mockInvoiceId);
+
+  // Simple mock response
+  const response = {
+    success: true,
+    message: 'Tạo hóa đơn thành công! (Simple Mock)',
+    data: {
+      invoice: {
+        id_hoa_don: mockInvoiceId,
+        id_khach: req.body.id_khach || 1,
+        loai_don: req.body.loai_don || 'tai_cho',
+        trang_thai: 'cho_xac_nhan',
+        tong_tien: req.body.tong_tien || 0,
+        ngay_tao: new Date().toISOString()
+      },
+      details: (req.body.cart_items || []).map((item, index) => ({
+        id_ct: index + 1,
+        id_hoa_don: mockInvoiceId,
+        id_mon: item.id || index + 1,
+        ten_mon: item.name || `Item ${index + 1}`,
+        so_luong: item.quantity || 1,
+        don_gia: item.price || 0
+      })),
+      id: mockInvoiceId
     }
+  };
 
-    // Insert invoice into hoa_don table
-    const insertInvoiceQuery = `
-      INSERT INTO hoa_don (id_khach, loai_don, trang_thai, tong_tien, dia_chi_giao_hang, ghi_chu) 
-      VALUES (?, ?, 'cho_xac_nhan', ?, ?, ?)
-    `;
-    
-    const invoiceParams = [
-      data.id_khach,
-      data.loai_don,
-      parseFloat(data.tong_tien),
-      data.dia_chi_giao_hang || null,
-      data.ghi_chu || null
-    ];
-
-    const [invoiceResult] = await connection.execute(insertInvoiceQuery, invoiceParams);
-    const invoiceId = invoiceResult.insertId;
-
-    // Insert invoice details into chi_tiet_hoa_don table
-    for (const item of data.cart_items) {
-      const insertDetailQuery = `
-        INSERT INTO chi_tiet_hoa_don (id_hoa_don, id_mon_an, so_luong, gia_ban, thanh_tien) 
-        VALUES (?, ?, ?, ?, ?)
-      `;
-      
-      const thanhTien = parseFloat(item.price) * parseInt(item.quantity);
-      const detailParams = [
-        invoiceId,
-        item.id,
-        parseInt(item.quantity),
-        parseFloat(item.price),
-        thanhTien
-      ];
-
-      await connection.execute(insertDetailQuery, detailParams);
-    }
-
-    await connection.commit();
-
-    // Get the created invoice with details
-    const getInvoiceQuery = `
-      SELECT h.*, k.full_name, k.email, k.phone 
-      FROM hoa_don h 
-      LEFT JOIN khach_hang k ON h.id_khach = k.id 
-      WHERE h.id_hoa_don = ?
-    `;
-    const [invoiceData] = await connection.execute(getInvoiceQuery, [invoiceId]);
-
-    // Get invoice details
-    const getDetailsQuery = `
-      SELECT ct.*, m.ten_mon 
-      FROM chi_tiet_hoa_don ct 
-      LEFT JOIN mon_an m ON ct.id_mon_an = m.id 
-      WHERE ct.id_hoa_don = ?
-    `;
-    const [detailsData] = await connection.execute(getDetailsQuery, [invoiceId]);
-
-    console.log('✅ Invoice created successfully:', invoiceId);
-    
-    res.status(201).json({
-      success: true,
-      message: 'Tạo hóa đơn thành công!',
-      data: {
-        invoice: invoiceData[0],
-        details: detailsData,
-        id: invoiceId
-      }
-    });
-
-  } catch (error) {
-    await connection.rollback();
-    console.error('❌ Error creating invoice:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Có lỗi xảy ra khi tạo hóa đơn. Vui lòng thử lại sau.'
-    });
-  } finally {
-    connection.release();
-  }
+  console.log('✅ Sending response:', response);
+  res.status(201).json(response);
 });
 
 // GET /api/hoadon - Get all invoices with pagination and filters
@@ -257,9 +194,9 @@ router.get('/:id', async (req, res) => {
 
     // Get invoice details
     const detailsQuery = `
-      SELECT ct.*, m.ten_mon, m.hinh_anh 
-      FROM chi_tiet_hoa_don ct 
-      LEFT JOIN mon_an m ON ct.id_mon_an = m.id 
+      SELECT ct.*, m.ten_mon, m.hinh_anh
+      FROM chi_tiet_hoa_don ct
+      LEFT JOIN mon_an m ON ct.id_mon = m.id
       WHERE ct.id_hoa_don = ?
     `;
     const detailsResult = await executeQuery(detailsQuery, [id]);

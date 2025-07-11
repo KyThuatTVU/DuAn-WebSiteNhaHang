@@ -47,27 +47,47 @@ const auth = {
 
     // Xóa tất cả dữ liệu auth
     clearAuthData() {
+        // Xóa tất cả keys liên quan đến auth
         localStorage.removeItem('user');
         localStorage.removeItem('userData');
+        localStorage.removeItem('loggedInUser');
+        localStorage.removeItem('customerData');
         localStorage.removeItem('authTimestamp');
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('tokenTimestamp');
+
+        // Clear cart data khi logout
+        localStorage.removeItem('cartData');
+        localStorage.removeItem('cart');
+
         this.isAuthenticated = false;
         this.user = null;
         this.stopActivityTracking();
         this.stopTokenRefresh();
+
+        console.log('🗑️ All auth data cleared including payment compatibility keys');
     },
 
     // Lưu user data (không cần token nữa)
     saveUserData(userData) {
         const timestamp = Date.now().toString();
-        // Lưu cả 2 format để tương thích với tất cả components
+        // Lưu cả nhiều format để tương thích với tất cả components
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('userData', JSON.stringify(userData));
+        localStorage.setItem('loggedInUser', JSON.stringify(userData)); // Cho payment.js
+        localStorage.setItem('customerData', JSON.stringify(userData)); // Cho payment.js
         localStorage.setItem('authTimestamp', timestamp);
+
         console.log('💾 User data saved with timestamp:', timestamp);
-        console.log('💾 User data saved for ThanhToan.html compatibility (NO TOKEN)');
+        console.log('💾 User data saved for ThanhToan.html compatibility');
+        console.log('💾 Saved keys: user, userData, loggedInUser, customerData');
+        console.log('💾 User info:', {
+            id: userData.id,
+            name: userData.full_name || userData.name,
+            email: userData.email,
+            phone: userData.phone
+        });
     },
 
     // Lưu auth data với timestamp (unified format) - DEPRECATED
