@@ -39,7 +39,12 @@
 
             <!-- Giỏ hàng -->
             <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">Chi Tiết Đơn Hàng</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-700">Chi Tiết Đơn Hàng</h2>
+                    <button onclick="debugReloadCart()" class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
+                        <i class="fas fa-sync-alt mr-1"></i> Reload Cart
+                    </button>
+                </div>
                 <div id="cartItems" class="space-y-3">
                     <!-- Items will be loaded here -->
                 </div>
@@ -88,12 +93,84 @@
                               placeholder="Nhập địa chỉ giao hàng chi tiết..."></textarea>
                 </div>
 
+                <!-- Phương thức thanh toán -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">Phương Thức Thanh Toán</h3>
+                    <div class="space-y-3">
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="paymentMethod" value="cash" checked class="mr-3">
+                            <i class="fas fa-money-bill-wave text-green-600 mr-3"></i>
+                            <div>
+                                <span class="font-medium">Thanh toán tiền mặt</span>
+                                <p class="text-sm text-gray-500">Thanh toán khi nhận hàng</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="paymentMethod" value="bank_transfer" class="mr-3">
+                            <i class="fas fa-university text-blue-600 mr-3"></i>
+                            <div>
+                                <span class="font-medium">Chuyển khoản ngân hàng</span>
+                                <p class="text-sm text-gray-500">Chuyển khoản trước khi nhận hàng</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Thông tin chuyển khoản -->
+                <div id="bankTransferSection" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-blue-800 mb-3">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Thông Tin Chuyển Khoản
+                    </h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Ngân hàng:</span>
+                            <span class="font-medium">Vietcombank</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Số tài khoản:</span>
+                            <span class="font-medium">1234567890</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Chủ tài khoản:</span>
+                            <span class="font-medium">Nhà Hàng Ẩm Thực Phương Nam</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Nội dung:</span>
+                            <span class="font-medium" id="transferContent">HD000001 - Tên khách hàng</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Số tiền:</span>
+                            <span class="font-bold text-red-600" id="transferAmount">0đ</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                        <p class="text-sm text-yellow-800">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Lưu ý:</strong> Vui lòng chuyển khoản đúng số tiền và nội dung.
+                            Đơn hàng sẽ được xử lý sau khi nhận được thanh toán.
+                        </p>
+                    </div>
+
+                    <!-- Upload ảnh chuyển khoản -->
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-camera mr-2"></i>
+                            Tải lên ảnh chuyển khoản (tùy chọn)
+                        </label>
+                        <input type="file" id="transferProof" accept="image/*"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)</p>
+                    </div>
+                </div>
+
                 <!-- Ghi chú -->
                 <div>
                     <label for="orderNotes" class="block text-sm font-medium text-gray-700 mb-2">
                         Ghi chú đơn hàng (tùy chọn)
                     </label>
-                    <textarea id="orderNotes" name="orderNotes" rows="3" 
+                    <textarea id="orderNotes" name="orderNotes" rows="3"
                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                               placeholder="Ghi chú về đơn hàng..."></textarea>
                 </div>
@@ -430,6 +507,7 @@
                 const orderType = formData.get('orderType');
                 const deliveryAddress = formData.get('deliveryAddress');
                 const orderNotes = formData.get('orderNotes');
+                const paymentMethod = formData.get('paymentMethod');
 
                 // Calculate totals from real cart data
                 const subtotal = cartItems.reduce((sum, item) => {
@@ -454,7 +532,9 @@
                     tong_tien: total,
                     dia_chi_giao_hang: deliveryAddress || null,
                     ghi_chu: orderNotes || null,
-                    cart_items: normalizedCartItems
+                    cart_items: normalizedCartItems,
+                    payment_method: paymentMethod,
+                    payment_status: paymentMethod === 'bank_transfer' ? 'pending_approval' : 'completed'
                 };
 
                 console.log('🚀 Submitting payment:', paymentData);
@@ -544,6 +624,40 @@
             }
         });
 
+        // Handle payment method change
+        function handlePaymentMethodChange() {
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            const bankTransferSection = document.getElementById('bankTransferSection');
+            const submitBtn = document.getElementById('submitOrderBtn');
+
+            if (paymentMethod === 'bank_transfer') {
+                bankTransferSection.classList.remove('hidden');
+                submitBtn.innerHTML = '<i class="fas fa-university mr-2"></i>Xác Nhận Đặt Hàng (Chuyển Khoản)';
+
+                // Update transfer content and amount
+                updateTransferInfo();
+            } else {
+                bankTransferSection.classList.add('hidden');
+                submitBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Xác Nhận Thanh Toán';
+            }
+        }
+
+        // Update transfer information
+        function updateTransferInfo() {
+            const transferContent = document.getElementById('transferContent');
+            const transferAmount = document.getElementById('transferAmount');
+
+            if (transferContent && customerInfo) {
+                const invoiceNumber = `HD${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
+                transferContent.textContent = `${invoiceNumber} - ${customerInfo.full_name || customerInfo.name || 'Khách hàng'}`;
+            }
+
+            if (transferAmount) {
+                const total = calculateTotal();
+                transferAmount.textContent = formatCurrency(total);
+            }
+        }
+
         // Initialize with real data
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🔍 Payment page initializing...');
@@ -561,8 +675,51 @@
             loadCartItems();
             updateTotals();
 
+            // Setup event listeners
+            setupEventListeners();
+
             console.log('✅ Payment page initialized with real data');
         });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Payment method change
+            document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+                radio.addEventListener('change', handlePaymentMethodChange);
+            });
+
+            // Order type change (existing)
+            document.querySelectorAll('input[name="orderType"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const deliverySection = document.getElementById('deliveryAddressSection');
+                    if (this.value === 'giao_hang') {
+                        deliverySection.classList.remove('hidden');
+                    } else {
+                        deliverySection.classList.add('hidden');
+                    }
+                    updateTotals();
+                });
+            });
+        }
+
+        // Debug function to reload cart
+        function debugReloadCart() {
+            console.log('🔄 Debug: Reloading cart...');
+            console.log('📋 Current localStorage keys:', Object.keys(localStorage));
+            console.log('🛒 cartData:', localStorage.getItem('cartData'));
+            console.log('🛒 cart:', localStorage.getItem('cart'));
+            console.log('🛒 userCart:', localStorage.getItem('userCart'));
+
+            // Reload PaymentManager
+            if (window.paymentManager) {
+                window.paymentManager.cartData = window.paymentManager.getCartData();
+                window.paymentManager.displayCartSummary();
+                window.paymentManager.calculateTotal();
+            }
+
+            // Reload cart items
+            loadCartItems();
+        }
     </script>
 </body>
 </html>

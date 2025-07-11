@@ -25,17 +25,29 @@ class PaymentManager {
 
     getCartData() {
         // Try multiple keys to get cart data
-        const keys = ['cartData', 'cart'];
+        const keys = ['cartData', 'cart', 'userCart'];
+
+        console.log('🔍 Searching for cart data in localStorage...');
+        console.log('📋 Available localStorage keys:', Object.keys(localStorage));
 
         for (const key of keys) {
             const data = localStorage.getItem(key);
+            console.log(`🔍 Checking key "${key}":`, data ? 'Found data' : 'No data');
+
             if (data) {
                 try {
                     const cartData = JSON.parse(data);
+                    console.log(`📦 Parsed data for "${key}":`, cartData);
+
                     if (Array.isArray(cartData) && cartData.length > 0) {
-                        console.log(`✅ Found cart data in localStorage key: ${key}`);
+                        console.log(`✅ Found valid cart data in localStorage key: ${key}`);
                         console.log('🛒 Cart items:', cartData.length);
+                        console.log('📝 Cart details:', cartData);
                         return cartData;
+                    } else if (Array.isArray(cartData)) {
+                        console.log(`⚠️ Found empty cart array in key: ${key}`);
+                    } else {
+                        console.log(`⚠️ Data in key "${key}" is not an array:`, typeof cartData);
                     }
                 } catch (error) {
                     console.warn(`⚠️ Error parsing cart data from ${key}:`, error);
@@ -47,14 +59,17 @@ class PaymentManager {
         const urlParams = new URLSearchParams(window.location.search);
         const cartParam = urlParams.get('cart');
         if (cartParam) {
+            console.log('🔍 Found cart parameter in URL:', cartParam);
             try {
-                return JSON.parse(decodeURIComponent(cartParam));
+                const urlCartData = JSON.parse(decodeURIComponent(cartParam));
+                console.log('📦 Parsed URL cart data:', urlCartData);
+                return urlCartData;
             } catch (error) {
                 console.warn('⚠️ Error parsing cart from URL:', error);
             }
         }
 
-        console.log('❌ No cart data found');
+        console.log('❌ No cart data found in localStorage or URL');
         return [];
     }
 
@@ -88,8 +103,14 @@ class PaymentManager {
     }
 
     displayCartSummary() {
+        console.log('🎯 displayCartSummary called');
+        console.log('📦 Current cartData:', this.cartData);
+
         const cartContainer = document.getElementById('cartSummary');
+        console.log('🎯 Cart container found:', !!cartContainer);
+
         if (!cartContainer || !this.cartData || this.cartData.length === 0) {
+            console.log('⚠️ Cart is empty or container not found');
             if (cartContainer) {
                 cartContainer.innerHTML = '<p class="text-center text-gray-500">Giỏ hàng trống</p>';
             }
@@ -365,15 +386,30 @@ class PaymentManager {
         document.querySelectorAll('.error-message').forEach(error => error.remove());
         document.querySelectorAll('.border-red-500').forEach(field => field.classList.remove('border-red-500'));
 
+        // Validate cart first - reload if empty
+        if (!this.cartData || this.cartData.length === 0) {
+            console.log('🔄 Cart is empty, attempting to reload cart data...');
+            this.cartData = this.getCartData();
+
+            if (!this.cartData || this.cartData.length === 0) {
+                // Show user-friendly message with redirect option
+                const confirmRedirect = confirm('Giỏ hàng trống! Bạn có muốn quay lại Menu để thêm món ăn không?');
+                if (confirmRedirect) {
+                    window.location.href = 'Menu-new.html';
+                    return false;
+                }
+                this.showMessage('Giỏ hàng trống! Vui lòng thêm món ăn trước khi thanh toán.', 'error');
+                return false;
+            } else {
+                // Cart data found, refresh display
+                this.displayCartSummary();
+                this.calculateTotal();
+            }
+        }
+
         // Must be logged in to proceed
         if (!this.customerData) {
             this.showMessage('Vui lòng đăng nhập từ trang Menu trước khi thanh toán', 'error');
-            return false;
-        }
-
-        // Validate cart
-        if (!this.cartData || this.cartData.length === 0) {
-            this.showMessage('Giỏ hàng trống! Vui lòng thêm món ăn trước khi thanh toán.', 'error');
             return false;
         }
 

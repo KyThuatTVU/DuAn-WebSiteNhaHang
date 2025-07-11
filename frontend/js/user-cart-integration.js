@@ -480,10 +480,12 @@ class UserCartIntegration {
         // Save cart data for payment page (multiple keys for compatibility)
         localStorage.setItem('cartData', JSON.stringify(this.cartData));
         localStorage.setItem('cart', JSON.stringify(this.cartData));
+        localStorage.setItem('userCart', JSON.stringify(this.cartData));
 
-        console.log('💾 Cart data saved to localStorage with keys: cartData, cart');
+        console.log('💾 Cart data saved to localStorage with keys: cartData, cart, userCart');
         console.log('🔍 Verification - cartData:', localStorage.getItem('cartData'));
         console.log('🔍 Verification - cart:', localStorage.getItem('cart'));
+        console.log('🔍 Verification - userCart:', localStorage.getItem('userCart'));
 
         // Save customer data if logged in (multiple keys for compatibility)
         if (this.userData) {

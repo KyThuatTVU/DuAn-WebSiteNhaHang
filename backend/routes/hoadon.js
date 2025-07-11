@@ -101,6 +101,12 @@ router.post('/', async (req, res) => {
 
     console.log('✅ Mock transaction completed successfully');
 
+    // Determine status based on payment method
+    let trangThai = 'cho_xac_nhan';
+    if (data.payment_method === 'bank_transfer') {
+      trangThai = data.payment_status === 'pending_approval' ? 'cho_duyet' : 'cho_xac_nhan';
+    }
+
     // Prepare response (simulating database structure)
     const response = {
       success: true,
@@ -110,10 +116,12 @@ router.post('/', async (req, res) => {
           id_hoa_don: mockHoaDonId,
           id_khach: data.id_khach || 1,
           loai_don: data.loai_don || 'tai_cho',
-          trang_thai: 'cho_xac_nhan',
+          trang_thai: trangThai,
           tong_tien: data.tong_tien || 0,
           dia_chi_giao_hang: data.dia_chi_giao_hang || null,
           ghi_chu: data.ghi_chu || null,
+          payment_method: data.payment_method || 'cash',
+          payment_status: data.payment_status || 'completed',
           ngay_tao: new Date().toISOString()
         },
         details: cartItems.map((item, index) => ({
@@ -339,6 +347,56 @@ router.put('/:id/status', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Có lỗi xảy ra khi cập nhật trạng thái'
+    });
+  }
+});
+
+// PUT /api/hoadon/:id/approve - Admin approve invoice
+router.put('/:id/approve', async (req, res) => {
+  console.log('🔍 PUT /api/hoadon/:id/approve called with ID:', req.params.id);
+  console.log('📨 Request body:', req.body);
+
+  try {
+    const invoiceId = parseInt(req.params.id);
+    const { action } = req.body; // 'approve' or 'reject'
+
+    // Mock approval process
+    console.log(`🎭 Mock ${action} invoice ID:`, invoiceId);
+
+    let newStatus = 'cho_xac_nhan';
+    let message = 'Hóa đơn đã được xử lý';
+
+    if (action === 'approve') {
+      newStatus = 'da_duyet';
+      message = 'Hóa đơn đã được duyệt thành công!';
+    } else if (action === 'reject') {
+      newStatus = 'da_huy';
+      message = 'Hóa đơn đã bị từ chối!';
+    }
+
+    console.log(`✅ Mock invoice ${invoiceId} status changed to:`, newStatus);
+
+    const response = {
+      success: true,
+      message: message,
+      data: {
+        id_hoa_don: invoiceId,
+        trang_thai: newStatus,
+        updated_at: new Date().toISOString(),
+        approved_by: 'admin', // Mock admin user
+        action: action
+      }
+    };
+
+    console.log('✅ Approval response prepared:', response);
+    res.json(response);
+
+  } catch (error) {
+    console.error('❌ Error in PUT /api/hoadon/:id/approve:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi xử lý duyệt hóa đơn',
+      error: error.message
     });
   }
 });

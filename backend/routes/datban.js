@@ -21,8 +21,7 @@ const validateReservationData = (data) => {
   if (!data.sdt) {
     errors.push('Số điện thoại là bắt buộc');
   }
-  // Loại bỏ dấu cách, dấu chấm, dấu gạch ngang trước khi kiểm tra
-  const phone = data.sdt ? data.sdt.replace(/\s|\.|-/g, '') : '';
+  const phone = data.sdt ? data.sdt.replace(/\s/g, '') : '';
   if (phone && !/^[0-9]{10,11}$/.test(phone)) {
     errors.push('Số điện thoại phải có 10-11 chữ số');
   }

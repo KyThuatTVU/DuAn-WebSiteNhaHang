@@ -48,6 +48,16 @@
             color: #991b1b;
         }
 
+        .status-pending-approval {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-approved {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
         .filter-btn {
             transition: all 0.2s ease;
         }
@@ -352,7 +362,9 @@
                             })),
                             total: invoice.tong_tien || invoice.total || 0,
                             orderType: invoice.loai_don === 'giao_hang' ? 'delivery' : 'dine-in',
-                            status: invoice.trang_thai === 'cho_xac_nhan' ? 'confirmed' : 'pending',
+                            status: mapInvoiceStatus(invoice.trang_thai),
+                            payment_method: invoice.payment_method || 'cash',
+                            payment_status: invoice.payment_status || 'completed',
                             createdAt: invoice.ngay_tao || paymentInvoice.timestamp || new Date().toISOString(),
                             address: invoice.dia_chi_giao_hang || null,
                             notes: invoice.ghi_chu || null
@@ -595,10 +607,21 @@
                                 class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
                             <i class="fas fa-eye mr-1"></i>Xem
                         </button>
-                        <button onclick="event.stopPropagation(); printInvoice('${invoice.id}')"
-                                class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors">
-                            <i class="fas fa-print mr-1"></i>In
-                        </button>
+                        ${invoice.status === 'pending-approval' ? `
+                            <button onclick="event.stopPropagation(); approveInvoice('${invoice.id}')"
+                                    class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
+                                <i class="fas fa-check mr-1"></i>Duyệt
+                            </button>
+                            <button onclick="event.stopPropagation(); rejectInvoice('${invoice.id}')"
+                                    class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
+                                <i class="fas fa-times mr-1"></i>Từ chối
+                            </button>
+                        ` : `
+                            <button onclick="event.stopPropagation(); printInvoice('${invoice.id}')"
+                                    class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors">
+                                <i class="fas fa-print mr-1"></i>In
+                            </button>
+                        `}
                     </div>
                 </div>
             `;
@@ -606,10 +629,25 @@
             return card;
         }
 
+        // Map invoice status from backend to frontend
+        function mapInvoiceStatus(backendStatus) {
+            switch (backendStatus) {
+                case 'cho_duyet': return 'pending-approval';
+                case 'da_duyet': return 'approved';
+                case 'cho_xac_nhan': return 'confirmed';
+                case 'dang_phuc_vu': return 'confirmed';
+                case 'hoan_thanh': return 'completed';
+                case 'da_huy': return 'cancelled';
+                default: return 'pending';
+            }
+        }
+
         // Helper functions for status
         function getStatusClass(status) {
             switch (status) {
                 case 'pending': return 'status-pending';
+                case 'pending-approval': return 'status-pending-approval';
+                case 'approved': return 'status-approved';
                 case 'confirmed': return 'status-confirmed';
                 case 'completed': return 'status-completed';
                 case 'cancelled': return 'status-cancelled';
@@ -620,6 +658,8 @@
         function getStatusText(status) {
             switch (status) {
                 case 'pending': return 'Chờ xác nhận';
+                case 'pending-approval': return 'Chờ duyệt';
+                case 'approved': return 'Đã duyệt';
                 case 'confirmed': return 'Đã xác nhận';
                 case 'completed': return 'Hoàn thành';
                 case 'cancelled': return 'Đã hủy';
@@ -630,6 +670,8 @@
         function getStatusIcon(status) {
             switch (status) {
                 case 'pending': return 'fa-clock';
+                case 'pending-approval': return 'fa-hourglass-half';
+                case 'approved': return 'fa-check-circle';
                 case 'confirmed': return 'fa-check-circle';
                 case 'completed': return 'fa-check-double';
                 case 'cancelled': return 'fa-times-circle';
@@ -658,6 +700,87 @@
                         printWindow.print();
                     }, 1000);
                 };
+            }
+        }
+
+        // Approve invoice
+        async function approveInvoice(invoiceId) {
+            if (!confirm('Bạn có chắc chắn muốn duyệt hóa đơn này?')) {
+                return;
+            }
+
+            try {
+                console.log('🔍 Approving invoice:', invoiceId);
+                const response = await fetch(`http://localhost:3000/api/hoadon/${invoiceId}/approve`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ action: 'approve' })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Invoice approved:', result);
+
+                    // Update invoice status in local data
+                    updateInvoiceStatus(invoiceId, 'approved');
+
+                    alert('Hóa đơn đã được duyệt thành công!');
+
+                    // Refresh the list
+                    loadInvoices();
+                } else {
+                    throw new Error('Failed to approve invoice');
+                }
+            } catch (error) {
+                console.error('❌ Error approving invoice:', error);
+                alert('Có lỗi xảy ra khi duyệt hóa đơn. Vui lòng thử lại.');
+            }
+        }
+
+        // Reject invoice
+        async function rejectInvoice(invoiceId) {
+            if (!confirm('Bạn có chắc chắn muốn từ chối hóa đơn này?')) {
+                return;
+            }
+
+            try {
+                console.log('🔍 Rejecting invoice:', invoiceId);
+                const response = await fetch(`http://localhost:3000/api/hoadon/${invoiceId}/approve`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ action: 'reject' })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Invoice rejected:', result);
+
+                    // Update invoice status in local data
+                    updateInvoiceStatus(invoiceId, 'cancelled');
+
+                    alert('Hóa đơn đã bị từ chối!');
+
+                    // Refresh the list
+                    loadInvoices();
+                } else {
+                    throw new Error('Failed to reject invoice');
+                }
+            } catch (error) {
+                console.error('❌ Error rejecting invoice:', error);
+                alert('Có lỗi xảy ra khi từ chối hóa đơn. Vui lòng thử lại.');
+            }
+        }
+
+        // Update invoice status in local data
+        function updateInvoiceStatus(invoiceId, newStatus) {
+            const invoice = allInvoices.find(inv => inv.id == invoiceId);
+            if (invoice) {
+                invoice.status = newStatus;
+                saveInvoiceHistory();
             }
         }
 
