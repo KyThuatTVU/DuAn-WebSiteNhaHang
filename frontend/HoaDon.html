@@ -213,6 +213,21 @@
                         <p class="text-sm text-gray-600">Hóa đơn được tạo tự động bởi hệ thống</p>
                     </div>
                 </div>
+
+                <!-- Transfer Proof Section -->
+                <div id="transferProofSection" class="hidden mt-6 pt-4 border-t border-gray-300">
+                    <h4 class="text-md font-semibold text-gray-800 mb-3">
+                        <i class="fas fa-image text-blue-600 mr-2"></i>Hình Ảnh Chuyển Khoản
+                    </h4>
+                    <div class="bg-white rounded-lg border border-gray-200 p-4">
+                        <div class="text-center">
+                            <img id="transferProofImage" src="" alt="Hình ảnh chuyển khoản"
+                                 class="max-w-full max-h-64 object-contain mx-auto rounded-lg border border-gray-300"
+                                 onclick="openImageModal(this.src)">
+                            <p class="text-xs text-gray-500 mt-2">Click vào hình ảnh để xem kích thước đầy đủ</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -247,6 +262,16 @@
             <button onclick="goToHome()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                 Về Trang Chủ
             </button>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div class="relative max-w-4xl max-h-[90vh] mx-4">
+            <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="modalImage" src="" alt="Hình ảnh chuyển khoản" class="max-w-full max-h-full object-contain rounded-lg">
         </div>
     </div>
 
@@ -304,13 +329,21 @@
                 const orderData = localStorage.getItem('currentOrder');
                 const customerData = localStorage.getItem('checkoutCustomerInfo');
 
+                console.log('🔍 Loading invoice data...');
+                console.log('📋 Order data:', orderData ? 'Found' : 'Not found');
+                console.log('👤 Customer data:', customerData ? 'Found' : 'Not found');
+
                 if (!orderData) {
+                    console.error('❌ No order data found');
                     showError();
                     return;
                 }
 
                 const order = JSON.parse(orderData);
                 const customer = customerData ? JSON.parse(customerData) : null;
+
+                console.log('✅ Parsed order:', order);
+                console.log('✅ Parsed customer:', customer);
 
                 // Populate invoice data
                 populateInvoiceData(order, customer);
@@ -319,43 +352,64 @@
                 document.getElementById('loadingState').style.display = 'none';
 
             } catch (error) {
-                console.error('Error loading invoice data:', error);
+                console.error('❌ Error loading invoice data:', error);
                 showError();
             }
         }
 
         // Populate invoice with order data
         function populateInvoiceData(order, customer) {
-            // Generate invoice number and date
-            const invoiceNumber = generateInvoiceNumber();
-            const currentDate = new Date().toISOString();
+            // Use invoice number from order or generate new one
+            const invoiceNumber = order.invoiceNumber || generateInvoiceNumber();
+            const invoiceDate = order.createdAt || new Date().toISOString();
 
             // Set invoice header
             document.getElementById('invoiceNumber').textContent = invoiceNumber;
-            document.getElementById('invoiceDate').textContent = formatDate(currentDate);
+            document.getElementById('invoiceDate').textContent = formatDate(invoiceDate);
 
-            // Set status badge
+            // Set status badge based on order status
             const statusElement = document.getElementById('invoiceStatus');
+            let statusClass = 'status-confirmed';
+            let statusIcon = 'fa-check-circle';
+            let statusText = 'Đã xác nhận';
+
+            if (order.status === 'pending-approval' || order.paymentStatus === 'pending') {
+                statusClass = 'status-pending';
+                statusIcon = 'fa-clock';
+                statusText = 'Chờ duyệt';
+            } else if (order.status === 'completed') {
+                statusClass = 'status-completed';
+                statusIcon = 'fa-check-double';
+                statusText = 'Hoàn thành';
+            } else if (order.status === 'cancelled') {
+                statusClass = 'status-cancelled';
+                statusIcon = 'fa-times-circle';
+                statusText = 'Đã hủy';
+            }
+
             statusElement.innerHTML = `
-                <span class="status-badge status-confirmed">
-                    <i class="fas fa-check-circle mr-1"></i>Đã xác nhận
+                <span class="status-badge ${statusClass}">
+                    <i class="fas ${statusIcon} mr-1"></i>${statusText}
                 </span>
             `;
 
             // Set customer info
-            if (customer) {
-                document.getElementById('customerName').textContent = customer.full_name || customer.name || 'Khách hàng';
-                document.getElementById('customerEmail').textContent = customer.email || '-';
-                document.getElementById('customerPhone').textContent = customer.phone || '-';
+            const customerInfo = order.customerInfo || customer;
+            if (customerInfo) {
+                document.getElementById('customerName').textContent = customerInfo.full_name || customerInfo.name || 'Khách hàng';
+                document.getElementById('customerEmail').textContent = customerInfo.email || '-';
+                document.getElementById('customerPhone').textContent = customerInfo.phone || '-';
             } else {
                 document.getElementById('customerName').textContent = 'Khách hàng';
+                document.getElementById('customerEmail').textContent = '-';
+                document.getElementById('customerPhone').textContent = '-';
             }
 
             // Set order type and delivery info
-            const orderType = order.orderType || 'tai_cho';
-            document.getElementById('orderType').textContent = orderType === 'giao_hang' ? 'Giao hàng' : 'Tại chỗ';
+            const orderType = order.orderType || 'dine-in';
+            document.getElementById('orderType').textContent = orderType === 'delivery' || orderType === 'giao_hang' ? 'Giao hàng' : 'Tại chỗ';
 
-            if (orderType === 'giao_hang' && order.deliveryAddress) {
+            if ((orderType === 'delivery' || orderType === 'giao_hang') && order.deliveryAddress) {
                 document.getElementById('deliveryAddressSection').classList.remove('hidden');
                 document.getElementById('deliveryAddress').textContent = order.deliveryAddress;
             }
@@ -368,12 +422,14 @@
             // Populate order items
             populateOrderItems(order.items || []);
 
-            // Calculate and set totals
-            calculateTotals(order.items || [], orderType);
+            // Set totals from order data
+            setTotalsFromOrder(order);
 
             // Set payment info
             let paymentMethodText = 'Tiền mặt';
-            if (order.paymentMethod === 'momo') {
+            if (order.paymentMethod === 'bank_transfer') {
+                paymentMethodText = 'Chuyển khoản ngân hàng';
+            } else if (order.paymentMethod === 'momo') {
                 paymentMethodText = 'MoMo';
             } else if (order.paymentMethod === 'vnpay') {
                 paymentMethodText = 'VNPay';
@@ -381,6 +437,48 @@
                 paymentMethodText = 'Thẻ tín dụng';
             }
             document.getElementById('paymentMethod').textContent = paymentMethodText;
+
+            // Set payment status
+            const paymentStatusElement = document.getElementById('paymentStatus');
+            if (order.paymentStatus === 'pending') {
+                paymentStatusElement.innerHTML = `
+                    <span class="status-badge status-pending">
+                        <i class="fas fa-clock mr-1"></i>Chờ xác nhận
+                    </span>
+                `;
+            } else if (order.paymentStatus === 'completed') {
+                paymentStatusElement.innerHTML = `
+                    <span class="status-badge status-completed">
+                        <i class="fas fa-check-circle mr-1"></i>Đã thanh toán
+                    </span>
+                `;
+            }
+
+            // Show transfer proof image if available
+            if (order.transfer_proof && order.paymentMethod === 'bank_transfer') {
+                const transferProofSection = document.getElementById('transferProofSection');
+                const transferProofImage = document.getElementById('transferProofImage');
+
+                transferProofSection.classList.remove('hidden');
+                transferProofImage.src = order.transfer_proof;
+
+                console.log('✅ Transfer proof image displayed');
+            }
+        }
+
+        // Open image modal
+        function openImageModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+
+            modalImage.src = imageSrc;
+            modal.classList.remove('hidden');
+        }
+
+        // Close image modal
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('hidden');
         }
 
         // Populate order items table
@@ -388,7 +486,9 @@
             const tableBody = document.getElementById('orderItemsTable');
             tableBody.innerHTML = '';
 
-            if (items.length === 0) {
+            console.log('📋 Populating order items:', items);
+
+            if (!items || items.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
                         <td colspan="5" class="border border-gray-200 px-4 py-8 text-center text-gray-500">
@@ -400,16 +500,25 @@
             }
 
             items.forEach((item, index) => {
-                const price = item.gia || item.price || 0;
-                const quantity = item.qty || item.quantity || 1;
-                const total = price * quantity;
+                // Handle different data formats
+                const price = item.don_gia || item.gia || item.price || 0;
+                const quantity = item.so_luong || item.qty || item.quantity || 1;
+                const total = item.thanh_tien || (price * quantity);
+                const itemName = item.ten_mon || item.name || 'Món ăn';
+
+                console.log(`📦 Item ${index + 1}:`, {
+                    name: itemName,
+                    price: price,
+                    quantity: quantity,
+                    total: total
+                });
 
                 const row = document.createElement('tr');
                 row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
                 row.innerHTML = `
                     <td class="border border-gray-200 px-4 py-3 text-center">${index + 1}</td>
                     <td class="border border-gray-200 px-4 py-3">
-                        <div class="font-medium text-gray-800">${item.ten_mon || item.name || 'Món ăn'}</div>
+                        <div class="font-medium text-gray-800">${itemName}</div>
                         ${item.mo_ta ? `<div class="text-sm text-gray-600">${item.mo_ta}</div>` : ''}
                     </td>
                     <td class="border border-gray-200 px-4 py-3 text-center">${quantity}</td>
@@ -420,15 +529,28 @@
             });
         }
 
-        // Calculate totals
+        // Set totals from order data
+        function setTotalsFromOrder(order) {
+            const subtotal = order.subtotal || 0;
+            const shippingFee = order.deliveryFee || 0;
+            const discount = 0; // No discount for now
+            const total = order.total || (subtotal + shippingFee - discount);
+
+            document.getElementById('subtotal').textContent = formatPrice(subtotal);
+            document.getElementById('shippingFee').textContent = formatPrice(shippingFee);
+            document.getElementById('discount').textContent = formatPrice(discount);
+            document.getElementById('totalAmount').textContent = formatPrice(total);
+        }
+
+        // Calculate totals (fallback function)
         function calculateTotals(items, orderType) {
             const subtotal = items.reduce((sum, item) => {
-                const price = item.gia || item.price || 0;
-                const quantity = item.qty || item.quantity || 1;
+                const price = item.don_gia || item.gia || item.price || 0;
+                const quantity = item.so_luong || item.qty || item.quantity || 1;
                 return sum + (price * quantity);
             }, 0);
 
-            const shippingFee = orderType === 'giao_hang' ? 15000 : 0; // 15k shipping fee for delivery
+            const shippingFee = (orderType === 'giao_hang' || orderType === 'delivery') ? 20000 : 0;
             const discount = 0; // No discount for now
             const total = subtotal + shippingFee - discount;
 
@@ -447,6 +569,13 @@
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             loadInvoiceData();
+
+            // Close image modal when clicking outside
+            document.getElementById('imageModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeImageModal();
+                }
+            });
         });
     </script>
 

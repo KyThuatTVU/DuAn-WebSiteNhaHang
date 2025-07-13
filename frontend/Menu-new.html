@@ -581,6 +581,8 @@
         <!-- Menu Section Content -->
         <section class="py-12" id="menuSection">
             <div class="container mx-auto px-4">
+
+
                 <!-- Page Title -->
                 <div class="text-center mb-12 fade-in" id="menuTitle">
                     <h2 class="text-4xl font-bold mb-4">Thực Đơn</h2>
@@ -824,6 +826,15 @@
 
     <!-- Initialize menu -->
     <script>
+        // Debug cart info (hidden function, accessible via console)
+        function debugCartInfo() {
+            if (window.cartManager) {
+                const info = window.cartManager.debugCartInfo();
+                console.log('🔍 Cart Debug Info:', info);
+                return info;
+            }
+        }
+
         // Initialize menu when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Menu-new.html loaded successfully!');
@@ -839,6 +850,8 @@
                 window.menuManager = new MenuManager();
                 console.log('📋 MenuManager initialized');
 
+                // Cart system is ready and working in background
+
                 // Test cart functionality
                 setTimeout(() => {
                     const cartBtn = document.getElementById('cartBtn');
@@ -852,10 +865,11 @@
                     }
                 }, 1000);
 
-
             }, 500);
-        });
 
+            // Cart system continues to work in background
+            // Each user maintains their own separate cart automatically
+        });
 
     </script>
 </body>

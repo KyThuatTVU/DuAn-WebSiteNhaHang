@@ -87,6 +87,9 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-3">
+                    <button onclick="addSamplePendingInvoice()" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                        <i class="fas fa-plus-circle mr-2"></i>Tạo HĐ chờ duyệt
+                    </button>
                     <button onclick="refreshList()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                         <i class="fas fa-sync-alt mr-2"></i>Làm mới
                     </button>
@@ -103,8 +106,11 @@
         <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="filterInvoices('all')" class="filter-btn  px-4 py-2 rounded-lg border border-gray-300 hover:bg-yellow-100" data-filter="all">
+                    <button onclick="filterInvoices('all')" class="filter-btn active px-4 py-2 rounded-lg border border-gray-300 hover:bg-yellow-100" data-filter="all">
                         <i class="fas fa-list mr-2"></i>Tất cả
+                    </button>
+                    <button onclick="filterInvoices('pending-approval')" class="filter-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-yellow-100" data-filter="pending-approval">
+                        <i class="fas fa-hourglass-half mr-2"></i>Chờ duyệt
                     </button>
                     <button onclick="filterInvoices('pending')" class="filter-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-yellow-100" data-filter="pending">
                         <i class="fas fa-clock mr-2"></i>Chờ xác nhận
@@ -133,7 +139,7 @@
         </div>
 
         <!-- Statistics -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
             <div class="bg-white rounded-lg shadow-sm p-4">
                 <div class="flex items-center justify-between">
                     <div>
@@ -142,6 +148,17 @@
                     </div>
                     <div class="bg-blue-100 p-3 rounded-full">
                         <i class="fas fa-receipt text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Chờ duyệt</p>
+                        <p id="pendingApprovalInvoices" class="text-2xl font-bold text-yellow-600">0</p>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-full">
+                        <i class="fas fa-hourglass-half text-yellow-600"></i>
                     </div>
                 </div>
             </div>
@@ -232,6 +249,150 @@
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Transfer Proof Modal -->
+    <div id="transferProofModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 max-w-2xl mx-4 max-h-[90vh] overflow-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    <i class="fas fa-image mr-2 text-blue-600"></i>
+                    Hình Ảnh Chuyển Khoản
+                </h3>
+                <button onclick="closeTransferProofModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="transferProofContent" class="text-center">
+                <!-- Image will be loaded here -->
+            </div>
+            <div class="mt-4 flex justify-end space-x-3">
+                <button onclick="closeTransferProofModal()"
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-times mr-2"></i>Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Invoice Modal -->
+    <div id="editInvoiceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 max-w-4xl mx-4 max-h-[90vh] overflow-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">
+                    <i class="fas fa-edit mr-2 text-yellow-600"></i>
+                    Chỉnh Sửa Hóa Đơn
+                </h3>
+                <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="editInvoiceForm" class="space-y-6">
+                <!-- Invoice Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mã hóa đơn</label>
+                        <input type="text" id="editInvoiceNumber" readonly
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
+                        <select id="editStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500">
+                            <option value="pending">Chờ xác nhận</option>
+                            <option value="pending-approval">Chờ duyệt</option>
+                            <option value="confirmed">Đã xác nhận</option>
+                            <option value="completed">Hoàn thành</option>
+                            <option value="cancelled">Đã hủy</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Customer Info -->
+                <div class="border-t pt-4">
+                    <h4 class="text-lg font-medium text-gray-800 mb-3">Thông tin khách hàng</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tên khách hàng</label>
+                            <input type="text" id="editCustomerName"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" id="editCustomerEmail"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
+                            <input type="tel" id="editCustomerPhone"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Details -->
+                <div class="border-t pt-4">
+                    <h4 class="text-lg font-medium text-gray-800 mb-3">Chi tiết đơn hàng</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Loại đơn</label>
+                            <select id="editOrderType" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500">
+                                <option value="dine-in">Tại chỗ</option>
+                                <option value="delivery">Giao hàng</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Phương thức thanh toán</label>
+                            <select id="editPaymentMethod" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500">
+                                <option value="cash">Tiền mặt</option>
+                                <option value="bank_transfer">Chuyển khoản</option>
+                                <option value="card">Thẻ tín dụng</option>
+                                <option value="momo">MoMo</option>
+                                <option value="vnpay">VNPay</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="editDeliveryAddressSection" class="hidden mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Địa chỉ giao hàng</label>
+                        <textarea id="editDeliveryAddress" rows="2"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ghi chú</label>
+                        <textarea id="editNotes" rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500"></textarea>
+                    </div>
+                </div>
+
+                <!-- Items List -->
+                <div class="border-t pt-4">
+                    <h4 class="text-lg font-medium text-gray-800 mb-3">Danh sách món ăn</h4>
+                    <div id="editItemsList" class="space-y-2">
+                        <!-- Items will be populated here -->
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <div class="flex justify-between text-lg font-bold">
+                            <span>Tổng cộng:</span>
+                            <span id="editTotalAmount" class="text-red-600">0đ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-3 pt-6 border-t">
+                    <button type="button" onclick="closeEditModal()"
+                            class="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Hủy
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>Lưu thay đổi
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -326,6 +487,52 @@
             }
         }
 
+        // Create sample pending approval invoices for testing
+        function createSamplePendingInvoices() {
+            const sampleInvoices = [
+                {
+                    id: 'pending_001',
+                    invoiceNumber: 'HD001001',
+                    customerName: 'Nguyễn Văn A',
+                    customerEmail: 'nguyenvana@gmail.com',
+                    customerPhone: '0901234567',
+                    items: [
+                        { name: 'Phở Bò Tái', quantity: 2, price: 65000, total: 130000 },
+                        { name: 'Chả Cá Lã Vọng', quantity: 1, price: 120000, total: 120000 }
+                    ],
+                    total: 250000,
+                    orderType: 'dine-in',
+                    status: 'pending-approval',
+                    payment_method: 'bank_transfer',
+                    payment_status: 'pending',
+                    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+                    address: null,
+                    notes: 'Khách hàng thanh toán qua chuyển khoản ngân hàng'
+                },
+                {
+                    id: 'pending_002',
+                    invoiceNumber: 'HD001002',
+                    customerName: 'Trần Thị B',
+                    customerEmail: 'tranthib@gmail.com',
+                    customerPhone: '0912345678',
+                    items: [
+                        { name: 'Bún Bò Huế', quantity: 1, price: 55000, total: 55000 },
+                        { name: 'Nem Nướng Nha Trang', quantity: 2, price: 45000, total: 90000 }
+                    ],
+                    total: 145000,
+                    orderType: 'delivery',
+                    status: 'pending-approval',
+                    payment_method: 'bank_transfer',
+                    payment_status: 'pending',
+                    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+                    address: '123 Nguyễn Huệ, Quận 1, TP.HCM',
+                    notes: 'Giao hàng tận nơi, thanh toán chuyển khoản'
+                }
+            ];
+
+            return sampleInvoices;
+        }
+
         // Load invoices from localStorage
         function loadInvoices() {
             try {
@@ -335,6 +542,14 @@
                     allInvoices = JSON.parse(storedInvoices);
                 } else {
                     allInvoices = [];
+                }
+
+                // Add sample pending approval invoices if none exist
+                const hasPendingApproval = allInvoices.some(inv => inv.status === 'pending-approval');
+                if (!hasPendingApproval) {
+                    const sampleInvoices = createSamplePendingInvoices();
+                    allInvoices.unshift(...sampleInvoices);
+                    saveInvoiceHistory();
                 }
 
                 // Add invoices from payment flow
@@ -351,9 +566,9 @@
                         const displayInvoice = {
                             id: invoice.id_hoa_don || invoice.id || generateInvoiceId(),
                             invoiceNumber: `HD${String(invoice.id_hoa_don || invoice.id || Math.floor(Math.random() * 1000)).padStart(6, '0')}`,
-                            customerName: 'Nguyễn Huỳnh Kỳ Nhật Nhật',
-                            customerEmail: 'nguyenhuynhkithuat84tv@gmail.com',
-                            customerPhone: '0123456789',
+                            customerName: invoice.customer_info?.full_name || 'Nguyễn Huỳnh Kỳ Nhật Nhật',
+                            customerEmail: invoice.customer_info?.email || 'nguyenhuynhkithuat84tv@gmail.com',
+                            customerPhone: invoice.customer_info?.phone || '0123456789',
                             items: details.map(detail => ({
                                 name: detail.ten_mon || detail.name || 'Món ăn',
                                 quantity: detail.so_luong || detail.quantity || 1,
@@ -367,7 +582,8 @@
                             payment_status: invoice.payment_status || 'completed',
                             createdAt: invoice.ngay_tao || paymentInvoice.timestamp || new Date().toISOString(),
                             address: invoice.dia_chi_giao_hang || null,
-                            notes: invoice.ghi_chu || null
+                            notes: invoice.ghi_chu || null,
+                            transfer_proof: invoice.transfer_proof || null // Lưu hình ảnh chuyển khoản
                         };
 
                         // Check if not already exists
@@ -434,6 +650,7 @@
             const total = allInvoices.length;
             const totalAmount = allInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
             const completed = allInvoices.filter(inv => inv.status === 'completed').length;
+            const pendingApproval = allInvoices.filter(inv => inv.status === 'pending-approval').length;
 
             const today = new Date().toDateString();
             const todayCount = allInvoices.filter(inv => {
@@ -442,6 +659,7 @@
             }).length;
 
             document.getElementById('totalInvoices').textContent = total;
+            document.getElementById('pendingApprovalInvoices').textContent = pendingApproval;
             document.getElementById('totalAmount').textContent = formatPrice(totalAmount);
             document.getElementById('completedInvoices').textContent = completed;
             document.getElementById('todayInvoices').textContent = todayCount;
@@ -607,6 +825,14 @@
                                 class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
                             <i class="fas fa-eye mr-1"></i>Xem
                         </button>
+                        <button onclick="event.stopPropagation(); editInvoice('${invoice.id}')"
+                                class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors">
+                            <i class="fas fa-edit mr-1"></i>Sửa
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteInvoice('${invoice.id}')"
+                                class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
+                            <i class="fas fa-trash mr-1"></i>Xóa
+                        </button>
                         ${invoice.status === 'pending-approval' ? `
                             <button onclick="event.stopPropagation(); approveInvoice('${invoice.id}')"
                                     class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
@@ -616,11 +842,23 @@
                                     class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
                                 <i class="fas fa-times mr-1"></i>Từ chối
                             </button>
+                            ${invoice.transfer_proof ? `
+                                <button onclick="event.stopPropagation(); viewTransferProof('${invoice.id}')"
+                                        class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-image mr-1"></i>Xem ảnh CK
+                                </button>
+                            ` : ''}
                         ` : `
                             <button onclick="event.stopPropagation(); printInvoice('${invoice.id}')"
                                     class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors">
                                 <i class="fas fa-print mr-1"></i>In
                             </button>
+                            ${invoice.transfer_proof ? `
+                                <button onclick="event.stopPropagation(); viewTransferProof('${invoice.id}')"
+                                        class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-image mr-1"></i>Xem ảnh CK
+                                </button>
+                            ` : ''}
                         `}
                     </div>
                 </div>
@@ -704,35 +942,25 @@
         }
 
         // Approve invoice
-        async function approveInvoice(invoiceId) {
+        function approveInvoice(invoiceId) {
             if (!confirm('Bạn có chắc chắn muốn duyệt hóa đơn này?')) {
                 return;
             }
 
             try {
                 console.log('🔍 Approving invoice:', invoiceId);
-                const response = await fetch(`http://localhost:3000/api/hoadon/${invoiceId}/approve`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ action: 'approve' })
-                });
 
-                if (response.ok) {
-                    const result = await response.json();
-                    console.log('✅ Invoice approved:', result);
+                // Update invoice status in local data
+                updateInvoiceStatus(invoiceId, 'confirmed');
 
-                    // Update invoice status in local data
-                    updateInvoiceStatus(invoiceId, 'approved');
+                // Show success message
+                alert('✅ Hóa đơn đã được duyệt thành công!\nTrạng thái đã chuyển sang "Đã xác nhận".');
 
-                    alert('Hóa đơn đã được duyệt thành công!');
+                // Refresh the display
+                updateStatistics();
+                renderInvoices();
 
-                    // Refresh the list
-                    loadInvoices();
-                } else {
-                    throw new Error('Failed to approve invoice');
-                }
+                console.log('✅ Invoice approved successfully');
             } catch (error) {
                 console.error('❌ Error approving invoice:', error);
                 alert('Có lỗi xảy ra khi duyệt hóa đơn. Vui lòng thử lại.');
@@ -740,35 +968,25 @@
         }
 
         // Reject invoice
-        async function rejectInvoice(invoiceId) {
+        function rejectInvoice(invoiceId) {
             if (!confirm('Bạn có chắc chắn muốn từ chối hóa đơn này?')) {
                 return;
             }
 
             try {
                 console.log('🔍 Rejecting invoice:', invoiceId);
-                const response = await fetch(`http://localhost:3000/api/hoadon/${invoiceId}/approve`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ action: 'reject' })
-                });
 
-                if (response.ok) {
-                    const result = await response.json();
-                    console.log('✅ Invoice rejected:', result);
+                // Update invoice status in local data
+                updateInvoiceStatus(invoiceId, 'cancelled');
 
-                    // Update invoice status in local data
-                    updateInvoiceStatus(invoiceId, 'cancelled');
+                // Show success message
+                alert('❌ Hóa đơn đã bị từ chối!\nTrạng thái đã chuyển sang "Đã hủy".');
 
-                    alert('Hóa đơn đã bị từ chối!');
+                // Refresh the display
+                updateStatistics();
+                renderInvoices();
 
-                    // Refresh the list
-                    loadInvoices();
-                } else {
-                    throw new Error('Failed to reject invoice');
-                }
+                console.log('✅ Invoice rejected successfully');
             } catch (error) {
                 console.error('❌ Error rejecting invoice:', error);
                 alert('Có lỗi xảy ra khi từ chối hóa đơn. Vui lòng thử lại.');
@@ -781,6 +999,290 @@
             if (invoice) {
                 invoice.status = newStatus;
                 saveInvoiceHistory();
+            }
+        }
+
+        // View transfer proof image
+        function viewTransferProof(invoiceId) {
+            const invoice = allInvoices.find(inv => inv.id === invoiceId);
+            if (!invoice || !invoice.transfer_proof) {
+                alert('Không tìm thấy hình ảnh chuyển khoản cho hóa đơn này.');
+                return;
+            }
+
+            const modal = document.getElementById('transferProofModal');
+            const content = document.getElementById('transferProofContent');
+
+            content.innerHTML = `
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 mb-2">
+                        <strong>Hóa đơn:</strong> ${invoice.invoiceNumber || 'N/A'} |
+                        <strong>Khách hàng:</strong> ${invoice.customerName || 'N/A'}
+                    </p>
+                    <p class="text-sm text-gray-600 mb-4">
+                        <strong>Số tiền:</strong> ${formatPrice(invoice.total || 0)}
+                    </p>
+                </div>
+                <div class="border border-gray-300 rounded-lg overflow-hidden">
+                    <img src="${invoice.transfer_proof}"
+                         alt="Hình ảnh chuyển khoản"
+                         class="max-w-full max-h-96 object-contain mx-auto"
+                         onerror="this.parentElement.innerHTML='<div class=\\'p-8 text-gray-500\\'>❌ Không thể tải hình ảnh</div>'">
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                    Click vào hình ảnh để xem kích thước đầy đủ
+                </p>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        // Close transfer proof modal
+        function closeTransferProofModal() {
+            const modal = document.getElementById('transferProofModal');
+            modal.classList.add('hidden');
+        }
+
+        // Delete invoice
+        function deleteInvoice(invoiceId) {
+            const invoice = allInvoices.find(inv => inv.id === invoiceId);
+            if (!invoice) {
+                alert('Không tìm thấy hóa đơn!');
+                return;
+            }
+
+            const confirmMessage = `Bạn có chắc chắn muốn xóa hóa đơn này?\n\n` +
+                                 `📋 Mã hóa đơn: ${invoice.invoiceNumber || 'N/A'}\n` +
+                                 `👤 Khách hàng: ${invoice.customerName || 'N/A'}\n` +
+                                 `💰 Số tiền: ${formatPrice(invoice.total || 0)}\n\n` +
+                                 `⚠️ Hành động này không thể hoàn tác!`;
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            try {
+                // Remove from allInvoices array
+                const index = allInvoices.findIndex(inv => inv.id === invoiceId);
+                if (index !== -1) {
+                    allInvoices.splice(index, 1);
+                }
+
+                // Update localStorage
+                saveInvoiceHistory();
+
+                // Also remove from invoiceList if exists
+                let invoiceList = JSON.parse(localStorage.getItem('invoiceList')) || [];
+                invoiceList = invoiceList.filter(inv => {
+                    const invId = inv.invoice?.id_hoa_don || inv.id;
+                    return invId !== invoiceId;
+                });
+                localStorage.setItem('invoiceList', JSON.stringify(invoiceList));
+
+                console.log('✅ Invoice deleted successfully:', invoiceId);
+                alert('✅ Hóa đơn đã được xóa thành công!');
+
+                // Refresh display
+                updateStatistics();
+                renderInvoices();
+
+            } catch (error) {
+                console.error('❌ Error deleting invoice:', error);
+                alert('Có lỗi xảy ra khi xóa hóa đơn. Vui lòng thử lại!');
+            }
+        }
+
+        // Edit invoice
+        function editInvoice(invoiceId) {
+            const invoice = allInvoices.find(inv => inv.id === invoiceId);
+            if (!invoice) {
+                alert('Không tìm thấy hóa đơn!');
+                return;
+            }
+
+            // Populate edit form
+            document.getElementById('editInvoiceNumber').value = invoice.invoiceNumber || '';
+            document.getElementById('editStatus').value = invoice.status || 'pending';
+            document.getElementById('editCustomerName').value = invoice.customerName || '';
+            document.getElementById('editCustomerEmail').value = invoice.customerEmail || '';
+            document.getElementById('editCustomerPhone').value = invoice.customerPhone || '';
+            document.getElementById('editOrderType').value = invoice.orderType || 'dine-in';
+            document.getElementById('editPaymentMethod').value = invoice.payment_method || 'cash';
+            document.getElementById('editDeliveryAddress').value = invoice.address || '';
+            document.getElementById('editNotes').value = invoice.notes || '';
+
+            // Show/hide delivery address section
+            const deliverySection = document.getElementById('editDeliveryAddressSection');
+            if (invoice.orderType === 'delivery') {
+                deliverySection.classList.remove('hidden');
+            } else {
+                deliverySection.classList.add('hidden');
+            }
+
+            // Populate items list
+            populateEditItemsList(invoice.items || []);
+
+            // Store current invoice ID for saving
+            document.getElementById('editInvoiceForm').dataset.invoiceId = invoiceId;
+
+            // Show modal
+            document.getElementById('editInvoiceModal').classList.remove('hidden');
+        }
+
+        // Populate edit items list
+        function populateEditItemsList(items) {
+            const container = document.getElementById('editItemsList');
+            container.innerHTML = '';
+
+            let total = 0;
+
+            items.forEach((item, index) => {
+                const itemTotal = (item.price || 0) * (item.quantity || 1);
+                total += itemTotal;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex items-center justify-between p-3 border border-gray-200 rounded-lg';
+                itemDiv.innerHTML = `
+                    <div class="flex-1">
+                        <input type="text" value="${item.name || item.ten_mon || ''}"
+                               class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                               onchange="updateEditItem(${index}, 'name', this.value)">
+                    </div>
+                    <div class="w-24 mx-2">
+                        <input type="number" value="${item.quantity || item.so_luong || 1}" min="1"
+                               class="w-full px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                               onchange="updateEditItem(${index}, 'quantity', this.value)">
+                    </div>
+                    <div class="w-32 mx-2">
+                        <input type="number" value="${item.price || item.don_gia || 0}" min="0"
+                               class="w-full px-2 py-1 border border-gray-300 rounded text-sm text-right"
+                               onchange="updateEditItem(${index}, 'price', this.value)">
+                    </div>
+                    <div class="w-32 text-right font-medium">
+                        ${itemTotal.toLocaleString('vi-VN')}đ
+                    </div>
+                    <button type="button" onclick="removeEditItem(${index})"
+                            class="ml-2 text-red-600 hover:text-red-800">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(itemDiv);
+            });
+
+            // Update total
+            document.getElementById('editTotalAmount').textContent = `${total.toLocaleString('vi-VN')}đ`;
+        }
+
+        // Update edit item
+        function updateEditItem(index, field, value) {
+            const invoiceId = document.getElementById('editInvoiceForm').dataset.invoiceId;
+            const invoice = allInvoices.find(inv => inv.id === invoiceId);
+
+            if (!invoice || !invoice.items || !invoice.items[index]) return;
+
+            if (field === 'name') {
+                invoice.items[index].name = value;
+                invoice.items[index].ten_mon = value;
+            } else if (field === 'quantity') {
+                const qty = parseInt(value) || 1;
+                invoice.items[index].quantity = qty;
+                invoice.items[index].so_luong = qty;
+            } else if (field === 'price') {
+                const price = parseFloat(value) || 0;
+                invoice.items[index].price = price;
+                invoice.items[index].don_gia = price;
+            }
+
+            // Recalculate total
+            populateEditItemsList(invoice.items);
+        }
+
+        // Remove edit item
+        function removeEditItem(index) {
+            const invoiceId = document.getElementById('editInvoiceForm').dataset.invoiceId;
+            const invoice = allInvoices.find(inv => inv.id === invoiceId);
+
+            if (!invoice || !invoice.items) return;
+
+            if (invoice.items.length <= 1) {
+                alert('Hóa đơn phải có ít nhất 1 món ăn!');
+                return;
+            }
+
+            if (confirm('Bạn có chắc chắn muốn xóa món ăn này?')) {
+                invoice.items.splice(index, 1);
+                populateEditItemsList(invoice.items);
+            }
+        }
+
+        // Close edit modal
+        function closeEditModal() {
+            document.getElementById('editInvoiceModal').classList.add('hidden');
+        }
+
+        // Save invoice changes
+        function saveInvoiceChanges(invoiceId, formData) {
+            const invoice = allInvoices.find(inv => inv.id === invoiceId);
+            if (!invoice) {
+                throw new Error('Invoice not found');
+            }
+
+            // Update invoice data
+            invoice.status = formData.status;
+            invoice.customerName = formData.customerName;
+            invoice.customerEmail = formData.customerEmail;
+            invoice.customerPhone = formData.customerPhone;
+            invoice.orderType = formData.orderType;
+            invoice.payment_method = formData.paymentMethod;
+            invoice.address = formData.deliveryAddress;
+            invoice.notes = formData.notes;
+
+            // Calculate new total
+            invoice.total = invoice.items.reduce((sum, item) => {
+                return sum + ((item.price || 0) * (item.quantity || 1));
+            }, 0);
+
+            // Update localStorage
+            saveInvoiceHistory();
+
+            // Also update invoiceList if exists
+            let invoiceList = JSON.parse(localStorage.getItem('invoiceList')) || [];
+            const listIndex = invoiceList.findIndex(inv => {
+                const invId = inv.invoice?.id_hoa_don || inv.id;
+                return invId === invoiceId;
+            });
+
+            if (listIndex !== -1) {
+                // Update the invoice in the list
+                if (invoiceList[listIndex].invoice) {
+                    invoiceList[listIndex].invoice.trang_thai = mapStatusToBackend(formData.status);
+                    invoiceList[listIndex].invoice.tong_tien = invoice.total;
+                    invoiceList[listIndex].invoice.dia_chi_giao_hang = formData.deliveryAddress;
+                    invoiceList[listIndex].invoice.ghi_chu = formData.notes;
+                    invoiceList[listIndex].invoice.payment_method = formData.paymentMethod;
+
+                    // Update customer info
+                    if (invoiceList[listIndex].invoice.customer_info) {
+                        invoiceList[listIndex].invoice.customer_info.full_name = formData.customerName;
+                        invoiceList[listIndex].invoice.customer_info.email = formData.customerEmail;
+                        invoiceList[listIndex].invoice.customer_info.phone = formData.customerPhone;
+                    }
+                }
+                localStorage.setItem('invoiceList', JSON.stringify(invoiceList));
+            }
+
+            console.log('✅ Invoice updated successfully:', invoiceId);
+        }
+
+        // Map frontend status to backend status
+        function mapStatusToBackend(frontendStatus) {
+            switch (frontendStatus) {
+                case 'pending': return 'cho_xac_nhan';
+                case 'pending-approval': return 'cho_duyet';
+                case 'confirmed': return 'da_xac_nhan';
+                case 'completed': return 'hoan_thanh';
+                case 'cancelled': return 'da_huy';
+                default: return 'cho_xac_nhan';
             }
         }
 
@@ -839,6 +1341,41 @@
             renderInvoices();
         }
 
+        // Add sample pending invoice for testing
+        function addSamplePendingInvoice() {
+            const randomId = 'pending_' + Date.now();
+            const randomInvoiceNumber = 'HD' + String(Math.floor(Math.random() * 999999)).padStart(6, '0');
+
+            const sampleInvoice = {
+                id: randomId,
+                invoiceNumber: randomInvoiceNumber,
+                customerName: 'Khách hàng Test',
+                customerEmail: 'test@gmail.com',
+                customerPhone: '0987654321',
+                items: [
+                    { name: 'Phở Bò Tái', quantity: 1, price: 65000, total: 65000 },
+                    { name: 'Trà Đá', quantity: 2, price: 5000, total: 10000 }
+                ],
+                total: 75000,
+                orderType: 'dine-in',
+                status: 'pending-approval',
+                payment_method: 'bank_transfer',
+                payment_status: 'pending',
+                createdAt: new Date().toISOString(),
+                address: null,
+                notes: 'Hóa đơn test - Thanh toán chuyển khoản ngân hàng'
+            };
+
+            allInvoices.unshift(sampleInvoice);
+            saveInvoiceHistory();
+
+            alert('✅ Đã tạo hóa đơn mẫu chờ duyệt!\nMã hóa đơn: ' + randomInvoiceNumber);
+
+            // Refresh display
+            updateStatistics();
+            filterInvoices('pending-approval'); // Auto switch to pending approval filter
+        }
+
         // Refresh list
         function refreshList() {
             document.getElementById('loadingState').style.display = 'block';
@@ -864,6 +1401,83 @@
             // Sort functionality
             document.getElementById('sortSelect').addEventListener('change', function() {
                 sortInvoices(this.value);
+            });
+
+            // Close modals when clicking outside
+            document.getElementById('transferProofModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeTransferProofModal();
+                }
+            });
+
+            document.getElementById('editInvoiceModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeEditModal();
+                }
+            });
+
+            // Edit form submission
+            document.getElementById('editInvoiceForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const invoiceId = this.dataset.invoiceId;
+                if (!invoiceId) {
+                    alert('Không tìm thấy ID hóa đơn!');
+                    return;
+                }
+
+                try {
+                    const formData = {
+                        status: document.getElementById('editStatus').value,
+                        customerName: document.getElementById('editCustomerName').value.trim(),
+                        customerEmail: document.getElementById('editCustomerEmail').value.trim(),
+                        customerPhone: document.getElementById('editCustomerPhone').value.trim(),
+                        orderType: document.getElementById('editOrderType').value,
+                        paymentMethod: document.getElementById('editPaymentMethod').value,
+                        deliveryAddress: document.getElementById('editDeliveryAddress').value.trim(),
+                        notes: document.getElementById('editNotes').value.trim()
+                    };
+
+                    // Validate required fields
+                    if (!formData.customerName) {
+                        alert('Vui lòng nhập tên khách hàng!');
+                        return;
+                    }
+
+                    if (!formData.customerEmail) {
+                        alert('Vui lòng nhập email khách hàng!');
+                        return;
+                    }
+
+                    if (!formData.customerPhone) {
+                        alert('Vui lòng nhập số điện thoại khách hàng!');
+                        return;
+                    }
+
+                    // Save changes
+                    saveInvoiceChanges(invoiceId, formData);
+
+                    alert('✅ Cập nhật hóa đơn thành công!');
+                    closeEditModal();
+
+                    // Refresh display
+                    updateStatistics();
+                    renderInvoices();
+
+                } catch (error) {
+                    console.error('❌ Error saving invoice:', error);
+                    alert('Có lỗi xảy ra khi lưu thay đổi. Vui lòng thử lại!');
+                }
+            });
+
+            // Order type change in edit form
+            document.getElementById('editOrderType').addEventListener('change', function() {
+                const deliverySection = document.getElementById('editDeliveryAddressSection');
+                if (this.value === 'delivery') {
+                    deliverySection.classList.remove('hidden');
+                } else {
+                    deliverySection.classList.add('hidden');
+                }
             });
 
             // Load invoices

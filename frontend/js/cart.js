@@ -2,7 +2,8 @@
 
 class CartManager {
     constructor() {
-        this.cart = JSON.parse(localStorage.getItem('cart')) || [];
+        this.currentUserId = this.getCurrentUserId();
+        this.cart = this.loadUserCart();
         this.customerInfo = this.loadCustomerInfo();
         this.isInitialized = false;
         this.init();
@@ -95,17 +96,15 @@ class CartManager {
         // Listen for auth changes (login/logout)
         window.addEventListener('storage', (e) => {
             if (e.key === 'user' || e.key === 'userData' || e.key === 'token') {
-                console.log('🔄 Auth state changed, refreshing customer info');
-                this.customerInfo = this.loadCustomerInfo();
-                this.updateCustomerInfoDisplay();
+                console.log('🔄 Auth state changed, switching cart');
+                this.handleUserChange();
             }
         });
 
         // Listen for custom auth events
         document.addEventListener('authStateChanged', (e) => {
             console.log('🔄 Auth state changed via event:', e.detail);
-            this.customerInfo = this.loadCustomerInfo();
-            this.updateCustomerInfoDisplay();
+            this.handleUserChange();
         });
 
         // Toggle cart details
@@ -139,6 +138,103 @@ class CartManager {
                 this.removeFromCart(itemId);
             }
         });
+    }
+
+    // Get current user ID for cart separation
+    getCurrentUserId() {
+        try {
+            const user = localStorage.getItem('user') || localStorage.getItem('userData');
+            if (user) {
+                const userData = JSON.parse(user);
+                return userData.id || userData.email || 'guest';
+            }
+            return 'guest';
+        } catch (error) {
+            console.error('Error getting current user ID:', error);
+            return 'guest';
+        }
+    }
+
+    // Load cart specific to current user
+    loadUserCart() {
+        try {
+            const cartKey = `cart_${this.currentUserId}`;
+            const userCart = localStorage.getItem(cartKey);
+
+            if (userCart) {
+                console.log(`🛒 Loaded cart for user: ${this.currentUserId}`);
+                return JSON.parse(userCart);
+            }
+
+            // If no user-specific cart exists, check for legacy cart
+            if (this.currentUserId !== 'guest') {
+                const legacyCart = localStorage.getItem('cart');
+                if (legacyCart) {
+                    const cart = JSON.parse(legacyCart);
+                    console.log(`🔄 Migrating legacy cart to user: ${this.currentUserId}`);
+                    this.saveUserCart(cart);
+                    // Don't remove legacy cart yet, in case other users need it
+                    return cart;
+                }
+            }
+
+            console.log(`🛒 No cart found for user: ${this.currentUserId}, starting with empty cart`);
+            return [];
+        } catch (error) {
+            console.error('Error loading user cart:', error);
+            return [];
+        }
+    }
+
+    // Save cart specific to current user
+    saveUserCart(cart = null) {
+        try {
+            const cartToSave = cart || this.cart;
+            const cartKey = `cart_${this.currentUserId}`;
+
+            localStorage.setItem(cartKey, JSON.stringify(cartToSave));
+
+            // Also save to legacy 'cart' key for backward compatibility
+            localStorage.setItem('cart', JSON.stringify(cartToSave));
+
+            console.log(`💾 Saved cart for user: ${this.currentUserId} (${cartToSave.length} items)`);
+
+            // Dispatch cart updated event
+            document.dispatchEvent(new CustomEvent('cartUpdated', {
+                detail: { cart: cartToSave, userId: this.currentUserId }
+            }));
+        } catch (error) {
+            console.error('Error saving user cart:', error);
+        }
+    }
+
+    // Handle user change (login/logout)
+    handleUserChange() {
+        const newUserId = this.getCurrentUserId();
+
+        if (newUserId !== this.currentUserId) {
+            console.log(`👤 User changed from ${this.currentUserId} to ${newUserId}`);
+
+            // Save current cart before switching
+            this.saveUserCart();
+
+            // Switch to new user
+            this.currentUserId = newUserId;
+            this.cart = this.loadUserCart();
+            this.customerInfo = this.loadCustomerInfo();
+
+            // Update UI
+            this.updateCartUI();
+            this.updateCustomerInfoDisplay();
+
+            // If cart modal is open, refresh it
+            const cartModal = document.getElementById('cartModal');
+            if (cartModal && cartModal.classList.contains('active')) {
+                this.renderCartItems();
+            }
+
+            console.log(`✅ Switched to cart for user: ${this.currentUserId} (${this.cart.length} items)`);
+        }
     }
 
     extractItemData(button) {
@@ -478,12 +574,7 @@ class CartManager {
     }
 
     saveCart() {
-        localStorage.setItem('cart', JSON.stringify(this.cart));
-
-        // Dispatch cart updated event for floating button
-        document.dispatchEvent(new CustomEvent('cartUpdated', {
-            detail: { cart: this.cart }
-        }));
+        this.saveUserCart();
     }
 
     updateCartUI() {
@@ -997,12 +1088,73 @@ class CartManager {
         }, 500);
     }
 
-    // Xóa toàn bộ giỏ hàng
+    // Xóa toàn bộ giỏ hàng của user hiện tại
     clearCart() {
-        this.cart = [];
-        this.saveCart();
-        this.updateCartUI();
-        this.showNotification('Đã xóa toàn bộ giỏ hàng', 'success');
+        if (this.cart.length === 0) return;
+
+        if (confirm('Bạn có chắc chắn muốn xóa tất cả món ăn trong giỏ hàng?')) {
+            this.cart = [];
+            this.saveCart();
+            this.updateCartUI();
+            this.renderCartItems();
+            this.showNotification('Đã xóa tất cả món ăn khỏi giỏ hàng', 'info');
+        }
+    }
+
+    // Clear cart for specific user (admin function)
+    clearUserCart(userId) {
+        try {
+            const cartKey = `cart_${userId}`;
+            localStorage.removeItem(cartKey);
+
+            if (userId === this.currentUserId) {
+                this.cart = [];
+                this.updateCartUI();
+                this.renderCartItems();
+            }
+
+            console.log(`🗑️ Cleared cart for user: ${userId}`);
+        } catch (error) {
+            console.error('Error clearing user cart:', error);
+        }
+    }
+
+    // Get all user carts (admin function)
+    getAllUserCarts() {
+        const userCarts = {};
+
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('cart_')) {
+                const userId = key.replace('cart_', '');
+                try {
+                    const cart = JSON.parse(localStorage.getItem(key));
+                    userCarts[userId] = cart;
+                } catch (error) {
+                    console.error(`Error parsing cart for user ${userId}:`, error);
+                }
+            }
+        }
+
+        return userCarts;
+    }
+
+    // Debug method to show cart info
+    debugCartInfo() {
+        console.log('🔍 Cart Debug Info:');
+        console.log('Current User ID:', this.currentUserId);
+        console.log('Current Cart Items:', this.cart.length);
+        console.log('Customer Info:', this.customerInfo);
+
+        const allCarts = this.getAllUserCarts();
+        console.log('All User Carts:', allCarts);
+
+        return {
+            currentUserId: this.currentUserId,
+            currentCartItems: this.cart.length,
+            customerInfo: this.customerInfo,
+            allUserCarts: allCarts
+        };
     }
 
     closeCheckoutModal() {
@@ -1165,6 +1317,7 @@ class CartManager {
             if (loggedInUser) {
                 console.log('✅ User đã đăng nhập, sử dụng thông tin từ account:', loggedInUser.email);
                 return {
+                    id: loggedInUser.id,
                     full_name: loggedInUser.full_name,
                     email: loggedInUser.email,
                     phone: loggedInUser.phone || '',
@@ -1173,8 +1326,9 @@ class CartManager {
                 };
             }
 
-            // Nếu chưa đăng nhập, lấy thông tin đã lưu từ form
-            const saved = localStorage.getItem('customerInfo');
+            // Nếu chưa đăng nhập, lấy thông tin đã lưu từ form (theo user)
+            const customerInfoKey = `customerInfo_${this.currentUserId}`;
+            const saved = localStorage.getItem(customerInfoKey);
             const customerInfo = saved ? JSON.parse(saved) : null;
 
             if (customerInfo) {
@@ -1209,9 +1363,15 @@ class CartManager {
 
     saveCustomerInfo(customerInfo) {
         try {
+            // Save customer info specific to current user
+            const customerInfoKey = `customerInfo_${this.currentUserId}`;
+            localStorage.setItem(customerInfoKey, JSON.stringify(customerInfo));
+
+            // Also save to legacy key for backward compatibility
             localStorage.setItem('customerInfo', JSON.stringify(customerInfo));
+
             this.customerInfo = customerInfo;
-            console.log('✅ Customer info saved:', customerInfo);
+            console.log(`✅ Customer info saved for user ${this.currentUserId}:`, customerInfo);
             this.updateCustomerInfoDisplay();
         } catch (error) {
             console.error('Error saving customer info:', error);
