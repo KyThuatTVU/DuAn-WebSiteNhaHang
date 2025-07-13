@@ -7,6 +7,7 @@
     <link rel="icon" href="img/logoPN.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="js/admin-auth.js"></script>
     <style>
         .invoice-card {
             transition: all 0.3s ease;
@@ -86,16 +87,50 @@
                         <p class="text-gray-600">Quản lý và xem lại các đơn hàng của bạn</p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <button onclick="addSamplePendingInvoice()" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
-                        <i class="fas fa-plus-circle mr-2"></i>Tạo HĐ chờ duyệt
-                    </button>
-                    <button onclick="refreshList()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-sync-alt mr-2"></i>Làm mới
-                    </button>
-                    <button onclick="goToMenu()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                        <i class="fas fa-plus mr-2"></i>Đặt món mới
-                    </button>
+                <div class="flex items-center space-x-4">
+                    <!-- User Info -->
+                    <div class="flex items-center space-x-3 bg-gray-50 px-4 py-2 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <div id="userRoleBadge" class="px-2 py-1 rounded text-xs font-semibold">
+                                <!-- Role badge will be inserted here -->
+                            </div>
+                            <span id="currentUserName" class="text-sm font-medium text-gray-700">
+                                <!-- Username will be inserted here -->
+                            </span>
+                        </div>
+                        <button onclick="logout()" class="text-red-600 hover:text-red-800 transition-colors" title="Đăng xuất">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+
+                    <!-- Action Buttons (Admin Only) -->
+                    <div id="adminActions" class="flex items-center space-x-3">
+                        <button onclick="addSamplePendingInvoice()" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                            <i class="fas fa-plus-circle mr-2"></i>Tạo HĐ chờ duyệt
+                        </button>
+                        <button onclick="addSampleCashInvoice()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
+                            <i class="fas fa-money-bill mr-2"></i>Tạo HĐ tiền mặt
+                        </button>
+                        <button onclick="clearAllTestData()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                            <i class="fas fa-trash-alt mr-2"></i>Xóa dữ liệu test
+                        </button>
+                        <button onclick="debugAdminStatus()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-bug mr-2"></i>Debug Admin
+                        </button>
+                        <button onclick="showStaffManagement()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-users mr-2"></i>Quản lý nhân viên
+                        </button>
+                    </div>
+
+                    <!-- Common Actions -->
+                    <div class="flex items-center space-x-3">
+                        <button onclick="refreshList()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Làm mới
+                        </button>
+                        <button onclick="goToMenu()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Đặt món mới
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -162,7 +197,7 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow-sm p-4">
+            <div id="totalAmountCard" class="bg-white rounded-lg shadow-sm p-4">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600">Tổng tiền</p>
@@ -396,29 +431,244 @@
         </div>
     </div>
 
+    <!-- Staff Management Modal -->
+    <div id="staffManagementModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 max-w-4xl mx-4 max-h-[90vh] overflow-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">
+                    <i class="fas fa-users mr-2 text-purple-600"></i>
+                    Quản Lý Nhân Viên
+                </h3>
+                <button onclick="closeStaffModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Create Staff Form -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h4 class="text-lg font-medium mb-4">Tạo Tài Khoản Nhân Viên Mới</h4>
+                <form id="createStaffForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tên đăng nhập</label>
+                        <input type="text" id="staffUsername" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu</label>
+                        <input type="password" id="staffPassword" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Họ tên</label>
+                        <input type="text" id="staffFullName" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div class="md:col-span-3">
+                        <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Tạo Tài Khoản
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Staff List -->
+            <div>
+                <h4 class="text-lg font-medium mb-4">Danh Sách Nhân Viên</h4>
+                <div id="staffList" class="space-y-3">
+                    <!-- Staff list will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Admin protection - Check immediately
-        (function() {
-            const isAdmin = localStorage.getItem('isAdmin') === 'true';
-            const adminPassword = localStorage.getItem('adminPassword');
+        // Initialize Admin Auth
+        let adminAuth;
 
-            if (!isAdmin || adminPassword !== 'admin123') {
-                const password = prompt('🔒 TRANG QUẢN TRỊ\n\nTrang này chỉ dành cho quản trị viên.\nVui lòng nhập mật khẩu admin:');
+        // Check authentication and redirect if needed
+        document.addEventListener('DOMContentLoaded', function() {
+            adminAuth = new AdminAuth();
 
-                if (password === 'admin123') {
-                    localStorage.setItem('isAdmin', 'true');
-                    localStorage.setItem('adminPassword', 'admin123');
-                    alert('✅ Đăng nhập thành công! Chào mừng Admin.');
-                } else if (password !== null) {
-                    alert('❌ Mật khẩu không đúng!\nBạn sẽ được chuyển về trang chủ.');
-                    window.location.href = 'Menu-new.html';
-                    return;
-                } else {
-                    window.location.href = 'Menu-new.html';
-                    return;
-                }
+            // Check if user is logged in and has permission
+            if (!adminAuth.checkPageAccess('view_invoices')) {
+                return; // Will redirect to login page
             }
-        })();
+
+            // Initialize page
+            initializePage();
+        });
+
+        // Initialize page with authentication
+        function initializePage() {
+            // Update UI based on user role
+            updateUIForUserRole();
+
+            // Load invoices
+            loadInvoices();
+
+            // Setup staff management if admin
+            if (adminAuth.isAdmin()) {
+                setupStaffManagement();
+            }
+        }
+
+        // Update UI based on user role
+        function updateUIForUserRole() {
+            const currentUser = adminAuth.getCurrentUser();
+            if (!currentUser) return;
+
+            // Update user info in header
+            document.getElementById('currentUserName').textContent = currentUser.fullName;
+
+            const roleBadge = document.getElementById('userRoleBadge');
+            if (currentUser.role === 'admin') {
+                roleBadge.textContent = 'ADMIN';
+                roleBadge.className = 'px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800';
+            } else {
+                roleBadge.textContent = 'NHÂN VIÊN';
+                roleBadge.className = 'px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800';
+            }
+
+            // Show/hide admin actions
+            const adminActions = document.getElementById('adminActions');
+            if (adminAuth.isAdmin()) {
+                adminActions.classList.remove('hidden');
+            } else {
+                adminActions.classList.add('hidden');
+            }
+
+            // Show/hide total amount for staff
+            const totalAmountCard = document.getElementById('totalAmountCard');
+            if (adminAuth.isAdmin()) {
+                totalAmountCard.classList.remove('hidden');
+            } else {
+                totalAmountCard.classList.add('hidden');
+            }
+        }
+
+        // Logout function
+        function logout() {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                adminAuth.logout();
+            }
+        }
+
+        // Show staff management modal (admin only)
+        function showStaffManagement() {
+            if (!adminAuth.hasPermission('create_staff')) {
+                alert('Bạn không có quyền quản lý nhân viên!');
+                return;
+            }
+
+            document.getElementById('staffManagementModal').classList.remove('hidden');
+            loadStaffList();
+        }
+
+        // Close staff management modal
+        function closeStaffModal() {
+            document.getElementById('staffManagementModal').classList.add('hidden');
+        }
+
+        // Setup staff management
+        function setupStaffManagement() {
+            // Create staff form submission
+            document.getElementById('createStaffForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                createStaff();
+            });
+        }
+
+        // Create new staff
+        function createStaff() {
+            const username = document.getElementById('staffUsername').value.trim();
+            const password = document.getElementById('staffPassword').value;
+            const fullName = document.getElementById('staffFullName').value.trim();
+
+            if (!username || !password || !fullName) {
+                alert('Vui lòng điền đầy đủ thông tin!');
+                return;
+            }
+
+            const result = adminAuth.createStaffAccount({
+                username: username,
+                password: password,
+                fullName: fullName
+            });
+
+            if (result.success) {
+                alert('✅ Tạo tài khoản nhân viên thành công!');
+                document.getElementById('createStaffForm').reset();
+                loadStaffList();
+            } else {
+                alert('❌ ' + result.message);
+            }
+        }
+
+        // Load staff list
+        function loadStaffList() {
+            const staffAccounts = adminAuth.getStaffAccounts();
+            const staffList = document.getElementById('staffList');
+
+            if (staffAccounts.length === 0) {
+                staffList.innerHTML = '<p class="text-gray-500 text-center py-4">Chưa có nhân viên nào</p>';
+                return;
+            }
+
+            staffList.innerHTML = staffAccounts.map(staff => `
+                <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-blue-600"></i>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-800">${staff.fullName}</div>
+                            <div class="text-sm text-gray-500">@${staff.username}</div>
+                            <div class="text-xs text-gray-400">Tạo: ${new Date(staff.createdAt).toLocaleDateString('vi-VN')}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                            ${staff.isActive ? 'Hoạt động' : 'Tạm khóa'}
+                        </span>
+                        <button onclick="deleteStaff('${staff.id}')"
+                                class="text-red-600 hover:text-red-800 p-1" title="Xóa nhân viên">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Delete staff
+        function deleteStaff(staffId) {
+            if (!confirm('Bạn có chắc chắn muốn xóa tài khoản nhân viên này?')) {
+                return;
+            }
+
+            const result = adminAuth.deleteStaffAccount(staffId);
+            if (result.success) {
+                alert('✅ Đã xóa tài khoản nhân viên!');
+                loadStaffList();
+            } else {
+                alert('❌ ' + result.message);
+            }
+        }
+
+        // Debug admin status
+        function debugAdminStatus() {
+            const debugInfo = {
+                adminAuth: !!adminAuth,
+                isLoggedIn: adminAuth ? adminAuth.isLoggedIn() : false,
+                isAdmin: adminAuth ? adminAuth.isAdmin() : false,
+                isStaff: adminAuth ? adminAuth.isStaff() : false,
+                currentUser: adminAuth ? adminAuth.getCurrentUser() : null,
+                hasApprovePermission: adminAuth ? adminAuth.hasPermission('approve_invoices') : false,
+                pendingInvoices: allInvoices.filter(inv => inv.status === 'pending-approval').length
+            };
+
+            console.log('🔍 Admin Debug Info:', debugInfo);
+            alert('Debug Info (xem console):\n' + JSON.stringify(debugInfo, null, 2));
+        }
 
         // Global variables
         let allInvoices = [];
@@ -507,7 +757,8 @@
                     payment_status: 'pending',
                     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
                     address: null,
-                    notes: 'Khách hàng thanh toán qua chuyển khoản ngân hàng'
+                    notes: 'Khách hàng thanh toán qua chuyển khoản ngân hàng',
+                    transfer_proof: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmOWZmIiBzdHJva2U9IiNjYWY0ZmYiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iMzAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiMzNzQ5NWUiPkjDrG5oIMOhbmggQ2h1eeG7g24gS2hvYW4gTcOidTwvdGV4dD4KICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjNjM2NjZiIj5T4buRIHRp4buBbjogMjUwLDAwMCBWTsSTPC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNzAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5Y2EzYWYiPk5nw6J5OiAyMy8xMi8yMDI0IC0gMTQ6MzA8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iNTAiIHI9IjIwIiBmaWxsPSIjMTBiOTgxIi8+CiAgPHRleHQgeD0iMzUwIiB5PSI1NSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSJ3aGl0ZSI+4pyTPC90ZXh0Pgo8L3N2Zz4='
                 },
                 {
                     id: 'pending_002',
@@ -526,7 +777,8 @@
                     payment_status: 'pending',
                     createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
                     address: '123 Nguyễn Huệ, Quận 1, TP.HCM',
-                    notes: 'Giao hàng tận nơi, thanh toán chuyển khoản'
+                    notes: 'Giao hàng tận nơi, thanh toán chuyển khoản',
+                    transfer_proof: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmVmM2M3IiBzdHJva2U9IiNmYmNmOWEiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iMzAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5MjQwMGUiPkjDrG5oIMOhbmggQ2h1eeG7g24gS2hvYW4gTcOidTwvdGV4dD4KICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTI0MDBmIj5T4buRIHRp4buBbjogMzIwLDAwMCBWTsSTPC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNzAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiNhMTYyMDciPk5nw6J5OiAyMy8xMi8yMDI0IC0gMTU6NDU8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iNTAiIHI9IjIwIiBmaWxsPSIjZWFiMzA4Ii8+CiAgPHRleHQgeD0iMzUwIiB5PSI1NSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSJ3aGl0ZSI+4pyTPC90ZXh0Pgo8L3N2Zz4='
                 }
             ];
 
@@ -544,13 +796,7 @@
                     allInvoices = [];
                 }
 
-                // Add sample pending approval invoices if none exist
-                const hasPendingApproval = allInvoices.some(inv => inv.status === 'pending-approval');
-                if (!hasPendingApproval) {
-                    const sampleInvoices = createSamplePendingInvoices();
-                    allInvoices.unshift(...sampleInvoices);
-                    saveInvoiceHistory();
-                }
+                // Sample invoices will only be created manually via "Tạo HĐ chờ duyệt" button
 
                 // Add invoices from payment flow
                 const paymentInvoices = localStorage.getItem('invoiceList');
@@ -784,7 +1030,13 @@
                                 </span>
                             </div>
                             <div class="text-right">
-                                <p class="font-bold text-lg text-blue-600">${formatPrice(invoice.total || 0)}</p>
+                                ${adminAuth && adminAuth.isAdmin() ? `
+                                    <p class="font-bold text-lg text-blue-600">${formatPrice(invoice.total || 0)}</p>
+                                ` : `
+                                    <p class="font-bold text-lg text-gray-400">
+                                        <i class="fas fa-lock mr-1"></i>***
+                                    </p>
+                                `}
                                 <p class="text-sm text-gray-500">${formatDateShort(invoice.createdAt || invoice.timestamp)}</p>
                             </div>
                         </div>
@@ -825,41 +1077,57 @@
                                 class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
                             <i class="fas fa-eye mr-1"></i>Xem
                         </button>
-                        <button onclick="event.stopPropagation(); editInvoice('${invoice.id}')"
-                                class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors">
-                            <i class="fas fa-edit mr-1"></i>Sửa
-                        </button>
-                        <button onclick="event.stopPropagation(); deleteInvoice('${invoice.id}')"
-                                class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
-                            <i class="fas fa-trash mr-1"></i>Xóa
-                        </button>
-                        ${invoice.status === 'pending-approval' ? `
-                            <button onclick="event.stopPropagation(); approveInvoice('${invoice.id}')"
-                                    class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
-                                <i class="fas fa-check mr-1"></i>Duyệt
+                        ${adminAuth && adminAuth.hasPermission('edit_invoices') ? `
+                            <button onclick="event.stopPropagation(); editInvoice('${invoice.id}')"
+                                    class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors">
+                                <i class="fas fa-edit mr-1"></i>Sửa
                             </button>
-                            <button onclick="event.stopPropagation(); rejectInvoice('${invoice.id}')"
+                        ` : ''}
+                        ${adminAuth && adminAuth.hasPermission('delete_invoices') ? `
+                            <button onclick="event.stopPropagation(); deleteInvoice('${invoice.id}')"
                                     class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
-                                <i class="fas fa-times mr-1"></i>Từ chối
+                                <i class="fas fa-trash mr-1"></i>Xóa
                             </button>
-                            ${invoice.transfer_proof ? `
-                                <button onclick="event.stopPropagation(); viewTransferProof('${invoice.id}')"
-                                        class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
-                                    <i class="fas fa-image mr-1"></i>Xem ảnh CK
-                                </button>
-                            ` : ''}
-                        ` : `
-                            <button onclick="event.stopPropagation(); printInvoice('${invoice.id}')"
-                                    class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors">
-                                <i class="fas fa-print mr-1"></i>In
+                        ` : ''}
+                        ${(() => {
+                            let buttons = '';
+
+                            // Nút duyệt cho hóa đơn chờ duyệt (chuyển khoản)
+                            if (invoice.status === 'pending-approval' && adminAuth && adminAuth.hasPermission('approve_invoices')) {
+                                buttons += `
+                                    <button onclick="event.stopPropagation(); approveInvoice('${invoice.id}')"
+                                            class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
+                                        <i class="fas fa-check mr-1"></i>Duyệt
+                                    </button>
+                                    <button onclick="event.stopPropagation(); rejectInvoice('${invoice.id}')"
+                                            class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
+                                        <i class="fas fa-times mr-1"></i>Từ chối
+                                    </button>
+                                `;
+                            }
+
+                            // Nút xác nhận thanh toán cho đơn hàng tiền mặt
+                            if (invoice.status === 'pending' && invoice.payment_method === 'cash' && adminAuth && adminAuth.hasPermission('approve_invoices')) {
+                                buttons += `
+                                    <button onclick="event.stopPropagation(); confirmCashPayment('${invoice.id}')"
+                                            class="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-700 transition-colors">
+                                        <i class="fas fa-money-bill mr-1"></i>Xác nhận thanh toán
+                                    </button>
+                                `;
+                            }
+
+                            return buttons;
+                        })()}
+                        ${invoice.transfer_proof ? `
+                            <button onclick="event.stopPropagation(); viewTransferProof('${invoice.id}')"
+                                    class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-image mr-1"></i>Xem ảnh CK
                             </button>
-                            ${invoice.transfer_proof ? `
-                                <button onclick="event.stopPropagation(); viewTransferProof('${invoice.id}')"
-                                        class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
-                                    <i class="fas fa-image mr-1"></i>Xem ảnh CK
-                                </button>
-                            ` : ''}
-                        `}
+                        ` : ''}
+                        <button onclick="event.stopPropagation(); printInvoice('${invoice.id}')"
+                                class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-print mr-1"></i>In
+                        </button>
                     </div>
                 </div>
             `;
@@ -943,6 +1211,12 @@
 
         // Approve invoice
         function approveInvoice(invoiceId) {
+            // Check permission
+            if (!adminAuth || !adminAuth.hasPermission('approve_invoices')) {
+                alert('Bạn không có quyền duyệt hóa đơn!');
+                return;
+            }
+
             if (!confirm('Bạn có chắc chắn muốn duyệt hóa đơn này?')) {
                 return;
             }
@@ -955,6 +1229,11 @@
 
                 // Show success message
                 alert('✅ Hóa đơn đã được duyệt thành công!\nTrạng thái đã chuyển sang "Đã xác nhận".');
+
+                // If currently viewing pending approval filter, refresh to remove approved invoice
+                if (currentFilter === 'pending-approval') {
+                    filterInvoices('pending-approval');
+                }
 
                 // Refresh the display
                 updateStatistics();
@@ -969,6 +1248,12 @@
 
         // Reject invoice
         function rejectInvoice(invoiceId) {
+            // Check permission
+            if (!adminAuth || !adminAuth.hasPermission('reject_invoices')) {
+                alert('Bạn không có quyền từ chối hóa đơn!');
+                return;
+            }
+
             if (!confirm('Bạn có chắc chắn muốn từ chối hóa đơn này?')) {
                 return;
             }
@@ -982,6 +1267,11 @@
                 // Show success message
                 alert('❌ Hóa đơn đã bị từ chối!\nTrạng thái đã chuyển sang "Đã hủy".');
 
+                // If currently viewing pending approval filter, refresh to remove rejected invoice
+                if (currentFilter === 'pending-approval') {
+                    filterInvoices('pending-approval');
+                }
+
                 // Refresh the display
                 updateStatistics();
                 renderInvoices();
@@ -993,12 +1283,78 @@
             }
         }
 
+        // Confirm cash payment
+        function confirmCashPayment(invoiceId) {
+            // Check permission
+            if (!adminAuth || !adminAuth.hasPermission('approve_invoices')) {
+                alert('Bạn không có quyền xác nhận thanh toán!');
+                return;
+            }
+
+            if (!confirm('Bạn có chắc chắn đã nhận được thanh toán tiền mặt cho hóa đơn này?')) {
+                return;
+            }
+
+            try {
+                console.log('🔍 Confirming cash payment:', invoiceId);
+
+                // Update invoice status to confirmed
+                updateInvoiceStatus(invoiceId, 'confirmed');
+
+                // Show success message
+                alert('✅ Đã xác nhận thanh toán tiền mặt!\nTrạng thái đã chuyển sang "Đã xác nhận".');
+
+                // If currently viewing pending filter, refresh to remove confirmed invoice
+                if (currentFilter === 'pending') {
+                    filterInvoices('pending');
+                }
+
+                // Refresh the display
+                updateStatistics();
+                renderInvoices();
+
+                console.log('✅ Cash payment confirmed successfully');
+            } catch (error) {
+                console.error('❌ Error confirming cash payment:', error);
+                alert('Có lỗi xảy ra khi xác nhận thanh toán. Vui lòng thử lại.');
+            }
+        }
+
         // Update invoice status in local data
         function updateInvoiceStatus(invoiceId, newStatus) {
             const invoice = allInvoices.find(inv => inv.id == invoiceId);
             if (invoice) {
+                console.log(`🔄 Updating invoice ${invoiceId} from ${invoice.status} to ${newStatus}`);
                 invoice.status = newStatus;
+                invoice.updatedAt = new Date().toISOString();
+
+                // Save to localStorage immediately
                 saveInvoiceHistory();
+
+                // Also update in invoiceList if exists (for payment flow compatibility)
+                const invoiceList = localStorage.getItem('invoiceList');
+                if (invoiceList) {
+                    try {
+                        const invoices = JSON.parse(invoiceList);
+                        const paymentInvoice = invoices.find(inv =>
+                            (inv.invoice && inv.invoice.id === invoiceId) || inv.id === invoiceId
+                        );
+                        if (paymentInvoice) {
+                            if (paymentInvoice.invoice) {
+                                paymentInvoice.invoice.status = newStatus;
+                            } else {
+                                paymentInvoice.status = newStatus;
+                            }
+                            localStorage.setItem('invoiceList', JSON.stringify(invoices));
+                        }
+                    } catch (error) {
+                        console.warn('Error updating invoiceList:', error);
+                    }
+                }
+
+                console.log(`✅ Invoice ${invoiceId} status updated successfully`);
+            } else {
+                console.error(`❌ Invoice ${invoiceId} not found for status update`);
             }
         }
 
@@ -1045,6 +1401,12 @@
 
         // Delete invoice
         function deleteInvoice(invoiceId) {
+            // Check permission
+            if (!adminAuth || !adminAuth.hasPermission('delete_invoices')) {
+                alert('Bạn không có quyền xóa hóa đơn!');
+                return;
+            }
+
             const invoice = allInvoices.find(inv => inv.id === invoiceId);
             if (!invoice) {
                 alert('Không tìm thấy hóa đơn!');
@@ -1094,6 +1456,12 @@
 
         // Edit invoice
         function editInvoice(invoiceId) {
+            // Check permission
+            if (!adminAuth || !adminAuth.hasPermission('edit_invoices')) {
+                alert('Bạn không có quyền sửa hóa đơn!');
+                return;
+            }
+
             const invoice = allInvoices.find(inv => inv.id === invoiceId);
             if (!invoice) {
                 alert('Không tìm thấy hóa đơn!');
@@ -1341,8 +1709,32 @@
             renderInvoices();
         }
 
+        // Clear all test data (for debugging)
+        function clearAllTestData() {
+            if (!adminAuth || !adminAuth.isAdmin()) {
+                alert('Chỉ admin mới có thể xóa dữ liệu test!');
+                return;
+            }
+
+            if (confirm('⚠️ Bạn có chắc chắn muốn xóa TẤT CẢ dữ liệu test?\nHành động này không thể hoàn tác!')) {
+                localStorage.removeItem('invoiceHistory');
+                localStorage.removeItem('invoiceList');
+                allInvoices = [];
+                filteredInvoices = [];
+                updateStatistics();
+                renderInvoices();
+                alert('✅ Đã xóa tất cả dữ liệu test!');
+            }
+        }
+
         // Add sample pending invoice for testing
         function addSamplePendingInvoice() {
+            // Check permission
+            if (!adminAuth || !adminAuth.isAdmin()) {
+                alert('Chỉ admin mới có thể tạo hóa đơn test!');
+                return;
+            }
+
             const randomId = 'pending_' + Date.now();
             const randomInvoiceNumber = 'HD' + String(Math.floor(Math.random() * 999999)).padStart(6, '0');
 
@@ -1363,7 +1755,8 @@
                 payment_status: 'pending',
                 createdAt: new Date().toISOString(),
                 address: null,
-                notes: 'Hóa đơn test - Thanh toán chuyển khoản ngân hàng'
+                notes: 'Hóa đơn test - Thanh toán chuyển khoản ngân hàng',
+                transfer_proof: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmZGY0IiBzdHJva2U9IiNhN2YzZDAiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iMjAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiMwNjU5NGYiPkjDrG5oIMOhbmggQ2h1eeG7g24gS2hvYW4gVGVzdDwvdGV4dD4KICA8dGV4dCB4PSI1MCUiIHk9IjQwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMDY1OTRmIj5T4buRIHRp4buBbjogMTUwLDAwMCBWTsSTPC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiMwNzc0OWIiPk5nw6J5OiAke25ldyBEYXRlKCkudG9Mb2NhbGVEYXRlU3RyaW5nKCd2aS1WTicpfTwvdGV4dD4KICA8dGV4dCB4PSI1MCUiIHk9Ijc1JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEwIiBmaWxsPSIjNmI3Mjc5Ij5Iw6xuaCDhuqNuaCBt4bqrdSBjaG8gdGVzdDwvdGV4dD4KICA8Y2lyY2xlIGN4PSIzNTAiIGN5PSI1MCIgcj0iMjAiIGZpbGw9IiMxMGI5ODEiLz4KICA8dGV4dCB4PSIzNTAiIHk9IjU1IiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IndoaXRlIj7inJM8L3RleHQ+Cjwvc3ZnPg=='
             };
 
             allInvoices.unshift(sampleInvoice);
@@ -1374,6 +1767,48 @@
             // Refresh display
             updateStatistics();
             filterInvoices('pending-approval'); // Auto switch to pending approval filter
+        }
+
+        // Add sample cash payment invoice for testing
+        function addSampleCashInvoice() {
+            // Check permission
+            if (!adminAuth || !adminAuth.isAdmin()) {
+                alert('Chỉ admin mới có thể tạo hóa đơn test!');
+                return;
+            }
+
+            const randomId = 'cash_' + Date.now();
+            const randomInvoiceNumber = 'HD' + String(Math.floor(Math.random() * 999999)).padStart(6, '0');
+
+            const sampleInvoice = {
+                id: randomId,
+                invoiceNumber: randomInvoiceNumber,
+                customerName: 'Khách hàng Tiền Mặt',
+                customerEmail: 'cash@gmail.com',
+                customerPhone: '0123456789',
+                items: [
+                    { name: 'Bún Bò Huế', quantity: 1, price: 55000, total: 55000 },
+                    { name: 'Nước Cam', quantity: 1, price: 25000, total: 25000 }
+                ],
+                total: 80000,
+                orderType: 'dine-in',
+                status: 'pending',
+                payment_method: 'cash',
+                payment_status: 'pending',
+                createdAt: new Date().toISOString(),
+                address: null,
+                notes: 'Hóa đơn test - Thanh toán tiền mặt tại quầy'
+            };
+
+            // Add to invoices list
+            allInvoices.unshift(sampleInvoice);
+            saveInvoiceHistory();
+
+            alert('✅ Đã tạo hóa đơn mẫu tiền mặt!\nMã hóa đơn: ' + randomInvoiceNumber);
+
+            // Refresh display
+            updateStatistics();
+            filterInvoices('pending'); // Auto switch to pending filter
         }
 
         // Refresh list

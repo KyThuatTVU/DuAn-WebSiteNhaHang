@@ -835,6 +835,36 @@
             }
         }
 
+        // Test login function (for debugging)
+        function testLogin() {
+            const testUser = {
+                id: 'test123',
+                email: 'test@example.com',
+                full_name: 'Test User',
+                phone: '0123456789'
+            };
+            localStorage.setItem('user', JSON.stringify(testUser));
+            console.log('✅ Test user logged in:', testUser);
+
+            // Trigger cart manager to reload customer info
+            if (window.cartManager) {
+                window.cartManager.handleUserChange();
+            }
+        }
+
+        // Test logout function (for debugging)
+        function testLogout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('token');
+            console.log('✅ Test user logged out');
+
+            // Trigger cart manager to reload customer info
+            if (window.cartManager) {
+                window.cartManager.handleUserChange();
+            }
+        }
+
         // Initialize menu when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Menu-new.html loaded successfully!');

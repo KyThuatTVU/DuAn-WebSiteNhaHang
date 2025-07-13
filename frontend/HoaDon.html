@@ -7,6 +7,7 @@
     <link rel="icon" href="img/logoPN.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="js/admin-auth.js"></script>
     <style>
         @media print {
             .no-print { display: none !important; }
@@ -152,8 +153,8 @@
                                 <th class="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">STT</th>
                                 <th class="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">Tên Món</th>
                                 <th class="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">Số Lượng</th>
-                                <th class="border border-gray-200 px-4 py-3 text-right font-semibold text-gray-700">Đơn Giá</th>
-                                <th class="border border-gray-200 px-4 py-3 text-right font-semibold text-gray-700">Thành Tiền</th>
+                                <th id="priceHeader" class="border border-gray-200 px-4 py-3 text-right font-semibold text-gray-700">Đơn Giá</th>
+                                <th id="totalHeader" class="border border-gray-200 px-4 py-3 text-right font-semibold text-gray-700">Thành Tiền</th>
                             </tr>
                         </thead>
                         <tbody id="orderItemsTable">
@@ -163,7 +164,7 @@
                 </div>
 
                 <!-- Total Section -->
-                <div class="mt-6 border-t border-gray-200 pt-4">
+                <div id="totalSection" class="mt-6 border-t border-gray-200 pt-4">
                     <div class="flex justify-end">
                         <div class="w-full max-w-sm space-y-2">
                             <div class="flex justify-between text-gray-600">
@@ -276,6 +277,51 @@
     </div>
 
     <script>
+        let adminAuth;
+
+        // Initialize admin auth and check permissions
+        document.addEventListener('DOMContentLoaded', function() {
+            adminAuth = new AdminAuth();
+
+            // Check if user has permission to view prices
+            if (!adminAuth.isLoggedIn()) {
+                // Redirect to login if not logged in
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            // Hide price information for staff
+            if (!adminAuth.isAdmin()) {
+                hidePriceInformation();
+            }
+
+            // Load invoice data
+            loadInvoiceData();
+        });
+
+        // Hide price information for staff
+        function hidePriceInformation() {
+            // Hide price columns in table
+            const priceHeader = document.getElementById('priceHeader');
+            const totalHeader = document.getElementById('totalHeader');
+            if (priceHeader) priceHeader.style.display = 'none';
+            if (totalHeader) totalHeader.style.display = 'none';
+
+            // Hide total section
+            const totalSection = document.getElementById('totalSection');
+            if (totalSection) totalSection.style.display = 'none';
+
+            // Add CSS to hide price columns in table rows
+            const style = document.createElement('style');
+            style.textContent = `
+                .price-column { display: none !important; }
+                @media print {
+                    .price-column { display: none !important; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         // Utility functions
         function formatPrice(price) {
             return new Intl.NumberFormat('vi-VN', {
@@ -515,6 +561,10 @@
 
                 const row = document.createElement('tr');
                 row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+
+                // Check if user can see prices
+                const canViewPrices = adminAuth && adminAuth.isAdmin();
+
                 row.innerHTML = `
                     <td class="border border-gray-200 px-4 py-3 text-center">${index + 1}</td>
                     <td class="border border-gray-200 px-4 py-3">
@@ -522,8 +572,8 @@
                         ${item.mo_ta ? `<div class="text-sm text-gray-600">${item.mo_ta}</div>` : ''}
                     </td>
                     <td class="border border-gray-200 px-4 py-3 text-center">${quantity}</td>
-                    <td class="border border-gray-200 px-4 py-3 text-right">${formatPrice(price)}</td>
-                    <td class="border border-gray-200 px-4 py-3 text-right font-medium">${formatPrice(total)}</td>
+                    <td class="border border-gray-200 px-4 py-3 text-right price-column">${canViewPrices ? formatPrice(price) : '<i class="fas fa-lock text-gray-400"></i>'}</td>
+                    <td class="border border-gray-200 px-4 py-3 text-right font-medium price-column">${canViewPrices ? formatPrice(total) : '<i class="fas fa-lock text-gray-400"></i>'}</td>
                 `;
                 tableBody.appendChild(row);
             });
@@ -566,10 +616,8 @@
             document.getElementById('errorState').classList.remove('hidden');
         }
 
-        // Initialize page
+        // Setup image modal event listener
         document.addEventListener('DOMContentLoaded', function() {
-            loadInvoiceData();
-
             // Close image modal when clicking outside
             document.getElementById('imageModal').addEventListener('click', function(e) {
                 if (e.target === this) {

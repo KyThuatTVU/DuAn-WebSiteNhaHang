@@ -159,7 +159,7 @@
                             <i class="fas fa-camera mr-2"></i>
                             Tải lên ảnh chuyển khoản <span class="text-red-500">*</span>
                         </label>
-                        <input type="file" id="transferProof" accept="image/*" required
+                        <input type="file" id="transferProof" name="transferProof" accept="image/*"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <p class="text-xs text-red-600 mt-1">
                             <i class="fas fa-exclamation-triangle mr-1"></i>
@@ -196,28 +196,28 @@
                 <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-check text-green-600 text-3xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">Đặt Hàng Thành Công!</h2>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Cảm ơn bạn đã sử dụng dịch vụ!</h2>
                 <p class="text-gray-600 mb-4">Mã hóa đơn: <span id="invoiceNumber" class="font-semibold text-blue-600">#HD000001</span></p>
             </div>
 
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                 <div class="flex items-center justify-center mb-2">
-                    <i class="fas fa-phone text-blue-600 mr-2"></i>
-                    <span class="font-semibold text-blue-800">Chúng tôi sẽ liên hệ với bạn sớm nhất!</span>
+                    <i class="fas fa-heart text-red-500 mr-2"></i>
+                    <span class="font-semibold text-green-800">Cảm ơn bạn đã tin tưởng nhà hàng!</span>
                 </div>
-                <p class="text-sm text-blue-700">
-                    Nhà hàng sẽ gọi điện xác nhận đơn hàng và thông báo thời gian chuẩn bị trong vòng 5-10 phút.
+                <p class="text-sm text-green-700">
+                    Đơn hàng của bạn đã được ghi nhận và đang chờ nhân viên xác nhận. Chúng tôi sẽ liên hệ với bạn sớm nhất để thông báo tình trạng đơn hàng.
                 </p>
             </div>
 
             <div class="space-y-3">
                 <button onclick="closeSuccessModal()"
-                        class="w-full bg-red-600 text-white py-3 px-4 rounded-md hover:bg-red-700 transition-colors duration-300 font-semibold">
-                    <i class="fas fa-home mr-2"></i>
-                    Quay về Thực đơn
+                        class="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 transition-colors duration-300 font-semibold">
+                    <i class="fas fa-check mr-2"></i>
+                    Đóng
                 </button>
                 <div class="text-sm text-gray-500">
-                    <p>Cảm ơn bạn đã tin tưởng nhà hàng!</p>
+                    <p>Chúng tôi rất trân trọng sự ủng hộ của bạn! 🙏</p>
                 </div>
             </div>
         </div>
@@ -497,17 +497,40 @@
         // Handle form submission
         document.getElementById('paymentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            console.log('🔄 Form submission started');
 
             const submitBtn = document.getElementById('submitOrderBtn');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
 
             try {
+                // Check if cart has items
+                if (!cartItems || cartItems.length === 0) {
+                    alert('⚠️ Giỏ hàng trống!\n\nVui lòng thêm món ăn vào giỏ hàng trước khi thanh toán.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Xác Nhận Thanh Toán';
+                    return;
+                }
+
                 const formData = new FormData(this);
                 const orderType = formData.get('orderType');
                 const deliveryAddress = formData.get('deliveryAddress');
                 const orderNotes = formData.get('orderNotes');
                 const paymentMethod = formData.get('paymentMethod');
+
+                console.log('📋 Form data:', {
+                    orderType, deliveryAddress, orderNotes, paymentMethod,
+                    cartItemsCount: cartItems.length,
+                    customerInfo: customerInfo
+                });
+
+                // Check customer info
+                if (!customerInfo) {
+                    alert('⚠️ Không có thông tin khách hàng!\n\nVui lòng kiểm tra lại.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Xác Nhận Thanh Toán';
+                    return;
+                }
 
                 // Handle transfer proof image
                 let transferProofImage = null;
@@ -569,7 +592,7 @@
                         dia_chi_giao_hang: deliveryAddress || null,
                         ghi_chu: orderNotes || null,
                         payment_method: paymentMethod,
-                        payment_status: paymentMethod === 'bank_transfer' ? 'pending_approval' : 'completed',
+                        payment_status: 'pending',
                         transfer_proof: transferProofImage, // Lưu hình ảnh chuyển khoản
                         customer_info: {
                             full_name: customerInfo.full_name || customerInfo.name || 'Khách hàng',
@@ -599,9 +622,9 @@
                     items: normalizedCartItems,
                     total: total,
                     orderType: orderType === 'giao_hang' ? 'delivery' : 'dine-in',
-                    status: paymentMethod === 'bank_transfer' ? 'pending-approval' : 'confirmed',
+                    status: paymentMethod === 'bank_transfer' ? 'pending-approval' : 'pending',
                     payment_method: paymentMethod,
-                    payment_status: paymentMethod === 'bank_transfer' ? 'pending' : 'completed',
+                    payment_status: 'pending',
                     createdAt: new Date().toISOString(),
                     address: deliveryAddress || null,
                     notes: orderNotes || null,
@@ -628,8 +651,8 @@
                     deliveryAddress: deliveryAddress,
                     notes: orderNotes,
                     paymentMethod: paymentMethod,
-                    paymentStatus: paymentMethod === 'bank_transfer' ? 'pending' : 'completed',
-                    status: paymentMethod === 'bank_transfer' ? 'pending-approval' : 'confirmed',
+                    paymentStatus: 'pending',
+                    status: paymentMethod === 'bank_transfer' ? 'pending-approval' : 'pending',
                     createdAt: new Date().toISOString(),
                     transfer_proof: transferProofImage,
                     customerInfo: {
@@ -656,10 +679,10 @@
                     window.cartManager.clearCart();
                 }
 
-                console.log('✅ Order completed successfully, redirecting to invoice...');
+                console.log('✅ Order completed successfully!');
 
-                // Chuyển hướng sang trang hóa đơn
-                window.location.href = 'HoaDon.html';
+                // Hiển thị modal cảm ơn
+                showSuccessModal(invoiceId);
 
             } catch (error) {
                 console.error('❌ Payment error:', error);
@@ -693,8 +716,7 @@
                 modal.style.animation = 'fadeOut 0.3s ease-out';
                 setTimeout(() => {
                     modal.classList.add('hidden');
-                    // Redirect to menu
-                    window.location.href = 'Menu-new.html';
+                    // Không chuyển hướng, chỉ đóng modal
                 }, 300);
             }
         }
@@ -712,16 +734,19 @@
             const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
             const bankTransferSection = document.getElementById('bankTransferSection');
             const submitBtn = document.getElementById('submitOrderBtn');
+            const transferProofInput = document.getElementById('transferProof');
 
             if (paymentMethod === 'bank_transfer') {
                 bankTransferSection.classList.remove('hidden');
                 submitBtn.innerHTML = '<i class="fas fa-university mr-2"></i>Xác Nhận Đặt Hàng (Chuyển Khoản)';
+                transferProofInput.setAttribute('required', 'required');
 
                 // Update transfer content and amount
                 updateTransferInfo();
             } else {
                 bankTransferSection.classList.add('hidden');
                 submitBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Xác Nhận Thanh Toán';
+                transferProofInput.removeAttribute('required');
             }
         }
 

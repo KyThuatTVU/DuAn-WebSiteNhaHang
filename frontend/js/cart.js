@@ -1344,13 +1344,12 @@ class CartManager {
 
     getLoggedInUser() {
         try {
-            // Kiểm tra cả 2 format để tương thích
+            // Kiểm tra cả 2 format để tương thích (không cần token)
             const user = localStorage.getItem('user') || localStorage.getItem('userData');
-            const token = localStorage.getItem('token');
 
-            if (user && token) {
+            if (user) {
                 const userData = JSON.parse(user);
-                console.log('👤 Found logged in user:', userData.email);
+                console.log('👤 Found logged in user:', userData.email || userData.full_name);
                 return userData;
             }
 
@@ -1572,17 +1571,30 @@ class CartManager {
         if (this.customerInfo) {
             if (this.customerInfo.isLoggedInUser) {
                 console.log('✅ Sử dụng thông tin từ user đã đăng nhập');
-                this.showNotification(`Xin chào ${this.customerInfo.full_name}! Đang thêm món vào giỏ hàng...`, 'success', 2000);
             } else {
                 console.log('✅ Sử dụng thông tin khách hàng đã lưu');
             }
             // Customer info already exists, execute callback
             callback();
         } else {
-            console.log('❌ Chưa có thông tin khách hàng, yêu cầu nhập thông tin');
-            // Store the callback to execute after customer info is provided
-            this.pendingCartAction = callback;
-            this.showCustomerInfoModal();
+            console.log('⚠️ Chưa có thông tin khách hàng, tạo thông tin guest tạm thời');
+
+            // Tạo thông tin guest tạm thời để cho phép thêm vào giỏ hàng
+            this.customerInfo = {
+                id: 'guest',
+                full_name: 'Khách hàng',
+                email: 'guest@restaurant.com',
+                phone: '0000000000',
+                isLoggedInUser: false
+            };
+
+            // Lưu thông tin guest
+            this.saveCustomerInfo(this.customerInfo);
+
+            console.log('✅ Đã tạo thông tin guest, cho phép thêm vào giỏ hàng');
+
+            // Execute callback
+            callback();
         }
     }
 
