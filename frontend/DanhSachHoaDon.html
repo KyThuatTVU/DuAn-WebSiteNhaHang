@@ -105,20 +105,8 @@
 
                     <!-- Action Buttons (Admin Only) -->
                     <div id="adminActions" class="flex items-center space-x-3">
-                        <button onclick="addSamplePendingInvoice()" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
-                            <i class="fas fa-plus-circle mr-2"></i>Tạo HĐ chờ duyệt
-                        </button>
-                        <button onclick="addSampleCashInvoice()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
-                            <i class="fas fa-money-bill mr-2"></i>Tạo HĐ tiền mặt
-                        </button>
-                        <button onclick="clearAllTestData()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
-                            <i class="fas fa-trash-alt mr-2"></i>Xóa dữ liệu test
-                        </button>
-                        <button onclick="debugAdminStatus()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
-                            <i class="fas fa-bug mr-2"></i>Debug Admin
-                        </button>
-                        <button onclick="showStaffManagement()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                            <i class="fas fa-users mr-2"></i>Quản lý nhân viên
+                        <button onclick="showRevenueStats()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-chart-line mr-2"></i>Thống kê doanh thu
                         </button>
                     </div>
 
@@ -476,6 +464,116 @@
                 <h4 class="text-lg font-medium mb-4">Danh Sách Nhân Viên</h4>
                 <div id="staffList" class="space-y-3">
                     <!-- Staff list will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Statistics Modal -->
+    <div id="revenueStatsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-chart-line mr-2 text-blue-600"></i>Thống Kê Doanh Thu
+                </h2>
+                <button onclick="closeRevenueStats()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Date Range Selector -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Từ ngày:</label>
+                        <input type="date" id="startDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Đến ngày:</label>
+                        <input type="date" id="endDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="updateRevenueStats()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-search mr-2"></i>Thống kê
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-blue-600 font-medium">Tổng đơn hàng</p>
+                            <p id="totalOrders" class="text-2xl font-bold text-blue-800">0</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i class="fas fa-receipt text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-green-600 font-medium">Tổng doanh thu</p>
+                            <p id="totalRevenue" class="text-2xl font-bold text-green-800">0 ₫</p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <i class="fas fa-dollar-sign text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-yellow-600 font-medium">Đơn trung bình</p>
+                            <p id="averageOrder" class="text-2xl font-bold text-yellow-800">0 ₫</p>
+                        </div>
+                        <div class="bg-yellow-100 p-3 rounded-full">
+                            <i class="fas fa-calculator text-yellow-600"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-purple-600 font-medium">Đơn hôm nay</p>
+                            <p id="todayOrders" class="text-2xl font-bold text-purple-800">0</p>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-full">
+                            <i class="fas fa-calendar-day text-purple-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Revenue Chart -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Doanh thu theo ngày</h3>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div id="dailyRevenueChart" class="h-64 flex items-center justify-center text-gray-500">
+                        <div class="text-center">
+                            <i class="fas fa-chart-bar text-4xl mb-2"></i>
+                            <p>Chọn khoảng thời gian để xem biểu đồ</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Method Breakdown -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Phương thức thanh toán</h3>
+                    <div id="paymentMethodStats" class="space-y-3">
+                        <!-- Payment method stats will be populated here -->
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Top món ăn bán chạy</h3>
+                    <div id="topDishesStats" class="space-y-3">
+                        <!-- Top dishes stats will be populated here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -1012,7 +1110,7 @@
 
             const statusClass = getStatusClass(invoice.status);
             const statusText = getStatusText(invoice.status);
-            const paymentMethodText = getPaymentMethodText(invoice.paymentMethod);
+            const paymentMethodText = getPaymentMethodText(invoice.payment_method);
 
             const itemsPreview = (invoice.items || []).slice(0, 2).map(item =>
                 item.ten_mon || item.name || 'Món ăn'
@@ -1187,10 +1285,11 @@
 
         function getPaymentMethodText(method) {
             switch (method) {
+                case 'bank_transfer': return 'Chuyển khoản ngân hàng';
                 case 'momo': return 'MoMo';
                 case 'vnpay': return 'VNPay';
                 case 'card': return 'Thẻ tín dụng';
-                case 'cash':
+                case 'cash': return 'Tiền mặt';
                 default: return 'Tiền mặt';
             }
         }
@@ -1918,6 +2017,239 @@
             // Load invoices
             loadInvoices();
         });
+
+        // Revenue Statistics Functions
+        function showRevenueStats() {
+            // Check permission
+            if (!adminAuth || !adminAuth.isAdmin()) {
+                alert('Chỉ admin mới có thể xem thống kê doanh thu!');
+                return;
+            }
+
+            // Set default date range (last 30 days)
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+            document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+
+            // Show modal
+            document.getElementById('revenueStatsModal').classList.remove('hidden');
+
+            // Load initial stats
+            updateRevenueStats();
+        }
+
+        function closeRevenueStats() {
+            document.getElementById('revenueStatsModal').classList.add('hidden');
+        }
+
+        function updateRevenueStats() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate || !endDate) {
+                alert('Vui lòng chọn khoảng thời gian!');
+                return;
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate + 'T23:59:59'); // Include end of day
+
+            // Filter invoices by date range and confirmed status
+            const filteredInvoices = allInvoices.filter(invoice => {
+                const invoiceDate = new Date(invoice.createdAt || invoice.timestamp);
+                return invoiceDate >= start &&
+                       invoiceDate <= end &&
+                       invoice.status === 'confirmed';
+            });
+
+            // Calculate statistics
+            const stats = calculateRevenueStats(filteredInvoices, start, end);
+
+            // Update UI
+            updateStatsDisplay(stats);
+            updateDailyChart(stats.dailyRevenue);
+            updatePaymentMethodStats(stats.paymentMethods);
+            updateTopDishesStats(stats.topDishes);
+        }
+
+        function calculateRevenueStats(invoices, startDate, endDate) {
+            const totalOrders = invoices.length;
+            const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+            const averageOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+            // Today's orders
+            const today = new Date().toDateString();
+            const todayOrders = invoices.filter(inv => {
+                const invDate = new Date(inv.createdAt || inv.timestamp).toDateString();
+                return invDate === today;
+            }).length;
+
+            // Daily revenue breakdown
+            const dailyRevenue = {};
+            const currentDate = new Date(startDate);
+
+            // Initialize all dates with 0
+            while (currentDate <= endDate) {
+                const dateStr = currentDate.toISOString().split('T')[0];
+                dailyRevenue[dateStr] = 0;
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Calculate actual daily revenue
+            invoices.forEach(invoice => {
+                const dateStr = new Date(invoice.createdAt || invoice.timestamp).toISOString().split('T')[0];
+                if (dailyRevenue.hasOwnProperty(dateStr)) {
+                    dailyRevenue[dateStr] += invoice.total || 0;
+                }
+            });
+
+            // Payment method breakdown
+            const paymentMethods = {};
+            invoices.forEach(invoice => {
+                const method = invoice.payment_method || 'cash';
+                if (!paymentMethods[method]) {
+                    paymentMethods[method] = { count: 0, revenue: 0 };
+                }
+                paymentMethods[method].count++;
+                paymentMethods[method].revenue += invoice.total || 0;
+            });
+
+            // Top dishes
+            const dishStats = {};
+            invoices.forEach(invoice => {
+                (invoice.items || []).forEach(item => {
+                    const dishName = item.ten_mon || item.name || 'Món ăn';
+                    if (!dishStats[dishName]) {
+                        dishStats[dishName] = { quantity: 0, revenue: 0 };
+                    }
+                    dishStats[dishName].quantity += item.so_luong || item.quantity || 1;
+                    dishStats[dishName].revenue += item.thanh_tien || (item.don_gia * item.so_luong) || 0;
+                });
+            });
+
+            const topDishes = Object.entries(dishStats)
+                .sort((a, b) => b[1].revenue - a[1].revenue)
+                .slice(0, 5);
+
+            return {
+                totalOrders,
+                totalRevenue,
+                averageOrder,
+                todayOrders,
+                dailyRevenue,
+                paymentMethods,
+                topDishes
+            };
+        }
+
+        function updateStatsDisplay(stats) {
+            document.getElementById('totalOrders').textContent = stats.totalOrders;
+            document.getElementById('totalRevenue').textContent = formatPrice(stats.totalRevenue);
+            document.getElementById('averageOrder').textContent = formatPrice(stats.averageOrder);
+            document.getElementById('todayOrders').textContent = stats.todayOrders;
+        }
+
+        function updateDailyChart(dailyRevenue) {
+            const chartContainer = document.getElementById('dailyRevenueChart');
+            const dates = Object.keys(dailyRevenue).sort();
+            const revenues = dates.map(date => dailyRevenue[date]);
+
+            if (dates.length === 0) {
+                chartContainer.innerHTML = `
+                    <div class="text-center text-gray-500">
+                        <i class="fas fa-chart-bar text-4xl mb-2"></i>
+                        <p>Không có dữ liệu trong khoảng thời gian này</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const maxRevenue = Math.max(...revenues);
+            const chartHTML = dates.map((date, index) => {
+                const revenue = revenues[index];
+                const height = maxRevenue > 0 ? (revenue / maxRevenue) * 200 : 0;
+                const dateObj = new Date(date);
+                const dayMonth = `${dateObj.getDate()}/${dateObj.getMonth() + 1}`;
+
+                return `
+                    <div class="flex flex-col items-center mx-1">
+                        <div class="bg-blue-500 rounded-t" style="height: ${height}px; width: 30px; min-height: 2px;"></div>
+                        <div class="text-xs text-gray-600 mt-2 transform -rotate-45 origin-top-left">${dayMonth}</div>
+                        <div class="text-xs text-gray-800 font-medium mt-1">${formatPrice(revenue)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            chartContainer.innerHTML = `
+                <div class="flex items-end justify-center space-x-1 h-64 overflow-x-auto">
+                    ${chartHTML}
+                </div>
+            `;
+        }
+
+        function updatePaymentMethodStats(paymentMethods) {
+            const container = document.getElementById('paymentMethodStats');
+            const total = Object.values(paymentMethods).reduce((sum, method) => sum + method.revenue, 0);
+
+            if (Object.keys(paymentMethods).length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Không có dữ liệu</p>';
+                return;
+            }
+
+            const methodsHTML = Object.entries(paymentMethods).map(([method, data]) => {
+                const percentage = total > 0 ? (data.revenue / total * 100).toFixed(1) : 0;
+                const methodText = getPaymentMethodText(method);
+
+                return `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-blue-500 rounded mr-3"></div>
+                            <span class="font-medium">${methodText}</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold">${formatPrice(data.revenue)}</div>
+                            <div class="text-sm text-gray-600">${data.count} đơn (${percentage}%)</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = methodsHTML;
+        }
+
+        function updateTopDishesStats(topDishes) {
+            const container = document.getElementById('topDishesStats');
+
+            if (topDishes.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Không có dữ liệu</p>';
+                return;
+            }
+
+            const dishesHTML = topDishes.map(([dishName, data], index) => {
+                const rank = index + 1;
+                const rankColors = ['text-yellow-600', 'text-gray-600', 'text-orange-600', 'text-blue-600', 'text-green-600'];
+                const rankColor = rankColors[index] || 'text-gray-600';
+
+                return `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+                                <span class="font-bold ${rankColor}">${rank}</span>
+                            </div>
+                            <span class="font-medium">${dishName}</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold">${formatPrice(data.revenue)}</div>
+                            <div class="text-sm text-gray-600">${data.quantity} phần</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = dishesHTML;
+        }
     </script>
 
     <!-- Floating Contact Buttons -->
