@@ -194,27 +194,6 @@ class AdminAuth {
                 createdAt: new Date().toISOString(),
                 createdBy: 'system',
                 isActive: true
-            },
-
-             {
-                id: 'staff_demo_003',
-                username: 'nhanvien03',
-                password: '123456',
-                fullName: 'Hứa Thị Thảo Vy',
-                role: 'staff',
-                createdAt: new Date().toISOString(),
-                createdBy: 'system',
-                isActive: true
-            },
-             {
-                id: 'staff_demo_004',
-                username: 'nhanvien04',
-                password: '123456',
-                fullName: 'Nguyễn Huỳnh Kỹ Thuật',
-                role: 'staff',
-                createdAt: new Date().toISOString(),
-                createdBy: 'system',
-                isActive: true
             }
         ];
 

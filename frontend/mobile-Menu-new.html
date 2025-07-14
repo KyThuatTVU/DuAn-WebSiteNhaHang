@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#667eea">
+    <title>Thực Đơn - Restaurant Management</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../img/favicon.ico">
+    <link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
+    
+    <!-- CSS Framework -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/mobile-responsive.css">
+    
+    <!-- Page-specific CSS -->
+    
+    
+    <style>
+        /* Page-specific mobile styles */
+        .mobile-page-content {
+            padding-bottom: 80px; /* Space for bottom navigation */
+            min-height: calc(100vh - 140px); /* Header + nav space */
+        }
+        
+        .mobile-header-hidden {
+            transform: translateY(-100%);
+        }
+        
+        /* Safe area support for devices with notches */
+        .mobile-header {
+            padding-top: env(safe-area-inset-top);
+        }
+        
+        .mobile-nav {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* Custom scrollbar for mobile */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 2px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.5);
+        }
+    </style>
+</head>
+<body class="mobile-bg-light">
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="mobile-header-content">
+            <div class="mobile-flex mobile-items-center mobile-justify-between">
+                <div class="mobile-flex mobile-items-center">
+                    <button class="mobile-btn-icon mobile-bg-white mobile-bg-opacity-20 mobile-mr-md" onclick="history.back()">
+                        <i class="fas fa-arrow-left mobile-text-white"></i>
+                    </button>
+                    <div>
+                        <h1 class="mobile-header-title">Thực Đơn</h1>
+                        <p class="mobile-header-subtitle">Khám phá các món ăn ngon</p>
+                    </div>
+                </div>
+
+                <div class="mobile-flex mobile-items-center mobile-space-x-sm">
+                    <!-- Search Button -->
+                    <button class="mobile-btn-icon mobile-bg-white mobile-bg-opacity-20" onclick="showMenuSearch()">
+                        <i class="fas fa-search mobile-text-white"></i>
+                    </button>
+
+                    <!-- Filter Button -->
+                    <button class="mobile-btn-icon mobile-bg-white mobile-bg-opacity-20" onclick="showMenuFilter()">
+                        <i class="fas fa-filter mobile-text-white"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mobile-page-content">
+        <div class="mobile-container mobile-py-lg">
+            <!-- Search Bar -->
+            <div class="mobile-search-bar mobile-animate-slideInDown">
+                <div class="mobile-relative">
+                    <i class="mobile-search-icon fas fa-search"></i>
+                    <input type="text" class="mobile-search-input" placeholder="Tìm kiếm món ăn..." id="menuSearchInput">
+                </div>
+            </div>
+
+            <!-- Category Tabs -->
+            <div class="mobile-tabs mobile-animate-fadeIn" style="animation-delay: 0.1s;">
+                <button class="mobile-tab active" data-category="all">Tất cả</button>
+                <button class="mobile-tab" data-category="pho">Phở</button>
+                <button class="mobile-tab" data-category="com">Cơm</button>
+                <button class="mobile-tab" data-category="nuong">Nướng</button>
+                <button class="mobile-tab" data-category="nuoc">Nước</button>
+            </div>
+
+            <!-- Menu Items Grid -->
+            <div id="menuItemsGrid" class="mobile-grid mobile-grid-cols-2" style="gap: 1rem;">
+                <!-- Menu items will be loaded here -->
+            </div>
+
+            <!-- Loading Skeleton -->
+            <div id="menuLoadingSkeleton" class="mobile-grid mobile-grid-cols-2 mobile-hidden" style="gap: 1rem;">
+                <div class="mobile-skeleton mobile-skeleton-card"></div>
+                <div class="mobile-skeleton mobile-skeleton-card"></div>
+                <div class="mobile-skeleton mobile-skeleton-card"></div>
+                <div class="mobile-skeleton mobile-skeleton-card"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-content">
+            <a href="../Index-new.html" class="mobile-nav-item" data-page="home">
+                <i class="mobile-nav-icon fas fa-home"></i>
+                <span class="mobile-nav-label">Trang chủ</span>
+            </a>
+            <a href="../Menu-new.html" class="mobile-nav-item" data-page="menu">
+                <i class="mobile-nav-icon fas fa-utensils"></i>
+                <span class="mobile-nav-label">Menu</span>
+            </a>
+            <a href="../thanhtoan.html" class="mobile-nav-item" data-page="cart">
+                <i class="mobile-nav-icon fas fa-shopping-cart"></i>
+                <span class="mobile-nav-label">Giỏ hàng</span>
+                <span id="mobileCartBadge" class="mobile-badge mobile-badge-error mobile-absolute mobile-top-0 mobile-right-0 mobile-transform mobile-translate-x-1/2 mobile--translate-y-1/2 mobile-hidden">0</span>
+            </a>
+            <a href="../DanhSachDatBan.html" class="mobile-nav-item" data-page="reservations">
+                <i class="mobile-nav-icon fas fa-calendar-check"></i>
+                <span class="mobile-nav-label">Đặt bàn</span>
+            </a>
+            <a href="../DanhSachHoaDon.html" class="mobile-nav-item" data-page="orders">
+                <i class="mobile-nav-icon fas fa-receipt"></i>
+                <span class="mobile-nav-label">Đơn hàng</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Mobile Floating Action Button (Optional) -->
+    <div class="mobile-fab-container mobile-fixed mobile-bottom-20 mobile-right-4 mobile-z-30" style="bottom: 100px;">
+        
+            <button class="mobile-btn mobile-btn-success mobile-rounded-full mobile-w-14 mobile-h-14 mobile-shadow-lg" onclick="viewCart()">
+                <i class="fas fa-shopping-cart mobile-text-xl"></i>
+                <span id="fabCartBadge" class="mobile-badge mobile-badge-error mobile-absolute mobile--top-2 mobile--right-2 mobile-hidden">0</span>
+            </button>
+        
+    </div>
+
+    <!-- Mobile Toast Container -->
+    <div class="mobile-toast-container"></div>
+
+    <!-- Mobile Loading Overlay -->
+    <div id="mobileLoadingOverlay" class="mobile-fixed mobile-inset-0 mobile-bg-dark mobile-bg-opacity-50 mobile-flex mobile-items-center mobile-justify-center mobile-z-50 mobile-hidden">
+        <div class="mobile-bg-white mobile-rounded-xl mobile-p-lg mobile-flex mobile-items-center mobile-space-x-md">
+            <div class="mobile-spinner"></div>
+            <span class="mobile-text-dark mobile-font-medium">Đang tải...</span>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/mobile-utils.js"></script>
+    
+    
+    <script>
+        // Mobile-specific initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize mobile features
+            initializeMobileFeatures();
+            
+            // Update user info
+            updateMobileUserInfo();
+            
+            // Update cart badge
+            updateMobileCartBadge();
+            
+            // Set active navigation
+            setActiveMobileNav();
+        });
+
+        function initializeMobileFeatures() {
+            // Load menu items
+            loadMenuItems();
+
+            // Setup category tabs
+            setupCategoryTabs();
+
+            // Setup search functionality
+            setupMenuSearch();
+
+            // Add entrance animations
+            setTimeout(() => {
+                const elements = document.querySelectorAll('.mobile-animate-fadeIn, .mobile-animate-slideInDown');
+                elements.forEach((element, index) => {
+                    setTimeout(() => {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+            }, 300);
+        }
+
+        function loadMenuItems() {
+            const menuGrid = document.getElementById('menuItemsGrid');
+            const skeleton = document.getElementById('menuLoadingSkeleton');
+
+            // Show loading skeleton
+            skeleton.classList.remove('mobile-hidden');
+            menuGrid.classList.add('mobile-hidden');
+
+            // Sample menu data (in real app, this would come from API)
+            const menuItems = [
+                {
+                    id: 'pho-bo',
+                    name: 'Phở Bò',
+                    description: 'Phở bò truyền thống với nước dùng đậm đà',
+                    price: 85000,
+                    image: 'img/pho-bo.jpg',
+                    category: 'pho',
+                    popular: true
+                },
+                {
+                    id: 'pho-ga',
+                    name: 'Phở Gà',
+                    description: 'Phở gà thơm ngon với thịt gà tươi',
+                    price: 75000,
+                    image: 'img/pho-ga.jpg',
+                    category: 'pho'
+                },
+                {
+                    id: 'com-tam',
+                    name: 'Cơm Tấm',
+                    description: 'Cơm tấm sườn nướng đặc biệt',
+                    price: 75000,
+                    image: 'img/com-tam.jpg',
+                    category: 'com',
+                    isNew: true
+                },
+                {
+                    id: 'com-ga',
+                    name: 'Cơm Gà',
+                    description: 'Cơm gà nướng mật ong thơm lừng',
+                    price: 70000,
+                    image: 'img/com-ga.jpg',
+                    category: 'com'
+                },
+                {
+                    id: 'banh-mi',
+                    name: 'Bánh Mì',
+                    description: 'Bánh mì thịt nướng đặc biệt',
+                    price: 25000,
+                    image: 'img/banh-mi.jpg',
+                    category: 'nuong'
+                },
+                {
+                    id: 'tra-da',
+                    name: 'Trà Đá',
+                    description: 'Trà đá mát lạnh giải khát',
+                    price: 10000,
+                    image: 'img/tra-da.jpg',
+                    category: 'nuoc'
+                }
+            ];
+
+            // Simulate loading delay
+            setTimeout(() => {
+                skeleton.classList.add('mobile-hidden');
+                menuGrid.classList.remove('mobile-hidden');
+                renderMenuItems(menuItems);
+            }, 1000);
+        }
+
+        function renderMenuItems(items) {
+            const menuGrid = document.getElementById('menuItemsGrid');
+            menuGrid.innerHTML = '';
+
+            items.forEach((item, index) => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'mobile-card mobile-transition';
+                itemElement.style.animationDelay = `${index * 0.1}s`;
+
+                itemElement.innerHTML = `
+                    <div class="mobile-relative">
+                        <img src="${item.image}" alt="${item.name}" class="mobile-w-full mobile-rounded-lg"
+                             style="height: 140px; object-fit: cover;"
+                             onerror="this.src='img/default-food.jpg'">
+                        ${item.popular ? '<div class="mobile-absolute mobile-top-0 mobile-right-0 mobile-m-sm"><span class="mobile-badge mobile-badge-success mobile-animate-pulse">Phổ biến</span></div>' : ''}
+                        ${item.isNew ? '<div class="mobile-absolute mobile-top-0 mobile-right-0 mobile-m-sm"><span class="mobile-badge mobile-badge-warning mobile-animate-pulse">Mới</span></div>' : ''}
+                        <div class="mobile-absolute mobile-bottom-0 mobile-left-0 mobile-right-0 mobile-text-white mobile-p-sm mobile-rounded-b-lg"
+                             style="background: linear-gradient(transparent, rgba(0,0,0,0.8));">
+                            <div class="mobile-flex mobile-justify-between mobile-items-center">
+                                <div class="mobile-flex-1">
+                                    <h4 class="mobile-font-semibold mobile-text-sm mobile-mb-xs">${item.name}</h4>
+                                    <p class="mobile-text-xs mobile-opacity-80 mobile-mb-sm">${item.description}</p>
+                                    <div class="mobile-text-warning mobile-font-bold mobile-text-sm">${formatPrice(item.price)}</div>
+                                </div>
+                                <button class="mobile-btn-icon mobile-btn-sm mobile-bg-white mobile-text-primary mobile-ml-sm"
+                                        onclick="addToCart('${item.id}', '${item.name}', ${item.price}); showToast('Đã thêm ${item.name} vào giỏ hàng!', 'success'); vibrate([50]);">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                menuGrid.appendChild(itemElement);
+            });
+        }
+
+        function setupCategoryTabs() {
+            const tabs = document.querySelectorAll('.mobile-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+
+                    // Filter menu items (simplified for demo)
+                    const category = this.dataset.category;
+                    showToast(`Đang lọc theo: ${this.textContent}`, 'info', 1500);
+                });
+            });
+        }
+
+        function setupMenuSearch() {
+            const searchInput = document.getElementById('menuSearchInput');
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                if (query.length > 0) {
+                    showToast(`Tìm kiếm: ${query}`, 'info', 1000);
+                }
+            });
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(price);
+        }
+
+        function addToCart(itemId, itemName, itemPrice) {
+            // Get current cart from localStorage
+            let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+            // Add item to cart
+            const existingItem = cart.find(item => item.id === itemId);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    id: itemId,
+                    name: itemName,
+                    price: itemPrice,
+                    quantity: 1,
+                    addedAt: new Date().toISOString()
+                });
+            }
+
+            // Save cart
+            localStorage.setItem('cart', JSON.stringify(cart));
+
+            // Update cart badge
+            updateMobileCartBadge();
+        }
+
+        function showMenuSearch() {
+            document.getElementById('menuSearchInput').focus();
+        }
+
+        function showMenuFilter() {
+            showToast('Tính năng lọc sẽ được cập nhật sớm!', 'info');
+        }
+
+        function updateMobileUserInfo() {
+            // Get user info from localStorage or API
+            const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('adminUser') || '{}');
+            
+            if (user.full_name || user.fullName) {
+                document.getElementById('mobileUserName').textContent = user.full_name || user.fullName;
+            }
+            
+            if (user.role) {
+                const roleText = user.role === 'admin' ? 'Quản trị viên' : 'Nhân viên';
+                document.getElementById('mobileUserRole').textContent = roleText;
+            }
+        }
+
+        function updateMobileCartBadge() {
+            // Get cart count
+            const cartManager = window.cartManager;
+            if (cartManager) {
+                const cart = cartManager.getCart();
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                
+                const badge = document.getElementById('mobileCartBadge');
+                if (totalItems > 0) {
+                    badge.textContent = totalItems;
+                    badge.classList.remove('mobile-hidden');
+                } else {
+                    badge.classList.add('mobile-hidden');
+                }
+            }
+        }
+
+        function setActiveMobileNav() {
+            const currentPage = 'menu';
+            const navItems = document.querySelectorAll('.mobile-nav-item');
+            
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-page') === currentPage) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        function showMobileLoading(show = true) {
+            const overlay = document.getElementById('mobileLoadingOverlay');
+            if (show) {
+                overlay.classList.remove('mobile-hidden');
+            } else {
+                overlay.classList.add('mobile-hidden');
+            }
+        }
+
+        function showMobileToast(message, type = 'info', duration = 3000) {
+            if (window.mobileUtils) {
+                window.mobileUtils.showToast(message, type, duration);
+            }
+        }
+
+        // Pull to refresh functionality
+        function enablePullToRefresh() {
+            let startY = 0;
+            let currentY = 0;
+            let pullDistance = 0;
+            const threshold = 100;
+            
+            document.addEventListener('touchstart', (e) => {
+                if (window.scrollY === 0) {
+                    startY = e.touches[0].clientY;
+                }
+            });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (startY > 0) {
+                    currentY = e.touches[0].clientY;
+                    pullDistance = currentY - startY;
+                    
+                    if (pullDistance > 0 && pullDistance < threshold * 2) {
+                        e.preventDefault();
+                        // Add visual feedback here
+                    }
+                }
+            });
+            
+            document.addEventListener('touchend', () => {
+                if (pullDistance > threshold) {
+                    // Trigger refresh
+                    if (typeof refreshPage === 'function') {
+                        refreshPage();
+                    } else {
+                        location.reload();
+                    }
+                }
+                startY = 0;
+                pullDistance = 0;
+            });
+        }
+
+        // Swipe gestures
+        function enableSwipeGestures() {
+            let startX = 0;
+            let startY = 0;
+            
+            document.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            });
+            
+            document.addEventListener('touchend', (e) => {
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                const diffX = startX - endX;
+                const diffY = startY - endY;
+                
+                // Horizontal swipe
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        // Swipe left
+                        if (typeof onSwipeLeft === 'function') onSwipeLeft();
+                    } else {
+                        // Swipe right
+                        if (typeof onSwipeRight === 'function') onSwipeRight();
+                    }
+                }
+            });
+        }
+
+        // Offline support
+        function enableOfflineSupport() {
+            window.addEventListener('online', () => {
+                showMobileToast('Đã kết nối internet', 'success');
+            });
+            
+            window.addEventListener('offline', () => {
+                showMobileToast('Mất kết nối internet', 'warning');
+            });
+        }
+
+        // Back button handler
+        function handleMobileBack() {
+            if (typeof goToHome === 'function') {
+                goToHome();
+            } else {
+                history.back();
+            }
+        }
+
+        // Utility functions for pages to use
+        window.mobilePageUtils = {
+            showLoading: showMobileLoading,
+            showToast: showMobileToast,
+            updateCartBadge: updateMobileCartBadge,
+            updateUserInfo: updateMobileUserInfo,
+            goBack: handleMobileBack
+        };
+    </script>
+</body>
+</html>

@@ -1,6 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { pool, executeQuery } = require('../config/database');
+
+// Try to import database, but handle gracefully if it fails
+let db = null;
+let executeQuery = null;
+
+try {
+    const dbModule = require('../config/database');
+    db = dbModule.pool;
+    executeQuery = dbModule.executeQuery;
+    console.log('✅ Database module loaded successfully');
+} catch (error) {
+    console.log('⚠️ Database module not available, using mock data');
+}
 
 // Validation helper functions
 const validateReservationData = (data) => {
@@ -186,49 +198,56 @@ router.post('/', async (req, res) => {
 // GET /api/datban - Get all reservations with pagination and filters
 router.get('/', async (req, res) => {
   try {
+    console.log('📋 Getting reservations list...');
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
-    
+
     const status = req.query.status;
     const date = req.query.date;
     const phone = req.query.phone;
-    
+
     let whereConditions = [];
     let params = [];
-    
-    if (status) {
+
+    if (status && status !== 'all') {
       whereConditions.push('trang_thai = ?');
       params.push(status);
     }
-    
+
     if (date) {
       whereConditions.push('ngay = ?');
       params.push(date);
     }
-    
+
     if (phone) {
-      whereConditions.push('sdt LIKE ?');
-      params.push(`%${phone}%`);
+      whereConditions.push('(ten_khach LIKE ? OR sdt LIKE ? OR email LIKE ?)');
+      const searchTerm = `%${phone}%`;
+      params.push(searchTerm, searchTerm, searchTerm);
     }
-    
+
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-    
+
+    console.log('🔍 Query conditions:', whereConditions);
+    console.log('🔍 Query params:', params);
+
     // Get total count
     const countQuery = `SELECT COUNT(*) as total FROM dat_ban ${whereClause}`;
     const countResult = await executeQuery(countQuery, params);
     const total = countResult.success ? countResult.data[0].total : 0;
-    
+
     // Get reservations
     const selectQuery = `
-      SELECT * FROM dat_ban ${whereClause} 
-      ORDER BY created_at DESC 
+      SELECT * FROM dat_ban ${whereClause}
+      ORDER BY created_at DESC
       LIMIT ? OFFSET ?
     `;
     const selectParams = [...params, limit, offset];
     const result = await executeQuery(selectQuery, selectParams);
-    
+
     if (result.success) {
+      console.log(`✅ Found ${result.data.length} reservations (${total} total)`);
       res.json({
         success: true,
         data: result.data,
@@ -244,10 +263,11 @@ router.get('/', async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Error getting reservations:', error);
+    console.error('❌ Error getting reservations:', error);
     res.status(500).json({
       success: false,
-      message: 'Có lỗi xảy ra khi lấy danh sách đặt bàn'
+      message: 'Có lỗi xảy ra khi lấy danh sách đặt bàn',
+      error: error.message
     });
   }
 });

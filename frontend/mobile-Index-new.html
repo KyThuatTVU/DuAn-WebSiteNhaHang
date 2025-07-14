@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#667eea">
+    <title>Trang Chủ - Restaurant Management</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../img/favicon.ico">
+    <link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
+    
+    <!-- CSS Framework -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/mobile-responsive.css">
+    
+    <!-- Page-specific CSS -->
+    
+    
+    <style>
+        /* Page-specific mobile styles */
+        .mobile-page-content {
+            padding-bottom: 80px; /* Space for bottom navigation */
+            min-height: calc(100vh - 140px); /* Header + nav space */
+        }
+        
+        .mobile-header-hidden {
+            transform: translateY(-100%);
+        }
+        
+        /* Safe area support for devices with notches */
+        .mobile-header {
+            padding-top: env(safe-area-inset-top);
+        }
+        
+        .mobile-nav {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* Custom scrollbar for mobile */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 2px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.5);
+        }
+    </style>
+</head>
+<body class="mobile-bg-light">
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="mobile-header-content">
+            <div class="mobile-flex mobile-items-center mobile-justify-between">
+                <div class="mobile-flex mobile-items-center">
+                    <div class="mobile-mr-md">
+                        <img src="img/logoPN.png" alt="Logo" class="mobile-w-10 mobile-h-10 mobile-rounded-lg" style="object-fit: cover;">
+                    </div>
+                    <div>
+                        <h1 class="mobile-header-title">Phương Nam</h1>
+                        <p class="mobile-header-subtitle">Hương vị đặc trưng Việt Nam</p>
+                    </div>
+                </div>
+
+                <div class="mobile-flex mobile-items-center mobile-space-x-sm">
+                    <!-- User Info -->
+                    <div class="mobile-flex mobile-items-center mobile-space-x-sm">
+                        <div class="mobile-w-8 mobile-h-8 mobile-bg-white mobile-bg-opacity-20 mobile-rounded-full mobile-flex mobile-items-center mobile-justify-center">
+                            <i class="fas fa-user mobile-text-white mobile-text-sm"></i>
+                        </div>
+                        <div class="mobile-hidden-sm">
+                            <div id="mobileUserName" class="mobile-text-white mobile-text-sm mobile-font-medium">Khách</div>
+                            <div id="mobileUserRole" class="mobile-text-white mobile-text-opacity-80 mobile-text-xs">Chưa đăng nhập</div>
+                        </div>
+                    </div>
+
+                    <!-- Header Actions -->
+                    <button class="mobile-btn-icon mobile-bg-white mobile-bg-opacity-20" onclick="showSearch()">
+                        <i class="fas fa-search mobile-text-white"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mobile-page-content">
+        <div class="mobile-container mobile-py-lg">
+            <!-- Welcome Section -->
+            <div class="mobile-card mobile-mb-lg mobile-animate-fadeIn">
+                <div class="mobile-card-body mobile-text-center">
+                    <div class="mobile-mb-md">
+                        <div class="mobile-w-16 mobile-h-16 mobile-bg-gradient-primary mobile-rounded-full mobile-flex mobile-items-center mobile-justify-center mobile-mx-auto mobile-mb-sm mobile-animate-bounce">
+                            <i class="fas fa-utensils mobile-text-2xl mobile-text-white"></i>
+                        </div>
+                    </div>
+                    <h2 class="mobile-text-2xl mobile-font-bold mobile-text-primary mobile-mb-sm">Chào mừng đến với Phương Nam</h2>
+                    <p class="mobile-text-secondary mobile-mb-lg">Khám phá hương vị đặc trưng của ẩm thực truyền thống Việt Nam với những món ăn được chế biến từ nguyên liệu tươi ngon nhất.</p>
+                    <div class="mobile-flex mobile-space-x-sm mobile-justify-center mobile-flex-wrap" style="gap: 0.5rem;">
+                        <a href="mobile-Menu-new.html" class="mobile-btn mobile-btn-primary mobile-transition">
+                            <i class="fas fa-book-open mobile-mr-sm"></i>
+                            Xem Thực Đơn
+                        </a>
+                        <a href="mobile-lienhe&datban-new.html" class="mobile-btn mobile-btn-secondary mobile-transition">
+                            <i class="fas fa-calendar-alt mobile-mr-sm"></i>
+                            Đặt Bàn
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured Items -->
+            <div class="mobile-mb-lg mobile-animate-fadeIn" style="animation-delay: 0.2s;">
+                <h3 class="mobile-text-xl mobile-font-bold mobile-mb-md mobile-text-center mobile-text-primary">
+                    <i class="fas fa-star mobile-mr-sm mobile-text-warning"></i>
+                    Món Ăn Nổi Bật
+                </h3>
+                <div class="mobile-grid mobile-grid-cols-2" style="gap: 1rem;">
+                    <div class="mobile-card mobile-transition" onclick="showToast('Đã thêm Phở Bò vào giỏ hàng!', 'success'); vibrate([50]);">
+                        <div class="mobile-relative">
+                            <img src="img/pho-bo.jpg" alt="Phở Bò" class="mobile-w-full mobile-rounded-lg" style="height: 120px; object-fit: cover;" onerror="this.src='img/default-food.jpg'">
+                            <div class="mobile-absolute mobile-top-0 mobile-right-0 mobile-m-sm">
+                                <span class="mobile-badge mobile-badge-success mobile-animate-pulse">Phổ biến</span>
+                            </div>
+                            <div class="mobile-absolute mobile-bottom-0 mobile-left-0 mobile-right-0 mobile-bg-gradient-primary mobile-text-white mobile-p-sm mobile-rounded-b-lg" style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
+                                <div class="mobile-flex mobile-justify-between mobile-items-center">
+                                    <div>
+                                        <h4 class="mobile-font-semibold mobile-text-sm">Phở Bò</h4>
+                                        <p class="mobile-text-xs mobile-opacity-80">Nước dùng đậm đà</p>
+                                    </div>
+                                    <div class="mobile-text-right">
+                                        <div class="mobile-text-warning mobile-font-bold mobile-text-sm">85.000đ</div>
+                                        <button class="mobile-btn-icon mobile-btn-sm mobile-bg-white mobile-text-primary mobile-mt-xs" onclick="event.stopPropagation(); addToCart('pho-bo');">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mobile-card mobile-transition" onclick="showToast('Đã thêm Cơm Tấm vào giỏ hàng!', 'success'); vibrate([50]);">
+                        <div class="mobile-relative">
+                            <img src="img/com-tam.jpg" alt="Cơm Tấm" class="mobile-w-full mobile-rounded-lg" style="height: 120px; object-fit: cover;" onerror="this.src='img/default-food.jpg'">
+                            <div class="mobile-absolute mobile-top-0 mobile-right-0 mobile-m-sm">
+                                <span class="mobile-badge mobile-badge-warning mobile-animate-pulse">Mới</span>
+                            </div>
+                            <div class="mobile-absolute mobile-bottom-0 mobile-left-0 mobile-right-0 mobile-bg-gradient-primary mobile-text-white mobile-p-sm mobile-rounded-b-lg" style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
+                                <div class="mobile-flex mobile-justify-between mobile-items-center">
+                                    <div>
+                                        <h4 class="mobile-font-semibold mobile-text-sm">Cơm Tấm</h4>
+                                        <p class="mobile-text-xs mobile-opacity-80">Sườn nướng đặc biệt</p>
+                                    </div>
+                                    <div class="mobile-text-right">
+                                        <div class="mobile-text-warning mobile-font-bold mobile-text-sm">75.000đ</div>
+                                        <button class="mobile-btn-icon mobile-btn-sm mobile-bg-white mobile-text-primary mobile-mt-xs" onclick="event.stopPropagation(); addToCart('com-tam');">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="mobile-grid mobile-grid-cols-2 mobile-space-y-md">
+                <div class="mobile-card mobile-text-center">
+                    <div class="mobile-card-body">
+                        <i class="fas fa-phone mobile-text-2xl mobile-text-success mobile-mb-sm"></i>
+                        <h4 class="mobile-font-semibold mobile-mb-xs">Gọi Đặt Bàn</h4>
+                        <p class="mobile-text-xs mobile-text-secondary mobile-mb-sm">Liên hệ trực tiếp</p>
+                        <a href="tel:0123456789" class="mobile-btn mobile-btn-sm mobile-btn-primary mobile-w-full">
+                            Gọi Ngay
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mobile-card mobile-text-center">
+                    <div class="mobile-card-body">
+                        <i class="fas fa-map-marker-alt mobile-text-2xl mobile-text-info mobile-mb-sm"></i>
+                        <h4 class="mobile-font-semibold mobile-mb-xs">Địa Chỉ</h4>
+                        <p class="mobile-text-xs mobile-text-secondary mobile-mb-sm">Xem vị trí nhà hàng</p>
+                        <button class="mobile-btn mobile-btn-sm mobile-btn-secondary mobile-w-full">
+                            Xem Bản Đồ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-content">
+            <a href="mobile-Index-new.html" class="mobile-nav-item active" data-page="home">
+                <i class="mobile-nav-icon fas fa-home"></i>
+                <span class="mobile-nav-label">Trang chủ</span>
+            </a>
+            <a href="mobile-Menu-new.html" class="mobile-nav-item" data-page="menu">
+                <i class="mobile-nav-icon fas fa-utensils"></i>
+                <span class="mobile-nav-label">Menu</span>
+            </a>
+            <a href="mobile-thanhtoan.html" class="mobile-nav-item" data-page="cart">
+                <div class="mobile-relative">
+                    <i class="mobile-nav-icon fas fa-shopping-cart"></i>
+                    <span id="mobileCartBadge" class="mobile-badge mobile-badge-error mobile-absolute mobile-top-0 mobile-right-0 mobile-transform mobile-translate-x-1/2 mobile--translate-y-1/2 mobile-hidden">0</span>
+                </div>
+                <span class="mobile-nav-label">Giỏ hàng</span>
+            </a>
+            <a href="mobile-lienhe&datban-new.html" class="mobile-nav-item" data-page="contact">
+                <i class="mobile-nav-icon fas fa-phone"></i>
+                <span class="mobile-nav-label">Liên hệ</span>
+            </a>
+            <a href="mobile-gioithieu-new.html" class="mobile-nav-item" data-page="about">
+                <i class="mobile-nav-icon fas fa-info-circle"></i>
+                <span class="mobile-nav-label">Giới thiệu</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Mobile Floating Action Button (Optional) -->
+    <div class="mobile-fab-container mobile-fixed mobile-bottom-20 mobile-right-4 mobile-z-30" style="bottom: 100px;">
+        
+            <button class="mobile-btn mobile-btn-primary mobile-rounded-full mobile-w-14 mobile-h-14 mobile-shadow-lg" onclick="quickOrder()">
+                <i class="fas fa-plus mobile-text-xl"></i>
+            </button>
+        
+    </div>
+
+    <!-- Mobile Toast Container -->
+    <div class="mobile-toast-container"></div>
+
+    <!-- Mobile Loading Overlay -->
+    <div id="mobileLoadingOverlay" class="mobile-fixed mobile-inset-0 mobile-bg-dark mobile-bg-opacity-50 mobile-flex mobile-items-center mobile-justify-center mobile-z-50 mobile-hidden">
+        <div class="mobile-bg-white mobile-rounded-xl mobile-p-lg mobile-flex mobile-items-center mobile-space-x-md">
+            <div class="mobile-spinner"></div>
+            <span class="mobile-text-dark mobile-font-medium">Đang tải...</span>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/mobile-utils.js"></script>
+    
+    
+    <script>
+        // Mobile-specific initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize mobile features
+            initializeMobileFeatures();
+            
+            // Update user info
+            updateMobileUserInfo();
+            
+            // Update cart badge
+            updateMobileCartBadge();
+            
+            // Set active navigation
+            setActiveMobileNav();
+        });
+
+        function initializeMobileFeatures() {
+            // Add entrance animations
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.mobile-card');
+                cards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(20px)';
+                        card.style.transition = 'all 0.5s ease';
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        }, 50);
+                    }, index * 100);
+                });
+            }, 300);
+
+            // Add touch feedback to buttons
+            const buttons = document.querySelectorAll('.mobile-btn, .mobile-btn-icon, .mobile-card');
+            buttons.forEach(button => {
+                button.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.95)';
+                }, { passive: true });
+
+                button.addEventListener('touchend', function() {
+                    this.style.transform = 'scale(1)';
+                }, { passive: true });
+            });
+
+            // Show welcome message
+            setTimeout(() => {
+                showToast('Chào mừng bạn đến với Phương Nam!', 'info', 2000);
+            }, 1000);
+        }
+
+        function addToCart(itemId) {
+            // Get current cart from localStorage
+            let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+            // Add item to cart
+            const existingItem = cart.find(item => item.id === itemId);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    id: itemId,
+                    quantity: 1,
+                    addedAt: new Date().toISOString()
+                });
+            }
+
+            // Save cart
+            localStorage.setItem('cart', JSON.stringify(cart));
+
+            // Update cart badge
+            updateMobileCartBadge();
+
+            // Vibrate feedback
+            if (window.vibrate) {
+                vibrate([50]);
+            }
+        }
+
+        function quickOrder() {
+            showModal(`
+                <div class="mobile-text-center">
+                    <i class="fas fa-rocket mobile-text-3xl mobile-text-primary mobile-mb-md"></i>
+                    <h3 class="mobile-text-xl mobile-font-bold mobile-mb-md">Đặt Hàng Nhanh</h3>
+                    <p class="mobile-text-secondary mobile-mb-lg">Chọn món ăn yêu thích để đặt hàng ngay!</p>
+                    <div class="mobile-grid mobile-grid-cols-2" style="gap: 0.5rem;">
+                        <button class="mobile-btn mobile-btn-primary" onclick="closeModal(document.querySelector('.mobile-modal.active')); window.location.href='mobile-Menu-new.html';">
+                            <i class="fas fa-utensils mobile-mr-sm"></i>
+                            Xem Menu
+                        </button>
+                        <button class="mobile-btn mobile-btn-secondary" onclick="closeModal(document.querySelector('.mobile-modal.active')); window.location.href='mobile-thanhtoan.html';">
+                            <i class="fas fa-shopping-cart mobile-mr-sm"></i>
+                            Giỏ Hàng
+                        </button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function updateMobileUserInfo() {
+            // Get user info from localStorage or API
+            const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('adminUser') || '{}');
+            
+            if (user.full_name || user.fullName) {
+                document.getElementById('mobileUserName').textContent = user.full_name || user.fullName;
+            }
+            
+            if (user.role) {
+                const roleText = user.role === 'admin' ? 'Quản trị viên' : 'Nhân viên';
+                document.getElementById('mobileUserRole').textContent = roleText;
+            }
+        }
+
+        function updateMobileCartBadge() {
+            // Get cart count
+            const cartManager = window.cartManager;
+            if (cartManager) {
+                const cart = cartManager.getCart();
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                
+                const badge = document.getElementById('mobileCartBadge');
+                if (totalItems > 0) {
+                    badge.textContent = totalItems;
+                    badge.classList.remove('mobile-hidden');
+                } else {
+                    badge.classList.add('mobile-hidden');
+                }
+            }
+        }
+
+        function setActiveMobileNav() {
+            const currentPage = 'home';
+            const navItems = document.querySelectorAll('.mobile-nav-item');
+            
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-page') === currentPage) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        function showMobileLoading(show = true) {
+            const overlay = document.getElementById('mobileLoadingOverlay');
+            if (show) {
+                overlay.classList.remove('mobile-hidden');
+            } else {
+                overlay.classList.add('mobile-hidden');
+            }
+        }
+
+        function showMobileToast(message, type = 'info', duration = 3000) {
+            if (window.mobileUtils) {
+                window.mobileUtils.showToast(message, type, duration);
+            }
+        }
+
+        // Pull to refresh functionality
+        function enablePullToRefresh() {
+            let startY = 0;
+            let currentY = 0;
+            let pullDistance = 0;
+            const threshold = 100;
+            
+            document.addEventListener('touchstart', (e) => {
+                if (window.scrollY === 0) {
+                    startY = e.touches[0].clientY;
+                }
+            });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (startY > 0) {
+                    currentY = e.touches[0].clientY;
+                    pullDistance = currentY - startY;
+                    
+                    if (pullDistance > 0 && pullDistance < threshold * 2) {
+                        e.preventDefault();
+                        // Add visual feedback here
+                    }
+                }
+            });
+            
+            document.addEventListener('touchend', () => {
+                if (pullDistance > threshold) {
+                    // Trigger refresh
+                    if (typeof refreshPage === 'function') {
+                        refreshPage();
+                    } else {
+                        location.reload();
+                    }
+                }
+                startY = 0;
+                pullDistance = 0;
+            });
+        }
+
+        // Swipe gestures
+        function enableSwipeGestures() {
+            let startX = 0;
+            let startY = 0;
+            
+            document.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            });
+            
+            document.addEventListener('touchend', (e) => {
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                const diffX = startX - endX;
+                const diffY = startY - endY;
+                
+                // Horizontal swipe
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        // Swipe left
+                        if (typeof onSwipeLeft === 'function') onSwipeLeft();
+                    } else {
+                        // Swipe right
+                        if (typeof onSwipeRight === 'function') onSwipeRight();
+                    }
+                }
+            });
+        }
+
+        // Offline support
+        function enableOfflineSupport() {
+            window.addEventListener('online', () => {
+                showMobileToast('Đã kết nối internet', 'success');
+            });
+            
+            window.addEventListener('offline', () => {
+                showMobileToast('Mất kết nối internet', 'warning');
+            });
+        }
+
+        // Back button handler
+        function handleMobileBack() {
+            if (typeof null === 'function') {
+                null();
+            } else {
+                history.back();
+            }
+        }
+
+        // Utility functions for pages to use
+        window.mobilePageUtils = {
+            showLoading: showMobileLoading,
+            showToast: showMobileToast,
+            updateCartBadge: updateMobileCartBadge,
+            updateUserInfo: updateMobileUserInfo,
+            goBack: handleMobileBack
+        };
+    </script>
+</body>
+</html>

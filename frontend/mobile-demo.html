@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#667eea">
+    <title>Mobile UI Demo - Restaurant Management</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+    <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+    
+    <!-- CSS Framework -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/mobile-responsive.css">
+    
+    <style>
+        /* Demo specific styles */
+        .demo-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .demo-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--mobile-primary);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .component-showcase {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .demo-grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .demo-grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    </style>
+</head>
+<body class="mobile-bg-light">
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="mobile-header-content">
+            <div class="mobile-flex mobile-items-center mobile-justify-between">
+                <div class="mobile-flex mobile-items-center">
+                    <div class="mobile-mr-md">
+                        <div class="mobile-w-10 mobile-h-10 mobile-bg-white mobile-bg-opacity-20 mobile-rounded-lg mobile-flex mobile-items-center mobile-justify-center">
+                            <i class="fas fa-mobile-alt mobile-text-white mobile-text-lg"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="mobile-header-title">Mobile UI Demo</h1>
+                        <p class="mobile-header-subtitle">Giao diện đẹp cho điện thoại</p>
+                    </div>
+                </div>
+                
+                <div class="mobile-flex mobile-items-center mobile-space-x-sm">
+                    <button class="mobile-btn-icon mobile-bg-white mobile-bg-opacity-20" onclick="showToast('Tính năng tìm kiếm!', 'info')">
+                        <i class="fas fa-search mobile-text-white"></i>
+                    </button>
+                    <button class="mobile-btn-icon mobile-bg-white mobile-bg-opacity-20" onclick="showToast('Menu tùy chọn!', 'info')">
+                        <i class="fas fa-ellipsis-v mobile-text-white"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mobile-page-content">
+        <div class="mobile-container mobile-py-lg">
+            
+            <!-- Buttons Demo -->
+            <div class="demo-section mobile-animate-fadeIn">
+                <h2 class="demo-title">Buttons & Icons</h2>
+                <div class="component-showcase">
+                    <div class="mobile-flex mobile-space-x-sm mobile-justify-center mobile-flex-wrap" style="gap: 0.5rem;">
+                        <button class="mobile-btn mobile-btn-primary" onclick="showToast('Primary button!', 'success')">
+                            <i class="fas fa-heart mobile-mr-sm"></i>
+                            Primary
+                        </button>
+                        <button class="mobile-btn mobile-btn-secondary" onclick="showToast('Secondary button!', 'info')">
+                            <i class="fas fa-star mobile-mr-sm"></i>
+                            Secondary
+                        </button>
+                    </div>
+                    <div class="mobile-flex mobile-space-x-sm mobile-justify-center">
+                        <button class="mobile-btn-icon mobile-bg-primary mobile-text-white" onclick="vibrate([100])">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="mobile-btn-icon mobile-bg-success mobile-text-white" onclick="vibrate([50, 50, 50])">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="mobile-btn-icon mobile-bg-warning mobile-text-white" onclick="vibrate([200])">
+                            <i class="fas fa-exclamation"></i>
+                        </button>
+                        <button class="mobile-btn-icon mobile-bg-error mobile-text-white" onclick="vibrate([100, 100, 100])">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards Demo -->
+            <div class="demo-section mobile-animate-fadeIn" style="animation-delay: 0.1s;">
+                <h2 class="demo-title">Cards & Content</h2>
+                <div class="component-showcase demo-grid-2">
+                    <div class="mobile-card">
+                        <div class="mobile-card-body mobile-text-center">
+                            <i class="fas fa-utensils mobile-text-2xl mobile-text-primary mobile-mb-sm"></i>
+                            <h4 class="mobile-font-semibold mobile-mb-xs">Món Ăn</h4>
+                            <p class="mobile-text-xs mobile-text-secondary">Thực đơn đa dạng</p>
+                        </div>
+                    </div>
+                    <div class="mobile-card">
+                        <div class="mobile-card-body mobile-text-center">
+                            <i class="fas fa-calendar mobile-text-2xl mobile-text-success mobile-mb-sm"></i>
+                            <h4 class="mobile-font-semibold mobile-mb-xs">Đặt Bàn</h4>
+                            <p class="mobile-text-xs mobile-text-secondary">Dễ dàng đặt chỗ</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Badges Demo -->
+            <div class="demo-section mobile-animate-fadeIn" style="animation-delay: 0.2s;">
+                <h2 class="demo-title">Badges & Status</h2>
+                <div class="component-showcase">
+                    <div class="mobile-flex mobile-space-x-sm mobile-justify-center mobile-flex-wrap" style="gap: 0.5rem;">
+                        <span class="mobile-badge mobile-badge-primary">Primary</span>
+                        <span class="mobile-badge mobile-badge-success">Success</span>
+                        <span class="mobile-badge mobile-badge-warning">Warning</span>
+                        <span class="mobile-badge mobile-badge-error">Error</span>
+                        <span class="mobile-badge mobile-badge-info">Info</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forms Demo -->
+            <div class="demo-section mobile-animate-fadeIn" style="animation-delay: 0.3s;">
+                <h2 class="demo-title">Forms & Inputs</h2>
+                <div class="component-showcase">
+                    <div class="mobile-search-bar">
+                        <div class="mobile-relative">
+                            <i class="mobile-search-icon fas fa-search"></i>
+                            <input type="text" class="mobile-search-input" placeholder="Tìm kiếm món ăn...">
+                        </div>
+                    </div>
+                    <input type="text" class="mobile-input" placeholder="Họ và tên">
+                    <input type="email" class="mobile-input" placeholder="Email">
+                    <textarea class="mobile-input mobile-textarea" placeholder="Ghi chú đặc biệt..."></textarea>
+                </div>
+            </div>
+
+            <!-- Tabs Demo -->
+            <div class="demo-section mobile-animate-fadeIn" style="animation-delay: 0.4s;">
+                <h2 class="demo-title">Tabs & Navigation</h2>
+                <div class="component-showcase">
+                    <div class="mobile-tabs">
+                        <button class="mobile-tab active" onclick="switchTab(this, 'all')">Tất cả</button>
+                        <button class="mobile-tab" onclick="switchTab(this, 'food')">Món ăn</button>
+                        <button class="mobile-tab" onclick="switchTab(this, 'drink')">Đồ uống</button>
+                        <button class="mobile-tab" onclick="switchTab(this, 'dessert')">Tráng miệng</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Demo -->
+            <div class="demo-section mobile-animate-fadeIn" style="animation-delay: 0.5s;">
+                <h2 class="demo-title">Progress & Loading</h2>
+                <div class="component-showcase">
+                    <div class="mobile-progress">
+                        <div class="mobile-progress-bar" style="width: 75%;"></div>
+                    </div>
+                    <div class="mobile-flex mobile-items-center mobile-justify-center mobile-space-x-md">
+                        <div class="mobile-loading"></div>
+                        <span class="mobile-text-secondary">Đang tải...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toast Demo -->
+            <div class="demo-section mobile-animate-fadeIn" style="animation-delay: 0.6s;">
+                <h2 class="demo-title">Notifications & Modals</h2>
+                <div class="component-showcase demo-grid-2">
+                    <button class="mobile-btn mobile-btn-primary mobile-btn-sm" onclick="showToast('Thành công!', 'success')">
+                        Success Toast
+                    </button>
+                    <button class="mobile-btn mobile-btn-secondary mobile-btn-sm" onclick="showToast('Thông tin!', 'info')">
+                        Info Toast
+                    </button>
+                    <button class="mobile-btn mobile-btn-primary mobile-btn-sm" onclick="showToast('Cảnh báo!', 'warning')">
+                        Warning Toast
+                    </button>
+                    <button class="mobile-btn mobile-btn-secondary mobile-btn-sm" onclick="showToast('Lỗi!', 'error')">
+                        Error Toast
+                    </button>
+                </div>
+                <div class="mobile-text-center mobile-mt-md">
+                    <button class="mobile-btn mobile-btn-primary" onclick="showDemoModal()">
+                        <i class="fas fa-window-maximize mobile-mr-sm"></i>
+                        Show Modal
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-content">
+            <a href="mobile-Index-new.html" class="mobile-nav-item" data-page="home">
+                <i class="mobile-nav-icon fas fa-home"></i>
+                <span class="mobile-nav-label">Trang chủ</span>
+            </a>
+            <a href="mobile-Menu-new.html" class="mobile-nav-item" data-page="menu">
+                <i class="mobile-nav-icon fas fa-utensils"></i>
+                <span class="mobile-nav-label">Menu</span>
+            </a>
+            <a href="mobile-demo.html" class="mobile-nav-item active" data-page="demo">
+                <i class="mobile-nav-icon fas fa-mobile-alt"></i>
+                <span class="mobile-nav-label">Demo</span>
+            </a>
+            <a href="mobile-lienhe&datban-new.html" class="mobile-nav-item" data-page="contact">
+                <i class="mobile-nav-icon fas fa-phone"></i>
+                <span class="mobile-nav-label">Liên hệ</span>
+            </a>
+            <a href="mobile-gioithieu-new.html" class="mobile-nav-item" data-page="about">
+                <i class="mobile-nav-icon fas fa-info-circle"></i>
+                <span class="mobile-nav-label">Giới thiệu</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Floating Action Button -->
+    <button class="mobile-fab" onclick="showToast('Floating Action Button!', 'info'); vibrate([100]);">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- JavaScript -->
+    <script src="js/mobile-utils.js"></script>
+    
+    <script>
+        // Demo specific functions
+        function switchTab(tabElement, category) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.mobile-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Add active class to clicked tab
+            tabElement.classList.add('active');
+            
+            // Show toast
+            showToast(`Chuyển sang: ${tabElement.textContent}`, 'info', 1500);
+        }
+
+        function showDemoModal() {
+            const modalContent = `
+                <div class="mobile-text-center">
+                    <i class="fas fa-star mobile-text-3xl mobile-text-warning mobile-mb-md"></i>
+                    <h3 class="mobile-text-xl mobile-font-bold mobile-mb-md">Demo Modal</h3>
+                    <p class="mobile-text-secondary mobile-mb-lg">
+                        Đây là một modal demo với giao diện đẹp và hiệu ứng mượt mà.
+                        Modal này có thể chứa bất kỳ nội dung nào bạn muốn.
+                    </p>
+                    <div class="mobile-flex mobile-space-x-sm mobile-justify-center">
+                        <button class="mobile-btn mobile-btn-primary" onclick="closeModal(document.querySelector('.mobile-modal.active')); showToast('Đã xác nhận!', 'success');">
+                            <i class="fas fa-check mobile-mr-sm"></i>
+                            Xác nhận
+                        </button>
+                        <button class="mobile-btn mobile-btn-secondary" onclick="closeModal(document.querySelector('.mobile-modal.active'));">
+                            <i class="fas fa-times mobile-mr-sm"></i>
+                            Hủy
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            showModal(modalContent);
+        }
+
+        // Initialize demo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show welcome message
+            setTimeout(() => {
+                showToast('Chào mừng đến với Mobile UI Demo!', 'success', 3000);
+            }, 1000);
+            
+            // Add entrance animations
+            setTimeout(() => {
+                const elements = document.querySelectorAll('.mobile-animate-fadeIn');
+                elements.forEach((element, index) => {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(20px)';
+                    element.style.transition = 'all 0.5s ease';
+                    
+                    setTimeout(() => {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+            }, 500);
+        });
+    </script>
+</body>
+</html>

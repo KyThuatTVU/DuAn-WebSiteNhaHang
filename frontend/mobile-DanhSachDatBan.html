@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#667eea">
+    <title>Quản Lý Đặt Bàn - Restaurant Management</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../img/favicon.ico">
+    <link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
+    
+    <!-- CSS Framework -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/mobile-responsive.css">
+    
+    <!-- Page-specific CSS -->
+    
+    
+    <style>
+        /* Page-specific mobile styles */
+        .mobile-page-content {
+            padding-bottom: 80px; /* Space for bottom navigation */
+            min-height: calc(100vh - 140px); /* Header + nav space */
+        }
+        
+        .mobile-header-hidden {
+            transform: translateY(-100%);
+        }
+        
+        /* Safe area support for devices with notches */
+        .mobile-header {
+            padding-top: env(safe-area-inset-top);
+        }
+        
+        .mobile-nav {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* Custom scrollbar for mobile */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 2px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.5);
+        }
+    </style>
+</head>
+<body class="mobile-bg-light">
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="mobile-header-content">
+            <div class="mobile-flex mobile-items-center">
+                <button class="mobile-btn-icon mobile-text-white mobile-mr-md" onclick="goToHome" style="background: none; border: none;">
+                    <i class="fas fa-arrow-left mobile-text-lg"></i>
+                </button>
+                <div>
+                    <h1 class="mobile-header-title">Quản Lý Đặt Bàn</h1>
+                    <p class="mobile-header-subtitle">Theo dõi các đặt bàn</p>
+                </div>
+            </div>
+            <div class="mobile-flex mobile-items-center mobile-space-x-md">
+                <!-- User Info -->
+                <div class="mobile-flex mobile-items-center mobile-space-x-sm">
+                    <div class="mobile-w-8 mobile-h-8 mobile-bg-white mobile-bg-opacity-20 mobile-rounded-full mobile-flex mobile-items-center mobile-justify-center">
+                        <i class="fas fa-user mobile-text-white mobile-text-sm"></i>
+                    </div>
+                    <div class="mobile-hidden-sm">
+                        <div id="mobileUserName" class="mobile-text-white mobile-text-sm mobile-font-medium">Đang tải...</div>
+                        <div id="mobileUserRole" class="mobile-text-white mobile-text-opacity-80 mobile-text-xs"></div>
+                    </div>
+                </div>
+                
+                <!-- Header Actions -->
+                <div class="mobile-flex mobile-items-center mobile-space-x-sm">
+                    
+            <button class="mobile-btn mobile-btn-sm mobile-bg-white mobile-bg-opacity-20 mobile-text-white" onclick="addReservation()">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="mobile-btn mobile-btn-sm mobile-bg-white mobile-bg-opacity-20 mobile-text-white" onclick="refreshReservations()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mobile-page-content">
+        <div class="mobile-container mobile-py-lg">
+            <!-- Content will be inserted here -->
+        </div>
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-content">
+            <a href="../Index-new.html" class="mobile-nav-item" data-page="home">
+                <i class="mobile-nav-icon fas fa-home"></i>
+                <span class="mobile-nav-label">Trang chủ</span>
+            </a>
+            <a href="../Menu-new.html" class="mobile-nav-item" data-page="menu">
+                <i class="mobile-nav-icon fas fa-utensils"></i>
+                <span class="mobile-nav-label">Menu</span>
+            </a>
+            <a href="../thanhtoan.html" class="mobile-nav-item" data-page="cart">
+                <i class="mobile-nav-icon fas fa-shopping-cart"></i>
+                <span class="mobile-nav-label">Giỏ hàng</span>
+                <span id="mobileCartBadge" class="mobile-badge mobile-badge-error mobile-absolute mobile-top-0 mobile-right-0 mobile-transform mobile-translate-x-1/2 mobile--translate-y-1/2 mobile-hidden">0</span>
+            </a>
+            <a href="../DanhSachDatBan.html" class="mobile-nav-item" data-page="reservations">
+                <i class="mobile-nav-icon fas fa-calendar-check"></i>
+                <span class="mobile-nav-label">Đặt bàn</span>
+            </a>
+            <a href="../DanhSachHoaDon.html" class="mobile-nav-item" data-page="orders">
+                <i class="mobile-nav-icon fas fa-receipt"></i>
+                <span class="mobile-nav-label">Đơn hàng</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Mobile Floating Action Button (Optional) -->
+    <div class="mobile-fab-container mobile-fixed mobile-bottom-20 mobile-right-4 mobile-z-30" style="bottom: 100px;">
+        
+    </div>
+
+    <!-- Mobile Toast Container -->
+    <div class="mobile-toast-container"></div>
+
+    <!-- Mobile Loading Overlay -->
+    <div id="mobileLoadingOverlay" class="mobile-fixed mobile-inset-0 mobile-bg-dark mobile-bg-opacity-50 mobile-flex mobile-items-center mobile-justify-center mobile-z-50 mobile-hidden">
+        <div class="mobile-bg-white mobile-rounded-xl mobile-p-lg mobile-flex mobile-items-center mobile-space-x-md">
+            <div class="mobile-spinner"></div>
+            <span class="mobile-text-dark mobile-font-medium">Đang tải...</span>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/mobile-utils.js"></script>
+    
+    
+    <script>
+        // Mobile-specific initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize mobile features
+            initializeMobileFeatures();
+            
+            // Update user info
+            updateMobileUserInfo();
+            
+            // Update cart badge
+            updateMobileCartBadge();
+            
+            // Set active navigation
+            setActiveMobileNav();
+        });
+
+        function initializeMobileFeatures() {
+            // Add pull-to-refresh (if needed)
+            if ('true' === 'true') {
+                enablePullToRefresh();
+            }
+            
+            // Add swipe gestures (if needed)
+            if ('false' === 'true') {
+                enableSwipeGestures();
+            }
+            
+            // Add offline support (if needed)
+            if ('false' === 'true') {
+                enableOfflineSupport();
+            }
+        }
+
+        function updateMobileUserInfo() {
+            // Get user info from localStorage or API
+            const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('adminUser') || '{}');
+            
+            if (user.full_name || user.fullName) {
+                document.getElementById('mobileUserName').textContent = user.full_name || user.fullName;
+            }
+            
+            if (user.role) {
+                const roleText = user.role === 'admin' ? 'Quản trị viên' : 'Nhân viên';
+                document.getElementById('mobileUserRole').textContent = roleText;
+            }
+        }
+
+        function updateMobileCartBadge() {
+            // Get cart count
+            const cartManager = window.cartManager;
+            if (cartManager) {
+                const cart = cartManager.getCart();
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                
+                const badge = document.getElementById('mobileCartBadge');
+                if (totalItems > 0) {
+                    badge.textContent = totalItems;
+                    badge.classList.remove('mobile-hidden');
+                } else {
+                    badge.classList.add('mobile-hidden');
+                }
+            }
+        }
+
+        function setActiveMobileNav() {
+            const currentPage = 'reservations';
+            const navItems = document.querySelectorAll('.mobile-nav-item');
+            
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-page') === currentPage) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        function showMobileLoading(show = true) {
+            const overlay = document.getElementById('mobileLoadingOverlay');
+            if (show) {
+                overlay.classList.remove('mobile-hidden');
+            } else {
+                overlay.classList.add('mobile-hidden');
+            }
+        }
+
+        function showMobileToast(message, type = 'info', duration = 3000) {
+            if (window.mobileUtils) {
+                window.mobileUtils.showToast(message, type, duration);
+            }
+        }
+
+        // Pull to refresh functionality
+        function enablePullToRefresh() {
+            let startY = 0;
+            let currentY = 0;
+            let pullDistance = 0;
+            const threshold = 100;
+            
+            document.addEventListener('touchstart', (e) => {
+                if (window.scrollY === 0) {
+                    startY = e.touches[0].clientY;
+                }
+            });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (startY > 0) {
+                    currentY = e.touches[0].clientY;
+                    pullDistance = currentY - startY;
+                    
+                    if (pullDistance > 0 && pullDistance < threshold * 2) {
+                        e.preventDefault();
+                        // Add visual feedback here
+                    }
+                }
+            });
+            
+            document.addEventListener('touchend', () => {
+                if (pullDistance > threshold) {
+                    // Trigger refresh
+                    if (typeof refreshPage === 'function') {
+                        refreshPage();
+                    } else {
+                        location.reload();
+                    }
+                }
+                startY = 0;
+                pullDistance = 0;
+            });
+        }
+
+        // Swipe gestures
+        function enableSwipeGestures() {
+            let startX = 0;
+            let startY = 0;
+            
+            document.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            });
+            
+            document.addEventListener('touchend', (e) => {
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                const diffX = startX - endX;
+                const diffY = startY - endY;
+                
+                // Horizontal swipe
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        // Swipe left
+                        if (typeof onSwipeLeft === 'function') onSwipeLeft();
+                    } else {
+                        // Swipe right
+                        if (typeof onSwipeRight === 'function') onSwipeRight();
+                    }
+                }
+            });
+        }
+
+        // Offline support
+        function enableOfflineSupport() {
+            window.addEventListener('online', () => {
+                showMobileToast('Đã kết nối internet', 'success');
+            });
+            
+            window.addEventListener('offline', () => {
+                showMobileToast('Mất kết nối internet', 'warning');
+            });
+        }
+
+        // Back button handler
+        function handleMobileBack() {
+            if (typeof goToHome === 'function') {
+                goToHome();
+            } else {
+                history.back();
+            }
+        }
+
+        // Utility functions for pages to use
+        window.mobilePageUtils = {
+            showLoading: showMobileLoading,
+            showToast: showMobileToast,
+            updateCartBadge: updateMobileCartBadge,
+            updateUserInfo: updateMobileUserInfo,
+            goBack: handleMobileBack
+        };
+    </script>
+</body>
+</html>
