@@ -2,12 +2,17 @@
 class AdminAuth {
     constructor() {
         this.currentUser = null;
+        // In-memory staff accounts storage
+        this.staffAccounts = [];
         this.init();
     }
 
     init() {
         this.loadCurrentUser();
         this.setupEventListeners();
+
+        // Initialize staff accounts storage
+        this.initializeStaffAccounts();
     }
 
     // Load current logged in admin/staff
@@ -61,13 +66,38 @@ class AdminAuth {
     // Login function
     login(username, password) {
         try {
+            console.log('🔐 Login attempt:', username, '/', password);
+
             // Get stored admin accounts
             const adminAccounts = this.getAdminAccounts();
-            
+            console.log('👑 Admin accounts for login:', adminAccounts);
+
+            // Get stored staff accounts
+            const staffAccounts = this.getStaffAccountsFromStorage();
+            console.log('👔 Staff accounts for login:', staffAccounts);
+
+            // Combine all accounts for login check
+            const allAccounts = [...adminAccounts, ...staffAccounts];
+            console.log('🔍 All accounts combined:', allAccounts);
+
             // Find matching account
-            const account = adminAccounts.find(acc => 
-                acc.username === username && acc.password === password
-            );
+            const account = allAccounts.find(acc => {
+                const usernameMatch = acc.username === username;
+                const passwordMatch = acc.password === password;
+                const isActive = acc.isActive;
+
+                console.log(`🔍 Checking account ${acc.username}:`, {
+                    usernameMatch,
+                    passwordMatch,
+                    isActive,
+                    storedPassword: acc.password,
+                    inputPassword: password
+                });
+
+                return usernameMatch && passwordMatch && isActive;
+            });
+
+            console.log('🔍 Found matching account:', account);
 
             if (account) {
                 // Create session
@@ -81,15 +111,15 @@ class AdminAuth {
 
                 // Save to localStorage
                 localStorage.setItem('adminUser', JSON.stringify(this.currentUser));
-                
-                console.log('✅ Admin login successful:', this.currentUser);
+
+                console.log('✅ Login successful:', this.currentUser);
                 return { success: true, user: this.currentUser };
             } else {
-                console.log('❌ Invalid credentials');
-                return { success: false, message: 'Tên đăng nhập hoặc mật khẩu không đúng' };
+                console.log('❌ Invalid credentials - no matching account found');
+                return { success: false, message: 'Tên đăng nhập hoặc mật khẩu không đúng hoặc tài khoản bị khóa' };
             }
         } catch (error) {
-            console.error('Login error:', error);
+            console.error('❌ Login error:', error);
             return { success: false, message: 'Có lỗi xảy ra khi đăng nhập' };
         }
     }
@@ -120,7 +150,7 @@ class AdminAuth {
         }
     }
 
-    // Create default admin accounts
+    // Create default admin accounts (only admin, no default staff)
     createDefaultAccounts() {
         const defaultAccounts = [
             {
@@ -131,22 +161,94 @@ class AdminAuth {
                 role: 'admin',
                 createdAt: new Date().toISOString(),
                 isActive: true
-            },
-            {
-                id: 'staff_001',
-                username: 'staff001',
-                password: 'staff123',
-                fullName: 'Nhân viên 001',
-                role: 'staff',
-                createdAt: new Date().toISOString(),
-                isActive: true
             }
         ];
 
         localStorage.setItem('adminAccounts', JSON.stringify(defaultAccounts));
-        console.log('✅ Default admin accounts created');
+        console.log('✅ Default admin account created');
         return defaultAccounts;
     }
+
+    // Initialize staff accounts storage
+    initializeStaffAccounts() {
+        console.log('🔧 Initializing staff accounts storage...');
+
+        // Create some demo staff accounts
+        this.staffAccounts = [
+            {
+                id: 'staff_demo_001',
+                username: 'nhanvien01',
+                password: '123456',
+                fullName: 'Nguyễn Văn A',
+                role: 'staff',
+                createdAt: new Date().toISOString(),
+                createdBy: 'system',
+                isActive: true
+            },
+            {
+                id: 'staff_demo_002',
+                username: 'nhanvien02',
+                password: '123456',
+                fullName: 'Trần Thị B',
+                role: 'staff',
+                createdAt: new Date().toISOString(),
+                createdBy: 'system',
+                isActive: true
+            },
+
+             {
+                id: 'staff_demo_003',
+                username: 'nhanvien03',
+                password: '123456',
+                fullName: 'Hứa Thị Thảo Vy',
+                role: 'staff',
+                createdAt: new Date().toISOString(),
+                createdBy: 'system',
+                isActive: true
+            },
+             {
+                id: 'staff_demo_004',
+                username: 'nhanvien04',
+                password: '123456',
+                fullName: 'Nguyễn Huỳnh Kỹ Thuật',
+                role: 'staff',
+                createdAt: new Date().toISOString(),
+                createdBy: 'system',
+                isActive: true
+            }
+        ];
+
+        console.log('✅ Staff accounts initialized:', this.staffAccounts);
+    }
+
+    // Get all staff accounts from in-memory storage
+    getStaffAccountsFromStorage() {
+        console.log('🔍 Getting staff accounts from memory:', this.staffAccounts);
+        return this.staffAccounts || [];
+    }
+
+    // Save staff accounts to in-memory storage
+    saveStaffAccountsToStorage(staffAccounts) {
+        console.log('💾 Saving staff accounts to memory:', staffAccounts);
+        this.staffAccounts = [...staffAccounts];
+        console.log('✅ Staff accounts saved to memory:', this.staffAccounts);
+        return true;
+    }
+
+    // Debug function to check all accounts
+    debugAllAccounts() {
+        console.log('🔍 === DEBUG ALL ACCOUNTS ===');
+        const adminAccounts = this.getAdminAccounts();
+        const staffAccounts = this.getStaffAccountsFromStorage();
+        console.log('👑 Admin accounts:', adminAccounts);
+        console.log('👔 Staff accounts:', staffAccounts);
+        console.log('📊 Total admin:', adminAccounts.length);
+        console.log('📊 Total staff:', staffAccounts.length);
+        console.log('🔍 === END DEBUG ===');
+        return { adminAccounts, staffAccounts };
+    }
+
+
 
     // Create new staff account (admin only)
     createStaffAccount(staffData) {
@@ -155,10 +257,19 @@ class AdminAuth {
         }
 
         try {
-            const accounts = this.getAdminAccounts();
-            
+            console.log('🔧 Creating staff account with data:', staffData);
+
+            // Get existing staff accounts
+            const staffAccounts = this.getStaffAccountsFromStorage();
+            console.log('🔧 Current staff accounts:', staffAccounts);
+
+            // Get admin accounts to check for username conflicts
+            const adminAccounts = this.getAdminAccounts();
+            const allExistingAccounts = [...adminAccounts, ...staffAccounts];
+
             // Check if username already exists
-            if (accounts.find(acc => acc.username === staffData.username)) {
+            if (allExistingAccounts.find(acc => acc.username === staffData.username)) {
+                console.log('❌ Username already exists:', staffData.username);
                 return { success: false, message: 'Tên đăng nhập đã tồn tại' };
             }
 
@@ -174,13 +285,22 @@ class AdminAuth {
                 isActive: true
             };
 
-            accounts.push(newStaff);
-            localStorage.setItem('adminAccounts', JSON.stringify(accounts));
+            console.log('🔧 New staff account created:', newStaff);
 
-            console.log('✅ Staff account created:', newStaff.username);
-            return { success: true, staff: newStaff };
+            // Add to staff accounts
+            staffAccounts.push(newStaff);
+            console.log('🔧 Updated staff accounts list:', staffAccounts);
+
+            // Save to staff storage
+            if (this.saveStaffAccountsToStorage(staffAccounts)) {
+                console.log('✅ Staff account saved successfully:', newStaff.username);
+                return { success: true, staff: newStaff };
+            } else {
+                console.log('❌ Failed to save staff account');
+                return { success: false, message: 'Không thể lưu tài khoản nhân viên' };
+            }
         } catch (error) {
-            console.error('Error creating staff account:', error);
+            console.error('❌ Error creating staff account:', error);
             return { success: false, message: 'Có lỗi xảy ra khi tạo tài khoản' };
         }
     }
@@ -191,8 +311,7 @@ class AdminAuth {
             return [];
         }
 
-        const accounts = this.getAdminAccounts();
-        return accounts.filter(acc => acc.role === 'staff');
+        return this.getStaffAccountsFromStorage();
     }
 
     // Update staff account (admin only)
@@ -228,13 +347,17 @@ class AdminAuth {
         }
 
         try {
-            const accounts = this.getAdminAccounts();
-            const filteredAccounts = accounts.filter(acc => acc.id !== staffId);
+            // Get staff accounts from separate storage
+            const staffAccounts = this.getStaffAccountsFromStorage();
+            const filteredStaffAccounts = staffAccounts.filter(acc => acc.id !== staffId);
 
-            localStorage.setItem('adminAccounts', JSON.stringify(filteredAccounts));
-
-            console.log('✅ Staff account deleted:', staffId);
-            return { success: true };
+            // Save updated staff accounts
+            if (this.saveStaffAccountsToStorage(filteredStaffAccounts)) {
+                console.log('✅ Staff account deleted:', staffId);
+                return { success: true };
+            } else {
+                return { success: false, message: 'Không thể xóa tài khoản nhân viên' };
+            }
         } catch (error) {
             console.error('Error deleting staff account:', error);
             return { success: false, message: 'Có lỗi xảy ra khi xóa tài khoản' };

@@ -98,6 +98,9 @@
                                 <!-- Username will be inserted here -->
                             </span>
                         </div>
+                        <button onclick="debugAccounts()" class="text-yellow-600 hover:text-yellow-800 transition-colors mr-2" title="Debug Accounts">
+                            <i class="fas fa-bug"></i>
+                        </button>
                         <button onclick="logout()" class="text-red-600 hover:text-red-800 transition-colors" title="Đăng xuất">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
@@ -107,6 +110,9 @@
                     <div id="adminActions" class="flex items-center space-x-3">
                         <button onclick="showRevenueStats()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                             <i class="fas fa-chart-line mr-2"></i>Thống kê doanh thu
+                        </button>
+                        <button onclick="showStaffManagement()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-users mr-2"></i>Quản lý nhân viên
                         </button>
                     </div>
 
@@ -644,6 +650,25 @@
             }
         }
 
+        // Debug accounts function
+        function debugAccounts() {
+            if (adminAuth) {
+                const result = adminAuth.debugAllAccounts();
+
+                // Test login with each staff account
+                console.log('🧪 Testing login for all staff accounts...');
+                result.staffAccounts.forEach(staff => {
+                    console.log(`🧪 Testing login: ${staff.username} / ${staff.password}`);
+                    const loginResult = adminAuth.login(staff.username, staff.password);
+                    console.log(`🧪 Login result for ${staff.username}:`, loginResult);
+                });
+
+                alert(`Debug Info:\n\nAdmin accounts: ${result.adminAccounts.length}\nStaff accounts: ${result.staffAccounts.length}\n\nCheck console for details and login tests.`);
+            } else {
+                alert('AdminAuth not initialized!');
+            }
+        }
+
         // Logout function
         function logout() {
             if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
@@ -687,16 +712,26 @@
                 return;
             }
 
+            console.log('🔧 Creating staff account:', { username, password, fullName });
+
             const result = adminAuth.createStaffAccount({
                 username: username,
                 password: password,
                 fullName: fullName
             });
 
+            console.log('🔧 Create staff result:', result);
+
             if (result.success) {
-                alert('✅ Tạo tài khoản nhân viên thành công!');
+                alert(`✅ Tạo tài khoản nhân viên thành công!\n\nUsername: ${username}\nPassword: ${password}\n\nBạn có thể đăng nhập bằng tài khoản này.`);
                 document.getElementById('createStaffForm').reset();
                 loadStaffList();
+
+                // Debug: Check if account was saved
+                setTimeout(() => {
+                    const staffAccounts = adminAuth.getStaffAccountsFromStorage();
+                    console.log('🔧 Staff accounts after creation:', staffAccounts);
+                }, 100);
             } else {
                 alert('❌ ' + result.message);
             }
