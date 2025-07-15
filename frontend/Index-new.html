@@ -67,6 +67,14 @@
             background-color: #f3f4f6;
             font-weight: 600;
         }
+
+        img.thumbnail {
+            cursor: zoom-in;
+            transition: transform 0.3s ease;
+        }
+        img.thumbnail:hover {
+            transform: scale(1.02);
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -96,9 +104,6 @@
             </div>
         </div>
 
-
-
-
         <!-- Featured Menu -->
         <div class="container mx-auto px-4 py-12 bg-amber-50" id="featuredMenu">
             <div class="text-center mb-12">
@@ -109,8 +114,8 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- Featured Item 1 -->
                 <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition duration-300 stagger-item">
-                    <div class="h-64 bg-cover bg-center relative" style="background-image: url('img/calocnuongtrui.jpg');">
-                        <div class="absolute inset-0 bg-black bg-opacity-20 hover:bg-opacity-10 transition duration-300"></div>
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="img/calocnuongtrui.jpg" alt="Cá Lóc Nướng Trui" class="w-full h-full object-cover thumbnail" onclick="showImage(this.src)">
                     </div>
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-2">
@@ -123,11 +128,10 @@
                         </a>
                     </div>
                 </div>
-
                 <!-- Featured Item 2 -->
                 <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition duration-300 stagger-item">
-                    <div class="h-64 bg-cover bg-center relative" style="background-image: url('img/laumam.webp');">
-                        <div class="absolute inset-0 bg-black bg-opacity-20 hover:bg-opacity-10 transition duration-300"></div>
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="img/laumam.webp" alt="Lẩu Mắm" class="w-full h-full object-cover thumbnail" onclick="showImage(this.src)">
                     </div>
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-2">
@@ -140,11 +144,10 @@
                         </a>
                     </div>
                 </div>
-
                 <!-- Featured Item 3 -->
                 <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition duration-300 stagger-item">
-                    <div class="h-64 bg-cover bg-center relative" style="background-image: url('img/banhxeo.jpg');">
-                        <div class="absolute inset-0 bg-black bg-opacity-20 hover:bg-opacity-10 transition duration-300"></div>
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="img/banhxeo.jpg" alt="Bánh Xèo Miền Tây" class="w-full h-full object-cover thumbnail" onclick="showImage(this.src)">
                     </div>
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-2">
@@ -156,6 +159,14 @@
                             <i class="fas fa-shopping-cart mr-2"></i>Đặt món ngay
                         </a>
                     </div>
+                </div>
+            </div>
+        
+            <!-- Modal xem ảnh to -->
+            <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-50 px-4 flex justify-center items-center">
+                <div class="relative w-full max-w-md md:max-w-2xl lg:max-w-3xl max-h-[80vh] flex justify-center items-center">
+                    <img id="modalImage" class="w-full h-auto max-h-[75vh] object-contain rounded-lg shadow-xl" />
+                    <button onclick="hideImage()" class="absolute top-2 right-2 text-white text-3xl font-bold bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition">&times;</button>
                 </div>
             </div>
 
@@ -250,7 +261,7 @@
         </div>
 
     </main>
-<div id="header-placeholder"></div>
+
     <!-- Footer Placeholder -->
     <div id="footer-placeholder"></div>
 
@@ -284,5 +295,24 @@
             });
         });
     </script>
+
+    <script>
+        function showImage(src) {
+            const modal = document.getElementById("imageModal");
+            const modalImg = document.getElementById("modalImage");
+            modalImg.src = src;
+            modal.classList.remove("hidden");
+        }
+
+        function hideImage() {
+            document.getElementById("imageModal").classList.add("hidden");
+        }
+
+        // Ẩn modal khi click ra ngoài ảnh
+        document.getElementById("imageModal").addEventListener("click", function (e) {
+            if (e.target === this) hideImage();
+        });
+    </script>
+
 </body>
 </html>

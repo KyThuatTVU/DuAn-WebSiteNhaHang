@@ -75,7 +75,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center mb-16 bg-gray-50 p-8 rounded-lg slide-in-left" id="aboutJourney">
                     <div class="bg-gray-300 h-80 md:h-96 rounded-lg flex items-center justify-center overflow-hidden hover-scale">
-                        <img src="img/gioithieu3.jpg" alt="Nhà hàng Phương Nam" class="w-full h-full object-cover">
+                        <img src="img/gioithieu3.jpg" alt="Nhà hàng Phương Nam" class="w-full h-full object-cover cursor-zoom-in" onclick="showImage(this.src)">
                     </div>
                     
                     <div class="slide-in-right">
@@ -95,7 +95,7 @@
                         <p class="text-gray-600">Chúng tôi tôn trọng bản sắc của từng món ăn, đồng thời không ngừng sáng tạo để mang đến những trải nghiệm ẩm thực mới mẻ nhưng vẫn giữ được hồn cốt của ẩm thực Nam Bộ.</p>
                     </div>
                     <div class="order-1 md:order-2 bg-gray-300 h-80 md:h-96 rounded-lg flex items-center justify-center hover-scale">
-                        <img src="img/hinhtruyenthong2.jpg" alt="Nhà hàng Phương Nam" class="w-full h-full object-cover rounded-lg">
+                        <img src="img/hinhtruyenthong2.jpg" alt="Nhà hàng Phương Nam" class="w-full h-full object-cover rounded-lg cursor-zoom-in" onclick="showImage(this.src)">
                     </div>
                 </div>
 
@@ -163,17 +163,17 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-blue-50 p-8 rounded-lg fade-in" id="aboutSpace">
                     <!-- Không gian chung -->
                     <div class="h-64 rounded-lg overflow-hidden shadow-md hover-lift">
-                        <img src="img/Alo.jpg" alt="Không gian nhà hàng" class="w-full h-full object-cover">
+                        <img src="img/Alo.jpg" alt="Không gian nhà hàng" class="w-full h-full object-cover cursor-zoom-in" onclick="showImage(this.src)">
                     </div>
 
                     <!-- Khu vực VIP -->
                     <div class="h-64 rounded-lg overflow-hidden shadow-md hover-lift">
-                        <img src="img/alo2.jpg" alt="Khu vực VIP" class="w-full h-full object-cover">
+                        <img src="img/alo2.jpg" alt="Khu vực VIP" class="w-full h-full object-cover cursor-zoom-in" onclick="showImage(this.src)">
                     </div>
 
                     <!-- Sân vườn -->
                     <div class="h-64 rounded-lg overflow-hidden shadow-md hover-lift">
-                        <img src="img/alo3.jpg" alt="Sân vườn" class="w-full h-full object-cover">
+                        <img src="img/alo3.jpg" alt="Sân vườn" class="w-full h-full object-cover cursor-zoom-in" onclick="showImage(this.src)">
                     </div>
                 </div>
             </div>
@@ -237,6 +237,16 @@
             </div>
         </section>
     </main>
+
+    <!-- Modal xem ảnh to -->
+    <div id="imageModal" class="fixed inset-0 z-[9999] bg-black bg-opacity-80 hidden flex items-center justify-center p-4">
+        <div class="relative w-auto max-w-5xl mx-auto">
+            <img id="modalImage" class="w-full h-auto max-h-[90vh] object-contain rounded-lg shadow-lg" />
+            <button onclick="hideImage()" class="absolute top-2 right-2 text-white text-3xl font-bold bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition">
+            &times;
+            </button>
+        </div>
+    </div>
 
     <!-- Footer Placeholder -->
     <div id="footer-placeholder"></div>
@@ -313,6 +323,21 @@
                 });
             }
         });
+    </script>
+
+    <script>
+        function showImage(src) {
+        const modal = document.getElementById("imageModal");
+        const modalImg = document.getElementById("modalImage");
+        modalImg.src = src;
+        modal.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden"); // chặn cuộn nền
+    }
+
+    function hideImage() {
+        document.getElementById("imageModal").classList.add("hidden");
+        document.body.classList.remove("overflow-hidden"); // cho cuộn lại
+    }
     </script>
 </body>
 </html>
