@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Hộp Thoại Bắt Buộc - Auto Logout</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary-color: #e53e3e; }
+        .bg-primary { background-color: var(--primary-color); }
+        .text-primary { color: var(--primary-color); }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">Demo Hộp Thoại Bắt Buộc Xác Nhận</h1>
+        
+        <!-- Instructions -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Hướng Dẫn</h2>
+            <div class="space-y-4">
+                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                    <h3 class="font-bold text-yellow-800 mb-2">🔒 Đặc Điểm Hộp Thoại Mới:</h3>
+                    <ul class="text-sm text-yellow-700 space-y-1">
+                        <li>✅ Bắt buộc phải xác nhận - không thể bỏ qua</li>
+                        <li>✅ Không thể đóng bằng ESC key</li>
+                        <li>✅ Không thể đóng bằng click outside</li>
+                        <li>✅ Hiển thị cho đến khi user chọn hành động</li>
+                        <li>✅ UI đẹp với icon và màu sắc rõ ràng</li>
+                    </ul>
+                </div>
+                <div class="p-4 bg-blue-50 border border-blue-200 rounded">
+                    <h3 class="font-bold text-blue-800 mb-2">📋 Quy Trình:</h3>
+                    <ol class="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                        <li>Sau 1.5 phút không hoạt động → Warning Dialog</li>
+                        <li>User có thể chọn "Gia hạn" hoặc "Đăng xuất ngay"</li>
+                        <li>Sau 2 phút không hoạt động → Expired Dialog</li>
+                        <li>User bắt buộc phải click "Đăng nhập lại"</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Buttons -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Test Hộp Thoại</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Warning Dialog -->
+                <div class="text-center">
+                    <h3 class="text-lg font-bold text-yellow-600 mb-4">Cảnh Báo Sắp Hết Hạn</h3>
+                    <button id="showWarning" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-4 rounded-lg text-lg font-semibold">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Hiển thị Warning Dialog
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Hiển thị khi còn 30 giây trước khi hết hạn
+                    </p>
+                </div>
+
+                <!-- Expired Dialog -->
+                <div class="text-center">
+                    <h3 class="text-lg font-bold text-red-600 mb-4">Phiên Đã Hết Hạn</h3>
+                    <button id="showExpired" class="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-lg text-lg font-semibold">
+                        <i class="fas fa-clock mr-2"></i>
+                        Hiển thị Expired Dialog
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Hiển thị khi phiên đã hết hạn hoàn toàn
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto Test -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Test Tự Động</h2>
+            <div class="text-center">
+                <button id="startAutoTest" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold">
+                    <i class="fas fa-play mr-2"></i>Bắt Đầu Test Tự Động (10 giây)
+                </button>
+                <p class="text-sm text-gray-600 mt-2">
+                    Sẽ hiển thị Warning sau 5 giây, sau đó Expired sau 10 giây
+                </p>
+                <div id="autoTestStatus" class="mt-4 text-lg font-mono"></div>
+            </div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4">Kết Quả Test</h2>
+            <div id="testResults" class="space-y-2 max-h-64 overflow-y-auto">
+                <p class="text-gray-600">Chưa có test nào được thực hiện</p>
+            </div>
+            <button id="clearResults" class="mt-4 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm">
+                Xóa kết quả
+            </button>
+        </div>
+    </div>
+
+    <!-- Include auth.js -->
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+    </script>
+    <script src="js/auth.js"></script>
+
+    <script>
+        function addTestResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'success' ? 'text-green-600' : 
+                              type === 'error' ? 'text-red-600' : 
+                              type === 'warning' ? 'text-yellow-600' : 'text-blue-600';
+            
+            const resultElement = document.createElement('div');
+            resultElement.className = `p-2 border-l-4 border-${type === 'success' ? 'green' : type === 'error' ? 'red' : type === 'warning' ? 'yellow' : 'blue'}-500 bg-gray-50`;
+            resultElement.innerHTML = `
+                <span class="text-xs text-gray-500">[${timestamp}]</span>
+                <span class="${colorClass} ml-2">${message}</span>
+            `;
+            
+            resultsDiv.appendChild(resultElement);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Test warning dialog
+            document.getElementById('showWarning').addEventListener('click', () => {
+                addTestResult('Hiển thị Warning Dialog - Thử ESC và click outside', 'warning');
+                
+                if (window.auth && window.auth.showSessionWarning) {
+                    window.auth.showSessionWarning();
+                } else {
+                    // Fallback nếu auth chưa load
+                    setTimeout(() => {
+                        if (window.auth && window.auth.showSessionWarning) {
+                            window.auth.showSessionWarning();
+                        } else {
+                            alert('Auth system chưa sẵn sàng. Vui lòng thử lại.');
+                        }
+                    }, 1000);
+                }
+            });
+
+            // Test expired dialog
+            document.getElementById('showExpired').addEventListener('click', () => {
+                addTestResult('Hiển thị Expired Dialog - Thử ESC và click outside', 'error');
+                
+                if (window.auth && window.auth.showSessionExpiredDialog) {
+                    window.auth.showSessionExpiredDialog();
+                } else {
+                    // Fallback nếu auth chưa load
+                    setTimeout(() => {
+                        if (window.auth && window.auth.showSessionExpiredDialog) {
+                            window.auth.showSessionExpiredDialog();
+                        } else {
+                            alert('Auth system chưa sẵn sàng. Vui lòng thử lại.');
+                        }
+                    }, 1000);
+                }
+            });
+
+            // Auto test
+            document.getElementById('startAutoTest').addEventListener('click', () => {
+                const statusDiv = document.getElementById('autoTestStatus');
+                const btn = document.getElementById('startAutoTest');
+                
+                btn.disabled = true;
+                btn.textContent = 'Đang chạy test...';
+                
+                let countdown = 10;
+                const updateStatus = () => {
+                    statusDiv.textContent = `Countdown: ${countdown} giây`;
+                    countdown--;
+                    
+                    if (countdown === 5) {
+                        addTestResult('Auto test: Hiển thị Warning Dialog', 'warning');
+                        if (window.auth && window.auth.showSessionWarning) {
+                            window.auth.showSessionWarning();
+                        }
+                    }
+                    
+                    if (countdown === 0) {
+                        addTestResult('Auto test: Hiển thị Expired Dialog', 'error');
+                        if (window.auth && window.auth.showSessionExpiredDialog) {
+                            window.auth.showSessionExpiredDialog();
+                        }
+                        statusDiv.textContent = 'Test hoàn thành!';
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-play mr-2"></i>Bắt Đầu Test Tự Động (10 giây)';
+                        return;
+                    }
+                    
+                    setTimeout(updateStatus, 1000);
+                };
+                
+                addTestResult('Bắt đầu auto test - Warning sau 5s, Expired sau 10s', 'info');
+                updateStatus();
+            });
+
+            // Clear results
+            document.getElementById('clearResults').addEventListener('click', () => {
+                document.getElementById('testResults').innerHTML = '<p class="text-gray-600">Chưa có test nào được thực hiện</p>';
+            });
+
+            // Listen for auth events
+            document.addEventListener('authStateChanged', (e) => {
+                addTestResult(`Auth event: ${e.detail.type}`, 'info');
+            });
+
+            addTestResult('Demo loaded - Sẵn sàng test hộp thoại', 'success');
+        });
+    </script>
+</body>
+</html>

@@ -180,14 +180,15 @@ const authEndpoints = {
                 phone
             });
 
-            // Create JWT token
+            // Create JWT token with short expiry for auto-logout feature
             const token = jwt.sign(
                 {
                     id: user.id,
-                    email: user.email
+                    email: user.email,
+                    iat: Math.floor(Date.now() / 1000)
                 },
                 JWT_SECRET,
-                { expiresIn: '24h' }
+                { expiresIn: '2m' } // 2 minutes for auto-logout
             );
 
             // Create refresh token
@@ -207,7 +208,8 @@ const authEndpoints = {
                 khach_hang: user,
                 token,
                 refreshToken,
-                expiresIn: '24h'
+                expiresIn: '2m', // 2 minutes
+                tokenExpiry: Date.now() + (2 * 60 * 1000)
             });
 
         } catch (error) {
@@ -254,14 +256,15 @@ const authEndpoints = {
                 });
             }
 
-            // Create JWT token
+            // Create JWT token with short expiry for auto-logout feature
             const token = jwt.sign(
                 {
                     id: user.id,
-                    email: user.email
+                    email: user.email,
+                    iat: Math.floor(Date.now() / 1000)
                 },
                 JWT_SECRET,
-                { expiresIn: '24h' }
+                { expiresIn: '2m' } // 2 minutes for auto-logout
             );
 
             // Create refresh token
@@ -284,7 +287,8 @@ const authEndpoints = {
                 khach_hang: userWithoutPassword,
                 token,
                 refreshToken,
-                expiresIn: '24h'
+                expiresIn: '2m', // 2 minutes
+                tokenExpiry: Date.now() + (2 * 60 * 1000)
             });
 
         } catch (error) {
@@ -334,20 +338,22 @@ const authEndpoints = {
                 });
             }
 
-            // Create new access token
+            // Create new access token with short expiry
             const newToken = jwt.sign(
                 {
                     id: decoded.id,
-                    email: decoded.email
+                    email: decoded.email,
+                    iat: Math.floor(Date.now() / 1000)
                 },
                 JWT_SECRET,
-                { expiresIn: '24h' }
+                { expiresIn: '2m' } // 2 minutes
             );
 
             res.json({
                 success: true,
                 token: newToken,
-                expiresIn: '24h'
+                expiresIn: '2m',
+                tokenExpiry: Date.now() + (2 * 60 * 1000)
             });
 
         } catch (error) {

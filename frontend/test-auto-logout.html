@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Auto Logout - Nhà Hàng Ẩm Thực Phương Nam</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary-color: #e53e3e; }
+        .bg-primary { background-color: var(--primary-color); }
+        .text-primary { color: var(--primary-color); }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">Test Tính Năng Tự Động Đăng Xuất</h1>
+        
+        <!-- Login Status -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Trạng Thái Đăng Nhập</h2>
+            <div id="loginStatus" class="mb-4">
+                <p class="text-gray-600">Đang kiểm tra...</p>
+            </div>
+            <div id="tokenInfo" class="mb-4 text-sm text-gray-600">
+                <p>Token: <span id="tokenDisplay">Chưa có</span></p>
+                <p>Hết hạn: <span id="expiryDisplay">Chưa có</span></p>
+                <p>Thời gian còn lại: <span id="timeLeftDisplay">Chưa có</span></p>
+            </div>
+            <div class="flex space-x-4">
+                <button id="loginBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                    Đăng Nhập Test
+                </button>
+                <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">
+                    Đăng Xuất
+                </button>
+                <button id="refreshTokenBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                    Refresh Token
+                </button>
+            </div>
+        </div>
+
+        <!-- Activity Simulation -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Mô Phỏng Hoạt Động</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button id="simulateClick" class="bg-purple-600 hover:bg-purple-700 text-white py-2 rounded">
+                    <i class="fas fa-mouse-pointer mr-2"></i>Mô phỏng Click
+                </button>
+                <button id="simulateMouseDown" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded">
+                    <i class="fas fa-hand-pointer mr-2"></i>Mô phỏng MouseDown
+                </button>
+                <button id="simulateKey" class="bg-pink-600 hover:bg-pink-700 text-white py-2 rounded">
+                    <i class="fas fa-keyboard mr-2"></i>Mô phỏng Phím
+                </button>
+            </div>
+            <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    <strong>Lưu ý:</strong> Chỉ các tương tác thực sự (click, mousedown, keypress) mới reset timer.
+                    Scroll và mousemove không được tính.
+                </p>
+            </div>
+            <div class="mt-4">
+                <label class="flex items-center">
+                    <input type="checkbox" id="autoActivity" class="mr-2">
+                    <span>Tự động mô phỏng hoạt động mỗi 30 giây</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Timer Display -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Bộ Đếm Thời Gian</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="text-center p-4 bg-blue-50 rounded">
+                    <h3 class="font-bold text-blue-600">Thời gian không hoạt động</h3>
+                    <div id="inactivityTimer" class="text-2xl font-mono text-blue-800">00:00</div>
+                </div>
+                <div class="text-center p-4 bg-red-50 rounded">
+                    <h3 class="font-bold text-red-600">Thời gian đến khi đăng xuất</h3>
+                    <div id="logoutTimer" class="text-2xl font-mono text-red-800">02:00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Dialogs -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Test Hộp Thoại</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button id="testWarningDialog" class="bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-lg">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Test Warning Dialog
+                </button>
+                <button id="testExpiredDialog" class="bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg">
+                    <i class="fas fa-clock mr-2"></i>Test Expired Dialog
+                </button>
+            </div>
+            <p class="text-sm text-gray-600 mt-4">
+                <i class="fas fa-info-circle mr-1"></i>
+                Các hộp thoại này bắt buộc phải xác nhận và không thể đóng bằng ESC hoặc click outside.
+            </p>
+        </div>
+
+        <!-- Test Results -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4">Kết Quả Test</h2>
+            <div id="testResults" class="space-y-2 max-h-64 overflow-y-auto">
+                <p class="text-gray-600">Chưa có test nào được thực hiện</p>
+            </div>
+            <button id="clearResults" class="mt-4 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm">
+                Xóa kết quả
+            </button>
+        </div>
+    </div>
+
+    <!-- Include necessary scripts -->
+    <script>
+        // Mock API base URL
+        const API_BASE_URL = 'http://localhost:3000/api';
+    </script>
+    <script src="js/auth.js"></script>
+
+    <script>
+        let inactivityStartTime = null;
+        let displayTimer = null;
+        let autoActivityTimer = null;
+
+        // Test functions
+        function updateLoginStatus() {
+            const statusDiv = document.getElementById('loginStatus');
+            const tokenDisplay = document.getElementById('tokenDisplay');
+            const expiryDisplay = document.getElementById('expiryDisplay');
+            const timeLeftDisplay = document.getElementById('timeLeftDisplay');
+            
+            const isLoggedIn = window.auth && window.auth.isLoggedIn();
+            
+            if (isLoggedIn) {
+                const user = window.auth.getCurrentUser();
+                statusDiv.innerHTML = `
+                    <div class="flex items-center text-green-600">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        <span>Đã đăng nhập: ${user.full_name || user.email}</span>
+                    </div>
+                `;
+                
+                // Update token info
+                const token = window.auth.token;
+                const expiry = window.auth.tokenExpiry;
+                
+                tokenDisplay.textContent = token ? token.substring(0, 20) + '...' : 'Chưa có';
+                expiryDisplay.textContent = expiry ? new Date(expiry).toLocaleTimeString() : 'Chưa có';
+                
+                if (expiry) {
+                    const timeLeft = Math.max(0, expiry - Date.now());
+                    const minutes = Math.floor(timeLeft / 60000);
+                    const seconds = Math.floor((timeLeft % 60000) / 1000);
+                    timeLeftDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    timeLeftDisplay.textContent = 'Chưa có';
+                }
+                
+                // Start inactivity tracking
+                if (!inactivityStartTime) {
+                    inactivityStartTime = Date.now();
+                    startDisplayTimer();
+                }
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="flex items-center text-red-600">
+                        <i class="fas fa-times-circle mr-2"></i>
+                        <span>Chưa đăng nhập</span>
+                    </div>
+                `;
+                
+                tokenDisplay.textContent = 'Chưa có';
+                expiryDisplay.textContent = 'Chưa có';
+                timeLeftDisplay.textContent = 'Chưa có';
+                
+                // Stop timers
+                inactivityStartTime = null;
+                stopDisplayTimer();
+            }
+        }
+
+        function startDisplayTimer() {
+            if (displayTimer) clearInterval(displayTimer);
+            
+            displayTimer = setInterval(() => {
+                if (!inactivityStartTime) return;
+                
+                const now = Date.now();
+                const inactiveTime = now - inactivityStartTime;
+                const timeToLogout = Math.max(0, (2 * 60 * 1000) - inactiveTime); // 2 minutes
+                
+                // Update inactivity timer
+                const inactiveMinutes = Math.floor(inactiveTime / 60000);
+                const inactiveSeconds = Math.floor((inactiveTime % 60000) / 1000);
+                document.getElementById('inactivityTimer').textContent = 
+                    `${inactiveMinutes.toString().padStart(2, '0')}:${inactiveSeconds.toString().padStart(2, '0')}`;
+                
+                // Update logout timer
+                const logoutMinutes = Math.floor(timeToLogout / 60000);
+                const logoutSeconds = Math.floor((timeToLogout % 60000) / 1000);
+                document.getElementById('logoutTimer').textContent = 
+                    `${logoutMinutes.toString().padStart(2, '0')}:${logoutSeconds.toString().padStart(2, '0')}`;
+                
+                // Update token time left
+                updateLoginStatus();
+            }, 1000);
+        }
+
+        function stopDisplayTimer() {
+            if (displayTimer) {
+                clearInterval(displayTimer);
+                displayTimer = null;
+            }
+            document.getElementById('inactivityTimer').textContent = '00:00';
+            document.getElementById('logoutTimer').textContent = '02:00';
+        }
+
+        function resetInactivityTimer() {
+            inactivityStartTime = Date.now();
+            addTestResult('Hoạt động được phát hiện - Timer được reset', 'info');
+        }
+
+        function addTestResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'success' ? 'text-green-600' : 
+                              type === 'error' ? 'text-red-600' : 
+                              type === 'warning' ? 'text-yellow-600' : 'text-blue-600';
+            
+            const resultElement = document.createElement('div');
+            resultElement.className = `p-2 border-l-4 border-${type === 'success' ? 'green' : type === 'error' ? 'red' : type === 'warning' ? 'yellow' : 'blue'}-500 bg-gray-50`;
+            resultElement.innerHTML = `
+                <span class="text-xs text-gray-500">[${timestamp}]</span>
+                <span class="${colorClass} ml-2">${message}</span>
+            `;
+            
+            resultsDiv.appendChild(resultElement);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for auth system to load
+            setTimeout(() => {
+                updateLoginStatus();
+                
+                // Listen for auth changes
+                document.addEventListener('authStateChanged', (e) => {
+                    addTestResult(`Auth state changed: ${e.detail.type}`, 'info');
+                    updateLoginStatus();
+                });
+                
+                // Listen for real interaction events only
+                ['mousedown', 'keydown', 'keypress', 'touchstart', 'click'].forEach(event => {
+                    document.addEventListener(event, resetInactivityTimer, true);
+                });
+            }, 500);
+
+            // Test login button
+            document.getElementById('loginBtn').addEventListener('click', async () => {
+                try {
+                    // Mock login with test user
+                    const testUser = {
+                        id: 999,
+                        full_name: 'Test User',
+                        email: 'test@example.com',
+                        phone: '0123456789'
+                    };
+                    
+                    // Mock token data
+                    const tokenExpiry = Date.now() + (2 * 60 * 1000); // 2 minutes from now
+                    
+                    localStorage.setItem('user', JSON.stringify(testUser));
+                    localStorage.setItem('userData', JSON.stringify(testUser));
+                    localStorage.setItem('token', 'mock_token_' + Date.now());
+                    localStorage.setItem('refreshToken', 'mock_refresh_token_' + Date.now());
+                    localStorage.setItem('tokenExpiry', tokenExpiry.toString());
+                    
+                    if (window.auth) {
+                        window.auth.isAuthenticated = true;
+                        window.auth.user = testUser;
+                        window.auth.token = 'mock_token_' + Date.now();
+                        window.auth.refreshToken = 'mock_refresh_token_' + Date.now();
+                        window.auth.tokenExpiry = tokenExpiry;
+                        
+                        // Start tracking
+                        window.auth.startActivityTracking();
+                        window.auth.startSessionCheck();
+                        
+                        window.auth.broadcastAuthChange('login', testUser);
+                    }
+                    
+                    updateLoginStatus();
+                    addTestResult('Đăng nhập test thành công - Token hết hạn sau 2 phút', 'success');
+                } catch (error) {
+                    addTestResult('Lỗi đăng nhập: ' + error.message, 'error');
+                }
+            });
+
+            // Test logout button
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                if (window.auth) {
+                    window.auth.logout();
+                }
+                updateLoginStatus();
+                addTestResult('Đăng xuất thành công', 'success');
+            });
+
+            // Refresh token button
+            document.getElementById('refreshTokenBtn').addEventListener('click', async () => {
+                try {
+                    if (window.auth && window.auth.extendSession) {
+                        await window.auth.extendSession();
+                        addTestResult('Token được refresh thành công', 'success');
+                    } else {
+                        addTestResult('Không thể refresh token - chưa đăng nhập', 'error');
+                    }
+                } catch (error) {
+                    addTestResult('Lỗi refresh token: ' + error.message, 'error');
+                }
+            });
+
+            // Activity simulation buttons
+            document.getElementById('simulateClick').addEventListener('click', () => {
+                addTestResult('Mô phỏng click event (sẽ reset timer)', 'success');
+                document.dispatchEvent(new Event('click'));
+            });
+
+            document.getElementById('simulateMouseDown').addEventListener('click', () => {
+                addTestResult('Mô phỏng mousedown event (sẽ reset timer)', 'success');
+                document.dispatchEvent(new Event('mousedown'));
+            });
+
+            document.getElementById('simulateKey').addEventListener('click', () => {
+                addTestResult('Mô phỏng keypress event (sẽ reset timer)', 'success');
+                document.dispatchEvent(new Event('keypress'));
+            });
+
+            // Auto activity checkbox
+            document.getElementById('autoActivity').addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    autoActivityTimer = setInterval(() => {
+                        document.dispatchEvent(new Event('mousedown'));
+                        addTestResult('Tự động mô phỏng hoạt động (mousedown)', 'info');
+                    }, 30000); // Every 30 seconds
+                    addTestResult('Bật tự động mô phỏng hoạt động thực sự', 'success');
+                } else {
+                    if (autoActivityTimer) {
+                        clearInterval(autoActivityTimer);
+                        autoActivityTimer = null;
+                    }
+                    addTestResult('Tắt tự động mô phỏng hoạt động', 'warning');
+                }
+            });
+
+            // Test dialog buttons
+            document.getElementById('testWarningDialog').addEventListener('click', () => {
+                if (window.auth && window.auth.showSessionWarning) {
+                    addTestResult('Hiển thị Warning Dialog (bắt buộc phải chọn)', 'warning');
+                    window.auth.showSessionWarning();
+                } else {
+                    addTestResult('Auth system chưa sẵn sàng', 'error');
+                }
+            });
+
+            document.getElementById('testExpiredDialog').addEventListener('click', () => {
+                if (window.auth && window.auth.showSessionExpiredDialog) {
+                    addTestResult('Hiển thị Expired Dialog (bắt buộc phải xác nhận)', 'error');
+                    window.auth.showSessionExpiredDialog();
+                } else {
+                    addTestResult('Auth system chưa sẵn sàng', 'error');
+                }
+            });
+
+            // Clear results button
+            document.getElementById('clearResults').addEventListener('click', () => {
+                document.getElementById('testResults').innerHTML = '<p class="text-gray-600">Chưa có test nào được thực hiện</p>';
+            });
+        });
+    </script>
+</body>
+</html>
