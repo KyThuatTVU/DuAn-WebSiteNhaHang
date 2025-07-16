@@ -163,3 +163,20 @@ function setupScrollAnimations() {
         });
     }
 }
+
+// Gọi lại initLanguageSwitcher sau khi header đã được tải xong
+document.addEventListener('DOMContentLoaded', () => {
+    // Kiểm tra header đã load xong
+    const headerInterval = setInterval(() => {
+        const langBtn = document.getElementById('language-toggle');
+        if (langBtn) {
+            clearInterval(headerInterval);
+            if (typeof initLanguageSwitcher === 'function') {
+                initLanguageSwitcher(); // ✅ Gọi hàm chuyển ngôn ngữ
+            } else {
+                console.warn('⚠️ initLanguageSwitcher chưa được định nghĩa!');
+            }
+        }
+    }, 100); // kiểm tra mỗi 100ms
+});
+
