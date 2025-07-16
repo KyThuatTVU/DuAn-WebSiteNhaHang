@@ -75,15 +75,53 @@
         const API_BASE = 'http://localhost:3000';
         const PLACEHOLDER = `${API_BASE}/images/placeholder.png`;
 
+        // Function to check if user is logged in
+        function checkUserLogin() {
+            const userData = localStorage.getItem('userData') || localStorage.getItem('user');
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    return user && user.id;
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        // Function to show login required notification
+        function showLoginRequired() {
+            alert('Vui lòng đăng nhập để thêm món ăn vào giỏ hàng!');
+
+            // Try to open login modal if available
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) {
+                localStorage.setItem('redirectAfterLogin', 'menu');
+                loginModal.classList.add('active');
+            } else {
+                // Redirect to login page
+                if (confirm('Chuyển đến trang đăng nhập?')) {
+                    window.location.href = 'Index-new.html';
+                }
+            }
+        }
+
         // Cart (Assuming this logic is correct for your needs)
         const cart = {
             items: JSON.parse(localStorage.getItem('cart') || '[]'),
             add(item, qty) {
+                // Check if user is logged in before adding to cart
+                if (!checkUserLogin()) {
+                    showLoginRequired();
+                    return false;
+                }
+
                 // Find the item *as returned by the API* in the cart
                 const exist = this.items.find(i => i.id_mon === item.id_mon);
                 // Get the max quantity *from the API item*
                 const maxQty = item.so_luong;
-                
+
                 if (exist) {
                     // Ensure we don't exceed max quantity
                     exist.qty = Math.min(exist.qty + qty, maxQty);
@@ -94,11 +132,18 @@
                 }
                 this.save();
                 this.updateUI();
+
+                // Show success notification
+                alert(`Đã thêm "${item.ten_mon}" vào giỏ hàng!`);
+                return true;
             },
             save() { localStorage.setItem('cart', JSON.stringify(this.items)); },
             updateUI() {
                 const total = this.items.reduce((s, i) => s + i.qty, 0);
-                document.querySelector('#cartBtn span').textContent = total;
+                const cartBtn = document.querySelector('#cartBtn span');
+                if (cartBtn) {
+                    cartBtn.textContent = total;
+                }
             }
         };
 
@@ -223,6 +268,21 @@
                 });
             } else {
                 console.error("Could not find search input element.");
+            }
+
+            // Cart Button Click Handler
+            const cartBtn = document.getElementById('cartBtn');
+            if (cartBtn) {
+                cartBtn.addEventListener('click', () => {
+                    if (!checkUserLogin()) {
+                        showLoginRequired();
+                        return;
+                    }
+
+                    // If user is logged in, show cart (you can implement cart modal here)
+                    alert('Giỏ hàng của bạn có ' + cart.items.length + ' món ăn');
+                    // TODO: Implement proper cart modal display
+                });
             }
 
             // Initial Load

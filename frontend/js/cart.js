@@ -411,6 +411,11 @@ class CartManager {
     }
 
     addToCart(item, buttonElement = null, quantity = 1) {
+        // Kiểm tra đăng nhập trước khi thêm vào giỏ hàng
+        if (!this.checkAuthBeforeAddToCart()) {
+            return false;
+        }
+
         // Yêu cầu thông tin khách hàng trước khi thêm vào giỏ hàng
         this.requireCustomerInfo(() => {
             this.performAddToCart(item, buttonElement, quantity);
@@ -613,7 +618,10 @@ class CartManager {
     }
 
     openCartModal() {
-        // Không cần kiểm tra đăng nhập nữa
+        // Kiểm tra đăng nhập trước khi mở giỏ hàng
+        if (!this.checkAuthBeforeCart()) {
+            return false;
+        }
 
         const cartModal = document.getElementById('cartModal');
         if (cartModal) {
@@ -628,6 +636,50 @@ class CartManager {
         }
     }
 
+    // Kiểm tra đăng nhập trước khi thêm món ăn vào giỏ hàng
+    checkAuthBeforeAddToCart() {
+        console.log('🔍 Checking auth before adding to cart...');
+
+        // Kiểm tra xem auth object có tồn tại không
+        if (typeof window.auth === 'undefined') {
+            console.log('⚠️ Auth system not loaded, checking localStorage...');
+
+            // Fallback: kiểm tra localStorage trực tiếp
+            const userData = localStorage.getItem('userData') || localStorage.getItem('user');
+
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    if (user && user.id) {
+                        console.log('✅ Found auth data in localStorage, allowing add to cart');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('❌ Error parsing user data:', error);
+                }
+            }
+
+            console.log('❌ No auth data found, showing login required for add to cart');
+            this.showLoginRequiredForAddToCart();
+            return false;
+        }
+
+        console.log('🔍 Auth system found:', {
+            isAuthenticated: window.auth.isAuthenticated,
+            hasUser: !!window.auth.user
+        });
+
+        // Kiểm tra trạng thái đăng nhập
+        if (!window.auth.isAuthenticated || !window.auth.user) {
+            console.log('❌ Not authenticated, showing login required for add to cart');
+            this.showLoginRequiredForAddToCart();
+            return false;
+        }
+
+        console.log('✅ User authenticated, allowing add to cart');
+        return true;
+    }
+
     // Kiểm tra đăng nhập trước khi truy cập giỏ hàng
     checkAuthBeforeCart() {
         console.log('🔍 Checking auth before cart...');
@@ -637,12 +689,18 @@ class CartManager {
             console.log('⚠️ Auth system not loaded, checking localStorage...');
 
             // Fallback: kiểm tra localStorage trực tiếp
-            const token = localStorage.getItem('token');
             const userData = localStorage.getItem('userData') || localStorage.getItem('user');
 
-            if (token && userData) {
-                console.log('✅ Found auth data in localStorage, allowing cart access');
-                return true;
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    if (user && user.id) {
+                        console.log('✅ Found auth data in localStorage, allowing cart access');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('❌ Error parsing user data:', error);
+                }
             }
 
             console.log('❌ No auth data found, showing login required');
@@ -664,6 +722,31 @@ class CartManager {
 
         console.log('✅ User authenticated, allowing cart access');
         return true;
+    }
+
+    // Hiển thị thông báo yêu cầu đăng nhập khi thêm món ăn
+    showLoginRequiredForAddToCart() {
+        // Hiển thị thông báo yêu cầu đăng nhập
+        this.showNotification('Vui lòng đăng nhập để thêm món ăn vào giỏ hàng!', 'warning', 4000);
+
+        // Tìm modal đăng nhập có sẵn
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) {
+            // Lưu trạng thái để redirect về menu sau khi đăng nhập
+            localStorage.setItem('redirectAfterLogin', 'menu');
+
+            // Hiển thị modal đăng nhập
+            setTimeout(() => {
+                loginModal.classList.add('active');
+            }, 500);
+        } else {
+            // Nếu không có modal đăng nhập, redirect đến trang đăng nhập
+            setTimeout(() => {
+                if (confirm('Bạn cần đăng nhập để thêm món ăn vào giỏ hàng. Chuyển đến trang đăng nhập?')) {
+                    window.location.href = 'Index-new.html';
+                }
+            }, 1000);
+        }
     }
 
     // Hiển thị modal yêu cầu đăng nhập
@@ -1568,33 +1651,18 @@ class CartManager {
         // Refresh customer info để kiểm tra trạng thái đăng nhập mới nhất
         this.customerInfo = this.loadCustomerInfo();
 
-        if (this.customerInfo) {
-            if (this.customerInfo.isLoggedInUser) {
-                console.log('✅ Sử dụng thông tin từ user đã đăng nhập');
-            } else {
-                console.log('✅ Sử dụng thông tin khách hàng đã lưu');
-            }
-            // Customer info already exists, execute callback
+        if (this.customerInfo && this.customerInfo.isLoggedInUser) {
+            console.log('✅ Sử dụng thông tin từ user đã đăng nhập');
+            // Customer info already exists and user is logged in, execute callback
             callback();
         } else {
-            console.log('⚠️ Chưa có thông tin khách hàng, tạo thông tin guest tạm thời');
+            console.log('❌ Không có thông tin user đã đăng nhập, yêu cầu đăng nhập');
 
-            // Tạo thông tin guest tạm thời để cho phép thêm vào giỏ hàng
-            this.customerInfo = {
-                id: 'guest',
-                full_name: 'Khách hàng',
-                email: 'guest@restaurant.com',
-                phone: '0000000000',
-                isLoggedInUser: false
-            };
+            // Hiển thị thông báo yêu cầu đăng nhập
+            this.showLoginRequiredForAddToCart();
 
-            // Lưu thông tin guest
-            this.saveCustomerInfo(this.customerInfo);
-
-            console.log('✅ Đã tạo thông tin guest, cho phép thêm vào giỏ hàng');
-
-            // Execute callback
-            callback();
+            // Không thực hiện callback vì user chưa đăng nhập
+            return false;
         }
     }
 
