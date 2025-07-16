@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trình chỉnh sửa ERD - Tùy biến sơ đồ UML</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 400px;
+            background: white;
+            border-right: 2px solid #e1e8ed;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .controls {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .control-group h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #34495e;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        textarea {
+            height: 200px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .toolbar {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e1e8ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .diagram-container {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+            background: white;
+        }
+
+        #diagram-output {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 20px;
+            background: #fafbfc;
+        }
+
+        .preset-btn {
+            background: #ecf0f1;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+            padding: 8px 15px;
+            margin: 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .color-input {
+            width: 50px !important;
+            height: 35px;
+            padding: 2px;
+            border-radius: 5px;
+        }
+
+        .size-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .size-controls input {
+            width: 80px;
+        }
+
+        .export-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 300px;
+            }
+            
+            .main-content {
+                height: calc(100vh - 300px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="header">
+                <h1>🎨 ERD Editor</h1>
+                <p>Tùy biến sơ đồ UML của bạn</p>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <h3>📝 Mã nguồn ERD</h3>
+                    <div class="form-group">
+                        <label>Chỉnh sửa mã Mermaid:</label>
+                        <textarea id="mermaid-code" placeholder="Nhập mã Mermaid ERD...">erDiagram
+    loai_mon {
+        int id_loai PK "AUTO_INCREMENT"
+        varchar ten_loai "NOT NULL"
+        text mo_ta
+        timestamp created_at "DEFAULT CURRENT_TIMESTAMP"
+    }
+    
+    khach_hang {
+        int id PK "AUTO_INCREMENT"
+        varchar full_name "NOT NULL"
+        varchar email "NOT NULL UNIQUE"
+        varchar phone "NOT NULL"
+        varchar password "NOT NULL"
+        timestamp created_at "DEFAULT CURRENT_TIMESTAMP"
+    }
+    
+    mon_an {
+        int id_mon PK "AUTO_INCREMENT"
+        int id_loai FK "NOT NULL"
+        varchar ten_mon "NOT NULL"
+        text mo_ta
+        decimal gia "NOT NULL"
+        varchar hinh_anh "NOT NULL"
+        enum trang_thai "DEFAULT 'kha_dung'"
+        int so_luong "DEFAULT 0"
+        timestamp created_at "DEFAULT CURRENT_TIMESTAMP"
+        timestamp updated_at "ON UPDATE CURRENT_TIMESTAMP"
+    }
+    
+    hoa_don {
+        int id_hoa_don PK "AUTO_INCREMENT"
+        int id_khach FK "NOT NULL"
+        datetime ngay_tao "DEFAULT CURRENT_TIMESTAMP"
+        enum loai_don "NOT NULL"
+        enum trang_thai "DEFAULT 'cho_xac_nhan'"
+        decimal tong_tien "NOT NULL"
+    }
+    
+    chi_tiet_hoa_don {
+        int id_ct PK "AUTO_INCREMENT"
+        int id_hoa_don FK "NOT NULL"
+        int id_mon FK "NOT NULL"
+        int so_luong "NOT NULL"
+        decimal don_gia "NOT NULL"
+    }
+    
+    dat_ban {
+        int id_datban PK "AUTO_INCREMENT"
+        varchar ten_khach "NOT NULL"
+        varchar sdt "NOT NULL"
+        varchar email
+        date ngay "NOT NULL"
+        time gio "NOT NULL"
+        int so_luong_khach "NOT NULL"
+        text ghi_chu
+        enum trang_thai "DEFAULT 'cho_xac_nhan'"
+        timestamp created_at "DEFAULT CURRENT_TIMESTAMP"
+        timestamp updated_at "ON UPDATE CURRENT_TIMESTAMP"
+    }
+    
+    loai_mon ||--o{ mon_an : "1:N"
+    khach_hang ||--o{ hoa_don : "1:N"
+    hoa_don ||--o{ chi_tiet_hoa_don : "1:N"
+    mon_an ||--o{ chi_tiet_hoa_don : "1:N"</textarea>
+                    </div>
+                    <button class="btn" onclick="updateDiagram()">🔄 Cập nhật sơ đồ</button>
+                </div>
+
+                <div class="control-group">
+                    <h3>🎨 Tùy chỉnh màu sắc</h3>
+                    <div class="form-group">
+                        <label>Màu chính:</label>
+                        <input type="color" id="primary-color" class="color-input" value="#667eea" onchange="updateColors()">
+                    </div>
+                    <div class="form-group">
+                        <label>Màu phụ:</label>
+                        <input type="color" id="secondary-color" class="color-input" value="#764ba2" onchange="updateColors()">
+                    </div>
+                    <div class="form-group">
+                        <label>Màu viền:</label>
+                        <input type="color" id="border-color" class="color-input" value="#ff6b6b" onchange="updateColors()">
+                    </div>
+                    <div class="form-group">
+                        <label>Màu nền:</label>
+                        <input type="color" id="bg-color" class="color-input" value="#f8f9fa" onchange="updateColors()">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>📏 Kích thước</h3>
+                    <div class="size-controls">
+                        <div class="form-group">
+                            <label>Chiều rộng:</label>
+                            <input type="number" id="diagram-width" value="1200" min="800" max="3000" onchange="updateSize()">
+                        </div>
+                        <div class="form-group">
+                            <label>Chiều cao:</label>
+                            <input type="number" id="diagram-height" value="800" min="600" max="2000" onchange="updateSize()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>📤 Xuất file</h3>
+                    <div class="export-options">
+                        <button class="btn btn-success" onclick="downloadPNG()">📷 PNG</button>
+                        <button class="btn btn-success" onclick="downloadSVG()">🎨 SVG</button>
+                        <button class="btn btn-secondary" onclick="copyCode()">📋 Copy mã</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>🎯 Mẫu có sẵn</h3>
+                    <button class="preset-btn" onclick="loadPreset('restaurant')">🍽️ Nhà hàng</button>
+                    <button class="preset-btn" onclick="loadPreset('ecommerce')">🛒 E-commerce</button>
+                    <button class="preset-btn" onclick="loadPreset('library')">📚 Thư viện</button>
+                    <button class="preset-btn" onclick="loadPreset('school')">🏫 Trường học</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="toolbar">
+                <div>
+                    <span style="font-weight: bold; color: #2c3e50;">Xem trước sơ đồ ERD</span>
+                </div>
+                <div>
+                    <button class="btn" onclick="resetDiagram()">🔄 Reset</button>
+                    <button class="btn btn-secondary" onclick="fullscreen()">🔍 Toàn màn hình</button>
+                </div>
+            </div>
+            
+            <div class="diagram-container">
+                <div id="diagram-output">
+                    <div class="mermaid" id="mermaid-diagram"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentConfig = {
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#667eea',
+                secondaryColor: '#764ba2',
+                primaryBorderColor: '#ff6b6b',
+                primaryTextColor: '#2c3e50',
+                lineColor: '#34495e',
+                sectionBkgColor: '#f8f9fa',
+                altSectionBkgColor: '#ecf0f1'
+            }
+        };
+
+        // Khởi tạo Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            ...currentConfig
+        });
+
+        // Cập nhật sơ đồ
+        function updateDiagram() {
+            const code = document.getElementById('mermaid-code').value;
+            const element = document.getElementById('mermaid-diagram');
+            
+            try {
+                element.innerHTML = code;
+                mermaid.init(undefined, element);
+            } catch (error) {
+                element.innerHTML = `<div style="color: red; padding: 20px;">Lỗi: ${error.message}</div>`;
+            }
+        }
+
+        // Cập nhật màu sắc
+        function updateColors() {
+            const primaryColor = document.getElementById('primary-color').value;
+            const secondaryColor = document.getElementById('secondary-color').value;
+            const borderColor = document.getElementById('border-color').value;
+            const bgColor = document.getElementById('bg-color').value;
+
+            currentConfig.themeVariables = {
+                ...currentConfig.themeVariables,
+                primaryColor: primaryColor,
+                secondaryColor: secondaryColor,
+                primaryBorderColor: borderColor,
+                sectionBkgColor: bgColor
+            };
+
+            mermaid.initialize({
+                startOnLoad: false,
+                ...currentConfig
+            });
+
+            updateDiagram();
+        }
+
+        // Cập nhật kích thước
+        function updateSize() {
+            const width = document.getElementById('diagram-width').value;
+            const height = document.getElementById('diagram-height').value;
+            
+            const container = document.getElementById('diagram-output');
+            container.style.width = width + 'px';
+            container.style.height = height + 'px';
+        }
+
+        // Tải xuống PNG
+        function downloadPNG() {
+            const svg = document.querySelector('#mermaid-diagram svg');
+            if (!svg) {
+                alert('Vui lòng tạo sơ đồ trước!');
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+            const url = URL.createObjectURL(svgBlob);
+
+            img.onload = function() {
+                canvas.width = img.width * 2;
+                canvas.height = img.height * 2;
+                ctx.scale(2, 2);
+                ctx.drawImage(img, 0, 0);
+                
+                const link = document.createElement('a');
+                link.download = 'erd-custom.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                URL.revokeObjectURL(url);
+            };
+
+            img.src = url;
+        }
+
+        // Tải xuống SVG
+        function downloadSVG() {
+            const svg = document.querySelector('#mermaid-diagram svg');
+            if (!svg) {
+                alert('Vui lòng tạo sơ đồ trước!');
+                return;
+            }
+
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const blob = new Blob([svgData], {type: 'image/svg+xml'});
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.download = 'erd-custom.svg';
+            link.href = url;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+
+        // Copy mã
+        function copyCode() {
+            const code = document.getElementById('mermaid-code').value;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Đã copy mã vào clipboard!');
+            });
+        }
+
+        // Reset sơ đồ
+        function resetDiagram() {
+            location.reload();
+        }
+
+        // Toàn màn hình
+        function fullscreen() {
+            const container = document.getElementById('diagram-output');
+            if (container.requestFullscreen) {
+                container.requestFullscreen();
+            }
+        }
+
+        // Tải mẫu có sẵn
+        function loadPreset(type) {
+            const presets = {
+                restaurant: document.getElementById('mermaid-code').value, // Mẫu hiện tại
+                ecommerce: `erDiagram
+    CUSTOMER {
+        int customer_id PK
+        string name
+        string email
+        string phone
+    }
+    ORDER {
+        int order_id PK
+        int customer_id FK
+        date order_date
+        decimal total
+    }
+    PRODUCT {
+        int product_id PK
+        string name
+        decimal price
+        int stock
+    }
+    ORDER_ITEM {
+        int item_id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+    }
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--o{ ORDER_ITEM : contains
+    PRODUCT ||--o{ ORDER_ITEM : included`,
+                library: `erDiagram
+    MEMBER {
+        int member_id PK
+        string name
+        string email
+        date join_date
+    }
+    BOOK {
+        int book_id PK
+        string title
+        string author
+        string isbn
+    }
+    BORROW {
+        int borrow_id PK
+        int member_id FK
+        int book_id FK
+        date borrow_date
+        date return_date
+    }
+    MEMBER ||--o{ BORROW : borrows
+    BOOK ||--o{ BORROW : borrowed`,
+                school: `erDiagram
+    STUDENT {
+        int student_id PK
+        string name
+        string email
+        date birth_date
+    }
+    COURSE {
+        int course_id PK
+        string name
+        int credits
+        string instructor
+    }
+    ENROLLMENT {
+        int enrollment_id PK
+        int student_id FK
+        int course_id FK
+        decimal grade
+    }
+    STUDENT ||--o{ ENROLLMENT : enrolls
+    COURSE ||--o{ ENROLLMENT : has`
+            };
+
+            document.getElementById('mermaid-code').value = presets[type];
+            updateDiagram();
+        }
+
+        // Khởi tạo sơ đồ ban đầu
+        window.onload = function() {
+            updateDiagram();
+        };
+    </script>
+</body>
+</html>
