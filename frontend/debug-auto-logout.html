@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Auto Logout - Nhà Hàng Ẩm Thực Phương Nam</title>
+    <link rel="icon" href="img/logoPN.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .debug-box {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: #f9fafb;
+        }
+        .debug-active { border-color: #10b981; background: #f0fdf4; }
+        .debug-warning { border-color: #f59e0b; background: #fffbeb; }
+        .debug-error { border-color: #ef4444; background: #fef2f2; }
+        .countdown { font-family: 'Courier New', monospace; font-size: 2rem; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-red-600">
+            🐛 Debug Auto Logout System
+        </h1>
+
+        <!-- Login Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Đăng Nhập Test</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input type="email" id="email" value="test@example.com" placeholder="Email" 
+                       class="px-3 py-2 border rounded-md">
+                <input type="password" id="password" value="123456" placeholder="Password" 
+                       class="px-3 py-2 border rounded-md">
+                <button onclick="testLogin()" class="bg-blue-500 text-white px-4 py-2 rounded-md">
+                    Đăng Nhập
+                </button>
+            </div>
+        </div>
+
+        <!-- Debug Info -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Debug Information</h2>
+            
+            <div id="authDebug" class="debug-box">
+                <strong>Auth Status:</strong> <span id="authStatus">Checking...</span>
+            </div>
+            
+            <div id="timerDebug" class="debug-box">
+                <strong>Activity Timer:</strong> <span id="timerStatus">Not set</span>
+            </div>
+            
+            <div id="eventDebug" class="debug-box">
+                <strong>Event Listeners:</strong> <span id="eventStatus">Not attached</span>
+            </div>
+            
+            <div id="countdownDebug" class="debug-box text-center">
+                <strong>Time Until Auto Logout:</strong><br>
+                <span id="countdown" class="countdown text-red-600">--:--</span>
+            </div>
+        </div>
+
+        <!-- Manual Test Controls -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Manual Test Controls</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <button onclick="manualStartTracking()" class="bg-green-500 text-white px-3 py-2 rounded text-sm">
+                    Start Tracking
+                </button>
+                <button onclick="manualResetTimer()" class="bg-yellow-500 text-white px-3 py-2 rounded text-sm">
+                    Reset Timer
+                </button>
+                <button onclick="manualTriggerWarning()" class="bg-orange-500 text-white px-3 py-2 rounded text-sm">
+                    Trigger Warning
+                </button>
+                <button onclick="manualTriggerLogout()" class="bg-red-500 text-white px-3 py-2 rounded text-sm">
+                    Trigger Logout
+                </button>
+                <button onclick="testShortTimeout()" class="bg-purple-500 text-white px-3 py-2 rounded text-sm">
+                    Test 10s Timeout
+                </button>
+                <button onclick="checkAuthState()" class="bg-blue-500 text-white px-3 py-2 rounded text-sm">
+                    Check Auth State
+                </button>
+                <button onclick="simulateActivity()" class="bg-indigo-500 text-white px-3 py-2 rounded text-sm">
+                    Simulate Activity
+                </button>
+                <button onclick="clearAllData()" class="bg-gray-500 text-white px-3 py-2 rounded text-sm">
+                    Clear All Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Activity Log</h2>
+            <div id="activityLog" class="bg-gray-900 text-green-400 p-4 rounded-md h-64 overflow-y-auto font-mono text-sm">
+                <div>🚀 Debug system initialized...</div>
+            </div>
+            <button onclick="clearLog()" class="mt-2 bg-gray-500 text-white px-3 py-1 rounded text-sm">
+                Clear Log
+            </button>
+        </div>
+    </div>
+
+    <!-- Include Auth System -->
+    <script src="js/auth.js"></script>
+
+    <script>
+        let debugInterval;
+        let lastActivity = Date.now();
+        let activityCount = 0;
+
+        // Initialize debug system
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🔧 Debug system starting...');
+            
+            // Check if auth is already initialized
+            checkAuthState();
+            
+            // Start debug monitoring
+            startDebugMonitoring();
+            
+            // Add our own activity listeners for debugging
+            addDebugActivityListeners();
+            
+            log('✅ Debug system ready');
+        });
+
+        function log(message) {
+            const logEl = document.getElementById('activityLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        }
+
+        function addDebugActivityListeners() {
+            const events = ['mousedown', 'keydown', 'keypress', 'touchstart', 'click', 'mousemove', 'scroll'];
+            
+            events.forEach(event => {
+                document.addEventListener(event, (e) => {
+                    activityCount++;
+                    lastActivity = Date.now();
+                    log(`👆 Activity detected: ${event} (count: ${activityCount})`);
+                }, true);
+            });
+            
+            log('👂 Debug activity listeners attached');
+        }
+
+        function startDebugMonitoring() {
+            if (debugInterval) clearInterval(debugInterval);
+            
+            debugInterval = setInterval(() => {
+                updateDebugInfo();
+            }, 1000);
+        }
+
+        function updateDebugInfo() {
+            // Auth status
+            const authStatus = document.getElementById('authStatus');
+            const authDebug = document.getElementById('authDebug');
+            
+            if (typeof auth !== 'undefined' && auth.isAuthenticated) {
+                authStatus.textContent = `Logged in as ${auth.user?.email || 'Unknown'}`;
+                authDebug.className = 'debug-box debug-active';
+            } else {
+                authStatus.textContent = 'Not logged in';
+                authDebug.className = 'debug-box debug-error';
+            }
+
+            // Timer status
+            const timerStatus = document.getElementById('timerStatus');
+            const timerDebug = document.getElementById('timerDebug');
+            
+            if (typeof auth !== 'undefined' && auth.activityTimer) {
+                timerStatus.textContent = 'Active';
+                timerDebug.className = 'debug-box debug-active';
+            } else {
+                timerStatus.textContent = 'Not set';
+                timerDebug.className = 'debug-box debug-error';
+            }
+
+            // Event listeners status
+            const eventStatus = document.getElementById('eventStatus');
+            const eventDebug = document.getElementById('eventDebug');
+            
+            // This is a rough check - in real implementation you'd track this properly
+            eventStatus.textContent = `Activity count: ${activityCount}`;
+            eventDebug.className = 'debug-box debug-active';
+
+            // Countdown
+            updateCountdown();
+        }
+
+        function updateCountdown() {
+            const countdownEl = document.getElementById('countdown');
+            const countdownDebug = document.getElementById('countdownDebug');
+            
+            if (typeof auth !== 'undefined' && auth.isAuthenticated && auth.activityTimer) {
+                const now = Date.now();
+                const timeSinceActivity = now - lastActivity;
+                const timeLeft = (typeof auth.INACTIVITY_TIMEOUT !== 'undefined' ? auth.INACTIVITY_TIMEOUT : 120000) - timeSinceActivity;
+                
+                if (timeLeft > 0) {
+                    const minutes = Math.floor(timeLeft / 60000);
+                    const seconds = Math.floor((timeLeft % 60000) / 1000);
+                    countdownEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    if (timeLeft <= 30000) {
+                        countdownDebug.className = 'debug-box debug-warning text-center';
+                    } else {
+                        countdownDebug.className = 'debug-box debug-active text-center';
+                    }
+                } else {
+                    countdownEl.textContent = '00:00';
+                    countdownDebug.className = 'debug-box debug-error text-center';
+                }
+            } else {
+                countdownEl.textContent = '--:--';
+                countdownDebug.className = 'debug-box text-center';
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            log(`🔐 Attempting login with ${email}...`);
+            
+            try {
+                if (typeof auth === 'undefined') {
+                    log('❌ Auth object not found!');
+                    return;
+                }
+                
+                const result = await auth.login(email, password);
+                log('✅ Login successful!');
+                log(`🔑 Token expires at: ${new Date(result.tokenExpiry)}`);
+                log(`⏰ Inactivity timeout: ${auth.INACTIVITY_TIMEOUT / 1000} seconds`);
+                
+                // Reset activity tracking
+                lastActivity = Date.now();
+                activityCount = 0;
+                
+            } catch (error) {
+                log(`❌ Login failed: ${error.message}`);
+            }
+        }
+
+        function manualStartTracking() {
+            if (typeof auth !== 'undefined') {
+                auth.startActivityTracking();
+                log('🔄 Manually started activity tracking');
+            } else {
+                log('❌ Auth object not available');
+            }
+        }
+
+        function manualResetTimer() {
+            if (typeof auth !== 'undefined') {
+                auth.resetActivityTimer();
+                lastActivity = Date.now();
+                log('🔄 Manually reset activity timer');
+            } else {
+                log('❌ Auth object not available');
+            }
+        }
+
+        function manualTriggerWarning() {
+            if (typeof auth !== 'undefined') {
+                auth.showSessionWarning();
+                log('⚠️ Manually triggered session warning');
+            } else {
+                log('❌ Auth object not available');
+            }
+        }
+
+        function manualTriggerLogout() {
+            if (typeof auth !== 'undefined') {
+                auth.autoLogout();
+                log('🚪 Manually triggered auto logout');
+            } else {
+                log('❌ Auth object not available');
+            }
+        }
+
+        function testShortTimeout() {
+            if (typeof auth !== 'undefined' && auth.isAuthenticated) {
+                log('⏰ Setting 10 second timeout for testing...');
+                
+                // Temporarily override timeout
+                const originalTimeout = auth.INACTIVITY_TIMEOUT;
+                auth.INACTIVITY_TIMEOUT = 10000; // 10 seconds
+                
+                // Restart tracking with new timeout
+                auth.stopActivityTracking();
+                auth.startActivityTracking();
+                
+                log('🚫 Do NOT interact with the page for 10 seconds!');
+                
+                // Restore original timeout after test
+                setTimeout(() => {
+                    auth.INACTIVITY_TIMEOUT = originalTimeout;
+                    log('🔄 Timeout restored to original value');
+                }, 15000);
+            } else {
+                log('❌ Please login first');
+            }
+        }
+
+        function checkAuthState() {
+            if (typeof auth !== 'undefined') {
+                log(`🔍 Auth object exists: ${typeof auth}`);
+                log(`🔍 Is authenticated: ${auth.isAuthenticated}`);
+                log(`🔍 User: ${auth.user ? auth.user.email : 'null'}`);
+                log(`🔍 Token: ${auth.token ? 'exists' : 'null'}`);
+                log(`🔍 Activity timer: ${auth.activityTimer ? 'set' : 'not set'}`);
+                log(`🔍 Inactivity timeout: ${auth.INACTIVITY_TIMEOUT / 1000} seconds`);
+            } else {
+                log('❌ Auth object not found!');
+            }
+        }
+
+        function simulateActivity() {
+            lastActivity = Date.now();
+            activityCount++;
+            
+            // Trigger auth reset if available
+            if (typeof auth !== 'undefined') {
+                auth.resetActivityTimer();
+            }
+            
+            log(`🖱️ Simulated activity (count: ${activityCount})`);
+        }
+
+        function clearAllData() {
+            if (typeof auth !== 'undefined') {
+                auth.clearAuthData();
+                log('🗑️ All auth data cleared');
+            }
+            lastActivity = Date.now();
+            activityCount = 0;
+        }
+
+        function clearLog() {
+            document.getElementById('activityLog').innerHTML = '<div>🚀 Log cleared...</div>';
+        }
+    </script>
+</body>
+</html>

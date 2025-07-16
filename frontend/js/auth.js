@@ -11,11 +11,11 @@ const auth = {
     warningTimer: null,
     refreshTimer: null,
     sessionCheckTimer: null,
-    INACTIVITY_TIMEOUT: 2 * 60 * 1000, // 2 phút không hoạt động
+    INACTIVITY_TIMEOUT: 2 * 60 * 1000, // 2 phút không hoạt động - TỰ ĐỘNG ĐĂNG XUẤT
     WARNING_TIME: 30 * 1000, // 30 giây trước khi đăng xuất
     TOKEN_REFRESH_INTERVAL: 90 * 1000, // 90 giây (refresh trước khi token hết hạn)
-    TOKEN_EXPIRY: 2 * 60 * 1000, // 2 phút
-    SESSION_CHECK_INTERVAL: 10 * 1000, // Kiểm tra session mỗi 10 giây
+    TOKEN_EXPIRY: 24 * 60 * 60 * 1000, // 24 giờ (token backend dài hạn)
+    SESSION_CHECK_INTERVAL: 5 * 1000, // Kiểm tra session mỗi 5 giây
 
     // Initialize auth state from localStorage
     init() {
@@ -288,17 +288,34 @@ const auth = {
 
     // Bắt đầu theo dõi hoạt động người dùng (chỉ tương tác thực sự)
     startActivityTracking() {
+        console.log('🔄 Starting activity tracking...');
+
+        if (!this.isAuthenticated) {
+            console.log('⚠️ Cannot start activity tracking - user not authenticated');
+            return;
+        }
+
+        // Stop existing tracking first
+        this.stopActivityTracking();
+
+        // Reset timer initially
         this.resetActivityTimer();
 
         // Chỉ lắng nghe các sự kiện tương tác thực sự của người dùng
         // Loại bỏ scroll và mousemove để tránh false positive
         const realInteractionEvents = ['mousedown', 'keydown', 'keypress', 'touchstart', 'click'];
 
+        console.log(`👂 Attaching listeners for events: ${realInteractionEvents.join(', ')}`);
+
         realInteractionEvents.forEach(event => {
-            document.addEventListener(event, this.resetActivityTimer.bind(this), true);
+            const handler = () => {
+                console.log(`👆 Activity detected: ${event}`);
+                this.resetActivityTimer();
+            };
+            document.addEventListener(event, handler, true);
         });
 
-        console.log('🔄 Activity tracking started - monitoring real user interactions only');
+        console.log('✅ Activity tracking started - monitoring real user interactions only');
     },
 
     // Dừng theo dõi hoạt động
@@ -345,44 +362,59 @@ const auth = {
         const now = Date.now();
         const timeUntilExpiry = this.tokenExpiry - now;
 
-        // Nếu token đã hết hạn
+        // Nếu token đã hết hạn (24h) - chỉ refresh token, không logout
         if (timeUntilExpiry <= 0) {
-            console.log('⏰ Token expired, auto logout');
-            this.handleSessionExpired();
+            console.log('⏰ Token expired, attempting refresh...');
+            this.refreshAccessToken();
             return;
         }
 
-        // Nếu token sắp hết hạn (còn 30 giây) và chưa hiển thị warning
-        if (timeUntilExpiry <= this.WARNING_TIME && !this.warningTimer) {
-            console.log('⚠️ Token expiring soon, showing warning');
-            this.showSessionWarning();
+        // Nếu token sắp hết hạn (còn 1 giờ) - refresh token proactively
+        if (timeUntilExpiry <= 60 * 60 * 1000) { // 1 hour
+            console.log('🔄 Token expiring soon, refreshing...');
+            this.refreshAccessToken();
         }
     },
 
     // Reset timer hoạt động
     resetActivityTimer() {
-        if (!this.isAuthenticated) return;
+        if (!this.isAuthenticated) {
+            console.log('⚠️ Cannot reset activity timer - user not authenticated');
+            return;
+        }
+
+        console.log('🔄 Resetting activity timer...');
 
         // Xóa timer cũ
         if (this.activityTimer) {
             clearTimeout(this.activityTimer);
+            console.log('🗑️ Cleared old activity timer');
         }
         if (this.warningTimer) {
             clearTimeout(this.warningTimer);
+            console.log('🗑️ Cleared old warning timer');
         }
 
         // Ẩn cảnh báo nếu đang hiển thị
         this.hideSessionWarning();
 
+        const warningTime = this.INACTIVITY_TIMEOUT - this.WARNING_TIME;
+        console.log(`⏰ Setting warning timer for ${warningTime / 1000} seconds`);
+        console.log(`⏰ Setting logout timer for ${this.INACTIVITY_TIMEOUT / 1000} seconds`);
+
         // Đặt timer cảnh báo (1.5 phút)
         this.warningTimer = setTimeout(() => {
+            console.log('⚠️ Showing session warning due to inactivity');
             this.showSessionWarning();
-        }, this.INACTIVITY_TIMEOUT - this.WARNING_TIME);
+        }, warningTime);
 
         // Đặt timer đăng xuất (2 phút)
         this.activityTimer = setTimeout(() => {
+            console.log('🚪 Auto logout triggered due to inactivity');
             this.autoLogout();
         }, this.INACTIVITY_TIMEOUT);
+
+        console.log('✅ Activity timers set successfully');
     },
 
     // Xử lý khi session hết hạn
@@ -573,6 +605,16 @@ const auth = {
     // Tự động đăng xuất
     autoLogout() {
         console.log('🚪 Auto logout due to inactivity');
+
+        // Hiển thị thông báo auto logout
+        this.showAutoLogoutNotification();
+
+        // Hiển thị dialog session expired
+        setTimeout(() => {
+            this.showSessionExpiredDialog();
+        }, 1000);
+
+        // Thực hiện logout
         this.handleSessionExpired();
     },
 

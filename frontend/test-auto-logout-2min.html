@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Auto Logout 2 Minutes - Nhà Hàng Ẩm Thực Phương Nam</title>
+    <link rel="icon" href="img/logoPN.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary-color: #e53e3e; }
+        .bg-primary { background-color: var(--primary-color); }
+        .text-primary { color: var(--primary-color); }
+        .countdown { font-family: 'Courier New', monospace; font-size: 2rem; font-weight: bold; }
+        .status-box { border: 2px solid #ddd; border-radius: 8px; padding: 1rem; margin: 0.5rem 0; }
+        .status-success { border-color: #10b981; background-color: #f0fdf4; }
+        .status-warning { border-color: #f59e0b; background-color: #fffbeb; }
+        .status-error { border-color: #ef4444; background-color: #fef2f2; }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-primary">
+            <i class="fas fa-clock mr-2"></i>
+            Test Auto Logout 2 Minutes
+        </h1>
+
+        <!-- Login Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Đăng Nhập Test
+            </h2>
+            
+            <div id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email:</label>
+                    <input type="email" id="email" value="test@example.com" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password:</label>
+                    <input type="password" id="password" value="123456" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button onclick="testLogin()" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-red-700">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Đăng Nhập Test
+                </button>
+            </div>
+
+            <div id="loginStatus" class="mt-4"></div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-info-circle mr-2"></i>
+                Trạng Thái Hệ Thống
+            </h2>
+            
+            <div id="authStatus" class="status-box">
+                <strong>Trạng thái đăng nhập:</strong> <span id="authStatusText">Chưa đăng nhập</span>
+            </div>
+            
+            <div id="tokenStatus" class="status-box">
+                <strong>Token:</strong> <span id="tokenStatusText">Không có</span>
+            </div>
+            
+            <div id="expiryStatus" class="status-box">
+                <strong>Token hết hạn:</strong> <span id="expiryStatusText">N/A</span>
+            </div>
+        </div>
+
+        <!-- Countdown Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-stopwatch mr-2"></i>
+                Đếm Ngược Auto Logout
+            </h2>
+            
+            <div class="text-center">
+                <div id="countdown" class="countdown text-primary">--:--</div>
+                <p class="text-gray-600 mt-2">Thời gian còn lại trước khi tự động đăng xuất</p>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <button onclick="resetActivity()" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 mr-2">
+                    <i class="fas fa-refresh mr-2"></i>
+                    Reset Activity
+                </button>
+                <button onclick="forceLogout()" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Force Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Test Actions -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-flask mr-2"></i>
+                Test Actions
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="testProtectedAPI()" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                    <i class="fas fa-shield-alt mr-2"></i>
+                    Test Protected API
+                </button>
+                <button onclick="testTokenRefresh()" class="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600">
+                    <i class="fas fa-sync mr-2"></i>
+                    Test Token Refresh
+                </button>
+                <button onclick="clearAllData()" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
+                    <i class="fas fa-trash mr-2"></i>
+                    Clear All Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Logs Section -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-terminal mr-2"></i>
+                Logs
+            </h2>
+            
+            <div id="logs" class="bg-gray-900 text-green-400 p-4 rounded-md h-64 overflow-y-auto font-mono text-sm">
+                <div>🚀 Auto Logout Test initialized...</div>
+            </div>
+            
+            <div class="mt-2">
+                <button onclick="clearLogs()" class="bg-gray-500 text-white px-3 py-1 rounded text-sm">
+                    Clear Logs
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Auth System -->
+    <script src="js/auth.js"></script>
+
+    <script>
+        let countdownInterval;
+        let statusInterval;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('📱 Page loaded, initializing test...');
+            updateStatus();
+            startStatusMonitoring();
+        });
+
+        // Log function
+        function log(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logs.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logs.scrollTop = logs.scrollHeight;
+            console.log(message);
+        }
+
+        // Test login
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            log(`🔐 Attempting login with ${email}...`);
+            
+            try {
+                const result = await auth.login(email, password);
+                log('✅ Login successful!');
+                log(`🔑 Token expires at: ${new Date(result.tokenExpiry)}`);
+                updateStatus();
+                startCountdown();
+            } catch (error) {
+                log(`❌ Login failed: ${error.message}`);
+                updateStatus();
+            }
+        }
+
+        // Update status display
+        function updateStatus() {
+            const authStatusEl = document.getElementById('authStatus');
+            const authStatusText = document.getElementById('authStatusText');
+            const tokenStatusText = document.getElementById('tokenStatusText');
+            const expiryStatusText = document.getElementById('expiryStatusText');
+
+            if (auth.isAuthenticated) {
+                authStatusEl.className = 'status-box status-success';
+                authStatusText.textContent = `Đã đăng nhập (${auth.user?.email || 'Unknown'})`;
+                tokenStatusText.textContent = auth.token ? 'Có token' : 'Không có token';
+                
+                if (auth.tokenExpiry) {
+                    const expiryDate = new Date(auth.tokenExpiry);
+                    expiryStatusText.textContent = expiryDate.toLocaleString();
+                } else {
+                    expiryStatusText.textContent = 'Không xác định';
+                }
+            } else {
+                authStatusEl.className = 'status-box status-error';
+                authStatusText.textContent = 'Chưa đăng nhập';
+                tokenStatusText.textContent = 'Không có';
+                expiryStatusText.textContent = 'N/A';
+            }
+        }
+
+        // Start countdown
+        function startCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            if (!auth.tokenExpiry) {
+                document.getElementById('countdown').textContent = '--:--';
+                return;
+            }
+
+            countdownInterval = setInterval(() => {
+                const now = Date.now();
+                const timeLeft = auth.tokenExpiry - now;
+
+                if (timeLeft <= 0) {
+                    document.getElementById('countdown').textContent = '00:00';
+                    log('⏰ Token expired!');
+                    clearInterval(countdownInterval);
+                    updateStatus();
+                    return;
+                }
+
+                const minutes = Math.floor(timeLeft / 60000);
+                const seconds = Math.floor((timeLeft % 60000) / 1000);
+                document.getElementById('countdown').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        // Start status monitoring
+        function startStatusMonitoring() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+
+            statusInterval = setInterval(() => {
+                updateStatus();
+                
+                // Check if user was logged out
+                if (!auth.isAuthenticated && countdownInterval) {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdown').textContent = '--:--';
+                    log('🚪 User was automatically logged out!');
+                }
+            }, 1000);
+        }
+
+        // Reset activity
+        function resetActivity() {
+            if (auth.isAuthenticated) {
+                auth.resetActivityTimer();
+                log('🔄 Activity timer reset');
+            } else {
+                log('⚠️ Not logged in, cannot reset activity');
+            }
+        }
+
+        // Force logout
+        function forceLogout() {
+            if (auth.isAuthenticated) {
+                auth.logout();
+                log('🚪 Forced logout');
+                updateStatus();
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdown').textContent = '--:--';
+                }
+            } else {
+                log('⚠️ Already logged out');
+            }
+        }
+
+        // Test protected API
+        async function testProtectedAPI() {
+            if (!auth.isAuthenticated) {
+                log('❌ Not logged in, cannot test protected API');
+                return;
+            }
+
+            try {
+                log('🔒 Testing protected API...');
+                const response = await auth.apiCall('http://localhost:3000/api/khach_hang/profile');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Protected API call successful');
+                } else {
+                    log(`❌ Protected API call failed: ${data.error}`);
+                }
+            } catch (error) {
+                log(`❌ Protected API error: ${error.message}`);
+            }
+        }
+
+        // Test token refresh
+        async function testTokenRefresh() {
+            if (!auth.isAuthenticated) {
+                log('❌ Not logged in, cannot test token refresh');
+                return;
+            }
+
+            try {
+                log('🔄 Testing token refresh...');
+                const result = await auth.refreshAccessToken();
+                
+                if (result) {
+                    log('✅ Token refresh successful');
+                    updateStatus();
+                    startCountdown();
+                } else {
+                    log('❌ Token refresh failed');
+                }
+            } catch (error) {
+                log(`❌ Token refresh error: ${error.message}`);
+            }
+        }
+
+        // Clear all data
+        function clearAllData() {
+            auth.clearAuthData();
+            log('🗑️ All auth data cleared');
+            updateStatus();
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                document.getElementById('countdown').textContent = '--:--';
+            }
+        }
+
+        // Clear logs
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '<div>🚀 Logs cleared...</div>';
+        }
+
+        // Listen for auth changes
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'user' || e.key === 'token') {
+                log('📡 Auth state changed (storage event)');
+                updateStatus();
+            }
+        });
+    </script>
+</body>
+</html>

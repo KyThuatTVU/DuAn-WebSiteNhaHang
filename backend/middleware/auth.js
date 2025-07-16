@@ -165,7 +165,7 @@ const authEndpoints = {
 
             await connection.end();
 
-            // Create JWT token
+            // Create JWT token with long expiry (frontend handles inactivity logout)
             const token = jwt.sign(
                 {
                     id: newUser[0].id,
@@ -247,7 +247,7 @@ const authEndpoints = {
                 });
             }
 
-            // Create JWT token with short expiry for auto-logout feature
+            // Create JWT token with long expiry (frontend handles inactivity logout)
             const token = jwt.sign(
                 {
                     id: user.id,
@@ -255,7 +255,7 @@ const authEndpoints = {
                     iat: Math.floor(Date.now() / 1000)
                 },
                 JWT_SECRET,
-                { expiresIn: '2m' } // 2 minutes for auto-logout
+                { expiresIn: '24h' } // 24 hours (frontend handles 2min inactivity logout)
             );
 
             // Create refresh token
@@ -280,8 +280,8 @@ const authEndpoints = {
                 khach_hang: userWithoutPassword,
                 token,
                 refreshToken,
-                expiresIn: '2m', // 2 minutes
-                tokenExpiry: Date.now() + (2 * 60 * 1000) // Timestamp when token expires
+                expiresIn: '24h', // 24 hours
+                tokenExpiry: Date.now() + (24 * 60 * 60 * 1000) // Timestamp when token expires
             });
 
         } catch (error) {
@@ -331,7 +331,7 @@ const authEndpoints = {
                 });
             }
 
-            // Create new access token with short expiry
+            // Create new access token with long expiry
             const newToken = jwt.sign(
                 {
                     id: decoded.id,
@@ -339,14 +339,14 @@ const authEndpoints = {
                     iat: Math.floor(Date.now() / 1000)
                 },
                 JWT_SECRET,
-                { expiresIn: '2m' } // 2 minutes
+                { expiresIn: '24h' } // 24 hours
             );
 
             res.json({
                 success: true,
                 token: newToken,
-                expiresIn: '2m',
-                tokenExpiry: Date.now() + (2 * 60 * 1000)
+                expiresIn: '24h',
+                tokenExpiry: Date.now() + (24 * 60 * 60 * 1000)
             });
 
         } catch (error) {
