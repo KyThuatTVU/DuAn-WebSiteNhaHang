@@ -68,60 +68,9 @@ const initializeTables = async () => {
     await connection.execute(createTableQuery);
     console.log('✅ Table dat_ban initialized successfully');
 
-    // Create hoa_don table if not exists (thêm các cột cần thiết cho frontend)
-    const createHoaDonQuery = `
-      CREATE TABLE IF NOT EXISTS hoa_don (
-        id_hoa_don INT AUTO_INCREMENT PRIMARY KEY,
-        id_khach INT NOT NULL,
-        ngay_tao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        loai_don ENUM('tai_cho','giao_hang') NOT NULL,
-        trang_thai ENUM('cho_xac_nhan','dang_phuc_vu','hoan_thanh','da_huy')
-          NOT NULL DEFAULT 'cho_xac_nhan',
-        tong_tien DECIMAL(12,2) NOT NULL,
-        dia_chi_giao_hang TEXT,
-        ghi_chu TEXT,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-          ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_id_khach (id_khach),
-        INDEX idx_ngay_tao (ngay_tao),
-        INDEX idx_trang_thai (trang_thai),
-        INDEX idx_loai_don (loai_don),
-        FOREIGN KEY (id_khach) REFERENCES khach_hang(id)
-          ON UPDATE CASCADE ON DELETE RESTRICT
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `;
-
-    await connection.execute(createHoaDonQuery);
-    console.log('✅ Table hoa_don initialized successfully');
-
-    // Drop and recreate chi_tiet_hoa_don table to ensure correct schema
-    try {
-      await connection.execute('DROP TABLE IF EXISTS chi_tiet_hoa_don');
-      console.log('🗑️ Dropped existing chi_tiet_hoa_don table');
-    } catch (error) {
-      console.log('ℹ️ No existing chi_tiet_hoa_don table to drop');
-    }
-
-    // Create chi_tiet_hoa_don table with your schema (đồng bộ với frontend/backend)
-    const createChiTietQuery = `
-      CREATE TABLE IF NOT EXISTS chi_tiet_hoa_don (
-        id_ct      INT AUTO_INCREMENT PRIMARY KEY,
-        id_hoa_don INT NOT NULL,
-        id_mon     INT NOT NULL,
-        so_luong   INT NOT NULL,
-        don_gia    DECIMAL(10,2) NOT NULL,
-        thanh_tien DECIMAL(12,2) NOT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (id_hoa_don) REFERENCES hoa_don(id_hoa_don)
-          ON UPDATE CASCADE ON DELETE CASCADE,
-        FOREIGN KEY (id_mon) REFERENCES mon_an(id)
-          ON UPDATE CASCADE ON DELETE RESTRICT
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `;
-
-    await connection.execute(createChiTietQuery);
-    console.log('✅ Table chi_tiet_hoa_don created successfully with all required columns');
+    // Bảng hóa đơn và chi tiết hóa đơn đã được loại bỏ
+    // Sử dụng dữ liệu ảo trong frontend thay thế
+    console.log('ℹ️ Skipping hoa_don and chi_tiet_hoa_don tables - using mock data in frontend');
 
     // Create khach_hang table if not exists
     const createKhachHangQuery = `
@@ -185,25 +134,10 @@ const initializeTables = async () => {
     await connection.execute(createMonAnQuery);
     console.log('✅ Table mon_an initialized successfully');
 
-    // Add foreign key constraint to hoa_don table
-    const addForeignKeyQuery = `
-      ALTER TABLE hoa_don
-      ADD CONSTRAINT fk_hoa_don_khach_hang
-      FOREIGN KEY (id_khach) REFERENCES khach_hang(id)
-      ON DELETE CASCADE
-    `;
-
-    try {
-      await connection.execute(addForeignKeyQuery);
-      console.log('✅ Foreign key constraint added to hoa_don table');
-    } catch (error) {
-      if (!error.message.includes('Duplicate key name')) {
-        console.log('ℹ️ Foreign key constraint already exists or skipped');
-      }
-    }
+    // Foreign key constraints for hoa_don table removed - using mock data
 
     // Insert sample data if tables are empty
-    await this.insertSampleData(connection);
+    await insertSampleData(connection);
 
     connection.release();
     return true;
