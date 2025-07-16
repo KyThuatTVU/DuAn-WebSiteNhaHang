@@ -843,12 +843,9 @@
             console.log('🛒 cart:', localStorage.getItem('cart'));
             console.log('🛒 userCart:', localStorage.getItem('userCart'));
 
-            // Reload PaymentManager
-            if (window.paymentManager) {
-                window.paymentManager.cartData = window.paymentManager.getCartData();
-                window.paymentManager.displayCartSummary();
-                window.paymentManager.calculateTotal();
-            }
+            // Reload cart data
+            loadCartItems();
+            updateTotals();
 
             // Reload cart items
             loadCartItems();

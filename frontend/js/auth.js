@@ -97,8 +97,8 @@ const auth = {
         // Lưu cả nhiều format để tương thích với tất cả components
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('userData', JSON.stringify(userData));
-        localStorage.setItem('loggedInUser', JSON.stringify(userData)); // Cho payment.js
-        localStorage.setItem('customerData', JSON.stringify(userData)); // Cho payment.js
+        localStorage.setItem('loggedInUser', JSON.stringify(userData)); // Cho thanh toán
+        localStorage.setItem('customerData', JSON.stringify(userData)); // Cho thanh toán
         localStorage.setItem('authTimestamp', timestamp);
 
         // Lưu token và thông tin hết hạn
