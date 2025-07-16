@@ -424,7 +424,7 @@ const auth = {
         this.logout();
     },
 
-    // Hiển thị dialog thông báo session hết hạn (giống như ảnh)
+    // Hiển thị dialog thông báo session hết hạn (PERSISTENT - không tự biến mất)
     showSessionExpiredDialog() {
         // Xóa modal cũ nếu có
         const existingModal = document.getElementById('sessionExpiredModal');
@@ -432,57 +432,141 @@ const auth = {
             existingModal.remove();
         }
 
-        // Tạo modal đơn giản giống như ảnh
+        console.log('🚨 Showing PERSISTENT session expired dialog - user MUST acknowledge');
+
+        // Tạo modal PERSISTENT với nút X
         const modal = document.createElement('div');
         modal.id = 'sessionExpiredModal';
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
         modal.style.fontFamily = 'Arial, sans-serif';
         modal.innerHTML = `
-            <div class="bg-white rounded-lg shadow-lg" style="width: 400px; max-width: 90vw;">
-                <!-- Header với icon cảnh báo -->
-                <div class="flex items-center p-4 bg-blue-50 rounded-t-lg border-b">
-                    <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
-                        <span class="text-white font-bold text-lg">!</span>
+            <div class="bg-white rounded-lg shadow-2xl border-2 border-red-500" style="width: 450px; max-width: 95vw;">
+                <!-- Header với icon lỗi và nút X -->
+                <div class="flex items-center justify-between p-4 bg-red-50 rounded-t-lg border-b-2 border-red-200">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center mr-3 animate-pulse">
+                            <span class="text-white font-bold text-xl">⚠</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-red-700">Phiên Làm Việc Đã Hết Hạn</h3>
+                            <p class="text-sm text-red-600">Yêu cầu đăng nhập lại</p>
+                        </div>
                     </div>
-                    <span class="text-gray-800 font-medium">Phiên làm việc đã hết hạn, vui lòng đăng nhập lại</span>
+                    <button id="closeExpiredDialogX" class="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-lg transition-colors">
+                        ×
+                    </button>
                 </div>
 
-                <!-- Nút đóng -->
-                <div class="p-4 text-right">
-                    <button id="closeSessionModal" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-medium">
-                        Đóng
-                    </button>
+                <!-- Nội dung -->
+                <div class="p-6">
+                    <div class="mb-4">
+                        <div class="flex items-center mb-3">
+                            <span class="text-2xl mr-2">🔒</span>
+                            <span class="font-semibold text-gray-800">Lý do bảo mật</span>
+                        </div>
+                        <p class="text-gray-600 mb-4 leading-relaxed">
+                            Phiên làm việc của bạn đã hết hạn do không có hoạt động trong <strong>2 phút</strong>.
+                            Điều này giúp bảo vệ tài khoản của bạn khỏi truy cập trái phép.
+                        </p>
+                    </div>
+
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
+                        <div class="flex items-center">
+                            <span class="text-yellow-600 mr-2">💡</span>
+                            <span class="text-sm text-yellow-700 font-medium">
+                                Vui lòng đăng nhập lại để tiếp tục sử dụng dịch vụ
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nút hành động -->
+                <div class="p-4 bg-gray-50 rounded-b-lg border-t">
+                    <div class="flex space-x-3">
+                        <button id="reloadPageBtn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                            <span class="mr-2">🔄</span>
+                            Tải Lại Trang
+                        </button>
+                        <button id="closeSessionModal" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                            <span class="mr-2">✓</span>
+                            Đã Hiểu
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
 
-        // Xử lý click nút đóng
-        document.getElementById('closeSessionModal').addEventListener('click', () => {
+        // Nút X để đóng
+        document.getElementById('closeExpiredDialogX')?.addEventListener('click', () => {
+            console.log('❌ User clicked X to close session expired dialog');
             modal.remove();
             this.redirectToLogin();
         });
 
-        // Cho phép đóng bằng click outside (giống như ảnh)
+        // Nút "Đã Hiểu"
+        document.getElementById('closeSessionModal')?.addEventListener('click', () => {
+            console.log('✓ User acknowledged session expiry');
+            modal.remove();
+            this.redirectToLogin();
+        });
+
+        // Nút "Tải Lại Trang"
+        document.getElementById('reloadPageBtn')?.addEventListener('click', () => {
+            console.log('🔄 User chose to reload page');
+            modal.remove();
+            window.location.reload();
+        });
+
+        // KHÔNG cho phép đóng bằng cách click outside
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                modal.remove();
-                this.redirectToLogin();
+                // Hiệu ứng shake để báo hiệu không thể đóng
+                const dialogContent = modal.querySelector('div');
+                dialogContent.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    dialogContent.style.animation = '';
+                }, 500);
+                console.log('🚫 User tried to close by clicking outside - blocked');
             }
         });
 
-        // Cho phép đóng bằng ESC
-        const handleEsc = (e) => {
+        // KHÔNG cho phép đóng bằng ESC
+        const handleEscape = (e) => {
             if (e.key === 'Escape') {
-                modal.remove();
-                this.redirectToLogin();
-                document.removeEventListener('keydown', handleEsc);
+                e.preventDefault();
+                e.stopPropagation();
+                // Hiệu ứng shake
+                const dialogContent = modal.querySelector('div');
+                dialogContent.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    dialogContent.style.animation = '';
+                }, 500);
+                console.log('🚫 User tried to close with ESC - blocked');
             }
         };
-        document.addEventListener('keydown', handleEsc);
 
-        console.log('🚨 Session expired dialog shown');
+        document.addEventListener('keydown', handleEscape, true);
+
+        // Lưu handler để có thể remove sau này
+        modal._escapeHandler = handleEscape;
+
+        // Thêm CSS animation cho shake effect
+        if (!document.getElementById('shakeAnimation')) {
+            const style = document.createElement('style');
+            style.id = 'shakeAnimation';
+            style.textContent = `
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                    20%, 40%, 60%, 80% { transform: translateX(5px); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        console.log('🔒 Persistent session expired dialog shown - user MUST acknowledge');
     },
 
 

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Inactivity Logout - Nhà Hàng Ẩm Thực Phương Nam</title>
+    <link rel="icon" href="img/logoPN.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .countdown-display {
+            font-family: 'Courier New', monospace;
+            font-size: 4rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 12px;
+            border: 3px solid #f59e0b;
+        }
+        
+        .activity-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        .active { background: #10b981; animation: pulse 1s infinite; }
+        .inactive { background: #ef4444; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .warning-box {
+            background: #fef2f2;
+            border: 2px solid #ef4444;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .info-box {
+            background: #f0f9ff;
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        
+        .logs {
+            background: #1f2937;
+            color: #10b981;
+            padding: 1.5rem;
+            border-radius: 12px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="text-center text-white mb-8">
+            <h1 class="text-4xl font-bold mb-3">
+                ⏰ Test Inactivity Auto Logout
+            </h1>
+            <p class="text-xl opacity-90">Mở màn hình nhưng không thao tác → Tự động đăng xuất sau 2 phút</p>
+        </div>
+
+        <!-- Countdown Display -->
+        <div class="card">
+            <h2 class="text-2xl font-bold mb-4 text-center">
+                ⏱️ Thời Gian Còn Lại Trước Khi Auto Logout
+            </h2>
+            <div id="countdownDisplay" class="countdown-display text-orange-600">
+                --:--
+            </div>
+            <div class="text-center mt-4">
+                <div class="inline-flex items-center">
+                    <span id="activityIndicator" class="activity-indicator inactive"></span>
+                    <span id="activityText" class="font-semibold">Không có hoạt động</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Controls -->
+        <div class="card">
+            <h2 class="text-2xl font-bold mb-4">🎮 Test Controls</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <button onclick="startTest()" class="btn btn-primary">
+                    🚀 Bắt Đầu Test (Login)
+                </button>
+                <button onclick="simulateActivity()" class="btn btn-success">
+                    👆 Mô Phỏng Hoạt Động
+                </button>
+                <button onclick="clearTest()" class="btn btn-danger">
+                    🗑️ Dừng Test
+                </button>
+            </div>
+
+            <div class="warning-box">
+                <h3 class="text-lg font-bold text-red-700 mb-2">⚠️ Hướng Dẫn Test:</h3>
+                <ul class="text-red-600 space-y-1">
+                    <li>1. Click "Bắt Đầu Test" để login và bắt đầu countdown</li>
+                    <li>2. <strong>KHÔNG click chuột, KHÔNG gõ phím</strong> trong 2 phút</li>
+                    <li>3. Có thể di chuyển chuột, scroll trang (không ảnh hưởng timer)</li>
+                    <li>4. Sau 1:30 sẽ có warning, sau 2:00 sẽ auto logout</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h3 class="text-lg font-bold text-blue-700 mb-2">ℹ️ Các Hoạt Động RESET Timer:</h3>
+                <ul class="text-blue-600 space-y-1">
+                    <li>• <strong>Click chuột</strong> (mousedown)</li>
+                    <li>• <strong>Gõ phím</strong> (keydown, keypress)</li>
+                    <li>• <strong>Touch màn hình</strong> (touchstart)</li>
+                </ul>
+                <p class="mt-2 text-sm text-blue-500">
+                    <strong>KHÔNG reset:</strong> Di chuyển chuột (mousemove), scroll trang
+                </p>
+            </div>
+        </div>
+
+        <!-- Status Display -->
+        <div class="card">
+            <h2 class="text-2xl font-bold mb-4">📊 Trạng Thái Hệ Thống</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div class="text-sm text-gray-600">Auth Status</div>
+                    <div id="authStatus" class="font-bold text-lg text-red-600">Not Logged In</div>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div class="text-sm text-gray-600">Activity Timer</div>
+                    <div id="timerStatus" class="font-bold text-lg text-gray-600">Inactive</div>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div class="text-sm text-gray-600">Last Activity</div>
+                    <div id="lastActivity" class="font-bold text-lg text-gray-600">Never</div>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div class="text-sm text-gray-600">Activity Count</div>
+                    <div id="activityCount" class="font-bold text-lg text-gray-600">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Logs -->
+        <div class="card">
+            <h2 class="text-2xl font-bold mb-4">📝 Activity Logs</h2>
+            
+            <div id="logs" class="logs">
+                <div>🚀 Inactivity Logout Test initialized...</div>
+                <div>📝 Ready to test auto logout on inactivity</div>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <button onclick="clearLogs()" class="btn btn-secondary">
+                    🧹 Clear Logs
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Auth System -->
+    <script src="js/auth.js"></script>
+
+    <script>
+        let statusInterval;
+        let countdownInterval;
+        let lastActivityTime = Date.now();
+        let activityCounter = 0;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('📱 Inactivity Logout Test page loaded');
+            setupActivityMonitoring();
+            startStatusMonitoring();
+        });
+
+        // Log function
+        function log(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logs.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logs.scrollTop = logs.scrollHeight;
+            console.log(message);
+        }
+
+        // Setup activity monitoring
+        function setupActivityMonitoring() {
+            // Monitor REAL interactions (same as auth.js)
+            const realInteractionEvents = ['mousedown', 'keydown', 'keypress', 'touchstart', 'click'];
+            
+            realInteractionEvents.forEach(event => {
+                document.addEventListener(event, (e) => {
+                    activityCounter++;
+                    lastActivityTime = Date.now();
+                    
+                    // Visual feedback
+                    const indicator = document.getElementById('activityIndicator');
+                    const text = document.getElementById('activityText');
+                    indicator.className = 'activity-indicator active';
+                    text.textContent = `Hoạt động: ${event}`;
+                    
+                    setTimeout(() => {
+                        indicator.className = 'activity-indicator inactive';
+                        text.textContent = 'Không có hoạt động';
+                    }, 2000);
+                    
+                    log(`👆 REAL Activity detected: ${event} (count: ${activityCounter})`);
+                }, true);
+            });
+
+            // Monitor NON-RESET events for comparison
+            const nonResetEvents = ['mousemove', 'scroll'];
+            
+            nonResetEvents.forEach(event => {
+                document.addEventListener(event, (e) => {
+                    log(`🖱️ Non-reset activity: ${event} (does NOT reset timer)`);
+                }, true);
+            });
+
+            log('👂 Activity monitoring setup complete');
+            log('✅ Real interactions: mousedown, keydown, keypress, touchstart, click');
+            log('❌ Non-reset events: mousemove, scroll');
+        }
+
+        // Start test
+        async function startTest() {
+            log('🚀 Starting inactivity logout test...');
+            
+            try {
+                if (typeof auth === 'undefined') {
+                    log('❌ Auth object not found!');
+                    return;
+                }
+                
+                // Login
+                const result = await auth.login('test@example.com', '123456');
+                log('✅ Login successful!');
+                log(`👤 User: ${result.khach_hang.email}`);
+                log('⏰ Inactivity timer started - 2 minutes countdown');
+                log('🚫 Do NOT click or press keys to test auto logout!');
+                
+                // Reset counters
+                activityCounter = 0;
+                lastActivityTime = Date.now();
+                
+                // Start countdown display
+                startCountdownDisplay();
+                
+            } catch (error) {
+                log(`❌ Login failed: ${error.message}`);
+            }
+        }
+
+        // Start countdown display
+        function startCountdownDisplay() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                if (typeof auth === 'undefined' || !auth.isAuthenticated) {
+                    document.getElementById('countdownDisplay').textContent = '--:--';
+                    clearInterval(countdownInterval);
+                    return;
+                }
+
+                const now = Date.now();
+                const timeSinceActivity = now - lastActivityTime;
+                const timeLeft = (auth.INACTIVITY_TIMEOUT || 120000) - timeSinceActivity;
+
+                if (timeLeft <= 0) {
+                    document.getElementById('countdownDisplay').textContent = '00:00';
+                    document.getElementById('countdownDisplay').className = 'countdown-display text-red-600';
+                    log('⏰ TIMEOUT REACHED - Auto logout should trigger!');
+                    clearInterval(countdownInterval);
+                    return;
+                }
+
+                const minutes = Math.floor(timeLeft / 60000);
+                const seconds = Math.floor((timeLeft % 60000) / 1000);
+                document.getElementById('countdownDisplay').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                // Color coding
+                if (timeLeft <= 30000) {
+                    document.getElementById('countdownDisplay').className = 'countdown-display text-red-600';
+                } else if (timeLeft <= 60000) {
+                    document.getElementById('countdownDisplay').className = 'countdown-display text-orange-600';
+                } else {
+                    document.getElementById('countdownDisplay').className = 'countdown-display text-green-600';
+                }
+            }, 1000);
+        }
+
+        // Update status display
+        function updateStatus() {
+            const authStatus = document.getElementById('authStatus');
+            const timerStatus = document.getElementById('timerStatus');
+            const lastActivity = document.getElementById('lastActivity');
+            const activityCount = document.getElementById('activityCount');
+
+            // Auth status
+            if (typeof auth !== 'undefined' && auth.isAuthenticated) {
+                authStatus.textContent = `Logged In (${auth.user?.email || 'Unknown'})`;
+                authStatus.className = 'font-bold text-lg text-green-600';
+            } else {
+                authStatus.textContent = 'Not Logged In';
+                authStatus.className = 'font-bold text-lg text-red-600';
+            }
+
+            // Timer status
+            if (typeof auth !== 'undefined' && auth.activityTimer) {
+                timerStatus.textContent = 'Active';
+                timerStatus.className = 'font-bold text-lg text-green-600';
+            } else {
+                timerStatus.textContent = 'Inactive';
+                timerStatus.className = 'font-bold text-lg text-gray-600';
+            }
+
+            // Last activity
+            if (lastActivityTime) {
+                const timeSince = Date.now() - lastActivityTime;
+                const seconds = Math.floor(timeSince / 1000);
+                lastActivity.textContent = `${seconds}s ago`;
+                lastActivity.className = seconds > 60 ? 'font-bold text-lg text-red-600' : 'font-bold text-lg text-green-600';
+            }
+
+            // Activity count
+            activityCount.textContent = activityCounter;
+            activityCount.className = 'font-bold text-lg text-blue-600';
+        }
+
+        // Start status monitoring
+        function startStatusMonitoring() {
+            if (statusInterval) clearInterval(statusInterval);
+            statusInterval = setInterval(updateStatus, 1000);
+        }
+
+        // Simulate activity
+        function simulateActivity() {
+            activityCounter++;
+            lastActivityTime = Date.now();
+            
+            if (typeof auth !== 'undefined') {
+                auth.resetActivityTimer();
+            }
+            
+            log(`🖱️ Simulated activity - timer reset (count: ${activityCounter})`);
+        }
+
+        // Clear test
+        function clearTest() {
+            if (typeof auth !== 'undefined') {
+                auth.clearAuthData();
+                log('🗑️ Test cleared - logged out');
+            }
+            
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                document.getElementById('countdownDisplay').textContent = '--:--';
+                document.getElementById('countdownDisplay').className = 'countdown-display text-gray-600';
+            }
+            
+            activityCounter = 0;
+            lastActivityTime = Date.now();
+        }
+
+        // Clear logs
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '<div>🚀 Logs cleared...</div>';
+        }
+
+        // Listen for auth changes
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'user' || e.key === 'token') {
+                log('📡 Auth state changed (storage event)');
+            }
+        });
+    </script>
+</body>
+</html>
