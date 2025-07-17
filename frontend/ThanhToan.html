@@ -48,6 +48,9 @@
                         <button onclick="debugShowAllCarts()" class="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600">
                             <i class="fas fa-users mr-1"></i> Show All Carts
                         </button>
+                        <button onclick="cleanupGuestCarts()" class="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600">
+                            <i class="fas fa-trash mr-1"></i> Clean Guest Carts
+                        </button>
                     </div>
                 </div>
                 <div id="cartItems" class="space-y-3">
@@ -329,15 +332,15 @@
                 if (user) {
                     const userData = JSON.parse(user);
                     console.log('🔍 getUserId - parsed userData:', userData);
-                    const userId = userData.id || userData.email || 'guest';
+                    const userId = userData.id || userData.email || null; // Không trả về 'guest'
                     console.log('🔍 getUserId - final userId:', userId);
                     return userId;
                 }
-                console.log('🔍 getUserId - no user data, returning guest');
-                return 'guest';
+                console.log('🔍 getUserId - no user data, returning null');
+                return null; // Không có user thì trả về null
             } catch (error) {
                 console.error('Error getting current user ID:', error);
-                return 'guest';
+                return null;
             }
         }
 
@@ -399,29 +402,42 @@
         // Load real cart items from CartManager
         function loadCartItems() {
             console.log('🔍 Loading cart items...');
+
+            // Kiểm tra đăng nhập trước
+            const currentUserId = getCurrentUserId();
+            if (!currentUserId) {
+                console.log('❌ No user logged in, cannot load cart');
+                cartItems = [];
+                const cartContainer = document.getElementById('cartItems');
+                cartContainer.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-user-lock text-4xl mb-4"></i>
+                        <p>Vui lòng đăng nhập để xem giỏ hàng</p>
+                        <a href="Menu-new.html" class="text-red-600 hover:underline mt-2 inline-block">
+                            <i class="fas fa-arrow-left mr-1"></i> Quay lại thực đơn
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
             console.log('🔍 Available localStorage keys:', Object.keys(localStorage));
 
             // Debug all possible cart sources
-            const currentUserId = getCurrentUserId();
             const cartKey = `cart_${currentUserId}`;
             console.log('🔍 Current user ID:', currentUserId);
             console.log('🔍 Cart key:', cartKey);
             console.log('🔍 localStorage cart_user:', localStorage.getItem(cartKey));
             console.log('🔍 localStorage cart:', localStorage.getItem('cart'));
-            console.log('🔍 localStorage cartData:', localStorage.getItem('cartData'));
-            console.log('🔍 localStorage userCart:', localStorage.getItem('userCart'));
 
             // Get cart data from CartManager
-            if (window.cartManager) {
+            if (window.cartManager && window.cartManager.currentUserId) {
                 cartItems = window.cartManager.getCart();
                 console.log('✅ Got cart from CartManager:', cartItems);
                 console.log('👤 Cart for user:', window.cartManager.currentUserId);
             } else {
-                // Fallback to localStorage - try user-specific cart first
-                cartItems = JSON.parse(localStorage.getItem(cartKey)) ||
-                           JSON.parse(localStorage.getItem('cart')) ||
-                           JSON.parse(localStorage.getItem('cartData')) ||
-                           JSON.parse(localStorage.getItem('userCart')) || [];
+                // Fallback to localStorage - chỉ load cart của user đã đăng nhập
+                cartItems = JSON.parse(localStorage.getItem(cartKey)) || [];
                 console.log(`✅ Got cart from localStorage for user ${currentUserId}:`, cartItems);
             }
 
@@ -826,6 +842,17 @@
         // Initialize with real data
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🔍 Payment page initializing...');
+
+            // Kiểm tra đăng nhập trước tiên
+            const currentUserId = getCurrentUserId();
+            if (!currentUserId) {
+                console.log('❌ No user logged in, redirecting to menu');
+                alert('⚠️ Vui lòng đăng nhập để sử dụng chức năng thanh toán!');
+                window.location.href = 'Menu-new.html';
+                return;
+            }
+
+            console.log('✅ User logged in:', currentUserId);
             console.log('🔍 CartManager available:', typeof CartManager !== 'undefined');
 
             // Wait for CartManager to be available
@@ -930,6 +957,12 @@
                 const key = localStorage.key(i);
                 if (key && key.startsWith('cart_')) {
                     const userId = key.replace('cart_', '');
+                    // Bỏ qua cart của guest
+                    if (userId === 'guest' || userId === 'null') {
+                        console.log(`🗑️ Skipping guest/null cart: ${key}`);
+                        continue;
+                    }
+
                     try {
                         const cartData = JSON.parse(localStorage.getItem(key));
                         allCarts[userId] = {
@@ -953,6 +986,26 @@
             console.log(`🛒 Current user cart: ${allCarts[currentUserId] ? allCarts[currentUserId].count : 0} items`);
 
             return allCarts;
+        }
+
+        // Function to clean up guest carts
+        function cleanupGuestCarts() {
+            console.log('🧹 Cleaning up guest carts...');
+            const keysToRemove = [];
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key === 'cart_guest' || key === 'cart_null' || key === 'cart_undefined')) {
+                    keysToRemove.push(key);
+                }
+            }
+
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                console.log(`🗑️ Removed ${key}`);
+            });
+
+            console.log(`✅ Cleaned up ${keysToRemove.length} guest cart entries`);
         }
     </script>
 </body>

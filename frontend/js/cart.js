@@ -146,18 +146,24 @@ class CartManager {
             const user = localStorage.getItem('user') || localStorage.getItem('userData');
             if (user) {
                 const userData = JSON.parse(user);
-                return userData.id || userData.email || 'guest';
+                return userData.id || userData.email || null; // Không trả về 'guest'
             }
-            return 'guest';
+            return null; // Không có user thì trả về null
         } catch (error) {
             console.error('Error getting current user ID:', error);
-            return 'guest';
+            return null;
         }
     }
 
     // Load cart specific to current user
     loadUserCart() {
         try {
+            // Chỉ load cart nếu user đã đăng nhập
+            if (!this.currentUserId) {
+                console.log('❌ No user logged in, no cart available');
+                return [];
+            }
+
             const cartKey = `cart_${this.currentUserId}`;
             const userCart = localStorage.getItem(cartKey);
 
@@ -166,16 +172,14 @@ class CartManager {
                 return JSON.parse(userCart);
             }
 
-            // If no user-specific cart exists, check for legacy cart
-            if (this.currentUserId !== 'guest') {
-                const legacyCart = localStorage.getItem('cart');
-                if (legacyCart) {
-                    const cart = JSON.parse(legacyCart);
-                    console.log(`🔄 Migrating legacy cart to user: ${this.currentUserId}`);
-                    this.saveUserCart(cart);
-                    // Don't remove legacy cart yet, in case other users need it
-                    return cart;
-                }
+            // If no user-specific cart exists, check for legacy cart (chỉ cho user đã đăng nhập)
+            const legacyCart = localStorage.getItem('cart');
+            if (legacyCart) {
+                const cart = JSON.parse(legacyCart);
+                console.log(`🔄 Migrating legacy cart to user: ${this.currentUserId}`);
+                this.saveUserCart(cart);
+                // Don't remove legacy cart yet, in case other users need it
+                return cart;
             }
 
             console.log(`🛒 No cart found for user: ${this.currentUserId}, starting with empty cart`);
@@ -189,12 +193,18 @@ class CartManager {
     // Save cart specific to current user
     saveUserCart(cart = null) {
         try {
+            // Chỉ save cart nếu user đã đăng nhập
+            if (!this.currentUserId) {
+                console.log('❌ No user logged in, cannot save cart');
+                return;
+            }
+
             const cartToSave = cart || this.cart;
             const cartKey = `cart_${this.currentUserId}`;
 
             localStorage.setItem(cartKey, JSON.stringify(cartToSave));
 
-            // Also save to legacy 'cart' key for backward compatibility
+            // Also save to legacy 'cart' key for backward compatibility (chỉ cho user đã đăng nhập)
             localStorage.setItem('cart', JSON.stringify(cartToSave));
 
             console.log(`💾 Saved cart for user: ${this.currentUserId} (${cartToSave.length} items)`);
