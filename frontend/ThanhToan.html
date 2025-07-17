@@ -221,11 +221,14 @@
             <div class="space-y-3">
                 <button onclick="closeSuccessModal()"
                         class="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 transition-colors duration-300 font-semibold">
-                    <i class="fas fa-check mr-2"></i>
-                    Đóng
+                    <i class="fas fa-utensils mr-2"></i>
+                    Quay lại Menu
                 </button>
                 <div class="text-sm text-gray-500">
                     <p>Chúng tôi rất trân trọng sự ủng hộ của bạn! 🙏</p>
+                    <p id="autoRedirectCountdown" class="mt-2 text-xs">
+                        Tự động quay lại menu sau <span id="countdownTimer">10</span> giây...
+                    </p>
                 </div>
             </div>
         </div>
@@ -760,17 +763,50 @@
                 modal.classList.remove('hidden');
                 // Add animation
                 modal.style.animation = 'fadeIn 0.3s ease-out';
+
+                // Bắt đầu countdown
+                startCountdown();
             }
         }
 
-        // Close success modal
+        // Countdown timer
+        let countdownInterval;
+        function startCountdown() {
+            let timeLeft = 10;
+            const timerEl = document.getElementById('countdownTimer');
+
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                if (timerEl) {
+                    timerEl.textContent = timeLeft;
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    const modal = document.getElementById('successModal');
+                    if (!modal.classList.contains('hidden')) {
+                        console.log('🔄 Auto redirecting to menu after countdown');
+                        closeSuccessModal();
+                    }
+                }
+            }, 1000);
+        }
+
+        // Close success modal and redirect to menu
         function closeSuccessModal() {
+            // Clear countdown timer
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
             const modal = document.getElementById('successModal');
             if (modal) {
                 modal.style.animation = 'fadeOut 0.3s ease-out';
                 setTimeout(() => {
                     modal.classList.add('hidden');
-                    // Không chuyển hướng, chỉ đóng modal
+                    // Chuyển hướng về trang menu sau khi thanh toán thành công
+                    console.log('🔄 Redirecting to menu after successful payment');
+                    window.location.href = 'Menu-new.html';
                 }, 300);
             }
         }
