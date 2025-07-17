@@ -1121,7 +1121,7 @@ class CartManager {
         // Không cần kiểm tra đăng nhập nữa
 
         if (this.cart.length === 0) {
-            this.showNotification('Giỏ hàng trống!', 'error');
+            this.showNotification('Vui lòng thêm món ăn vào giỏ hàng trước khi thanh toán!', 'warning');
             return;
         }
 

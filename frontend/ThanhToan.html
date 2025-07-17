@@ -41,9 +41,14 @@
             <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-semibold text-gray-700">Chi Tiết Đơn Hàng</h2>
-                    <button onclick="debugReloadCart()" class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
-                        <i class="fas fa-sync-alt mr-1"></i> Reload Cart
-                    </button>
+                    <div class="space-x-2">
+                        <button onclick="debugReloadCart()" class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
+                            <i class="fas fa-sync-alt mr-1"></i> Reload Cart
+                        </button>
+                        <button onclick="debugShowAllCarts()" class="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600">
+                            <i class="fas fa-users mr-1"></i> Show All Carts
+                        </button>
+                    </div>
                 </div>
                 <div id="cartItems" class="space-y-3">
                     <!-- Items will be loaded here -->
@@ -320,10 +325,15 @@
         function getCurrentUserId() {
             try {
                 const user = localStorage.getItem('user') || localStorage.getItem('userData');
+                console.log('🔍 getUserId - raw user data:', user);
                 if (user) {
                     const userData = JSON.parse(user);
-                    return userData.id || userData.email || 'guest';
+                    console.log('🔍 getUserId - parsed userData:', userData);
+                    const userId = userData.id || userData.email || 'guest';
+                    console.log('🔍 getUserId - final userId:', userId);
+                    return userId;
                 }
+                console.log('🔍 getUserId - no user data, returning guest');
                 return 'guest';
             } catch (error) {
                 console.error('Error getting current user ID:', error);
@@ -389,6 +399,17 @@
         // Load real cart items from CartManager
         function loadCartItems() {
             console.log('🔍 Loading cart items...');
+            console.log('🔍 Available localStorage keys:', Object.keys(localStorage));
+
+            // Debug all possible cart sources
+            const currentUserId = getCurrentUserId();
+            const cartKey = `cart_${currentUserId}`;
+            console.log('🔍 Current user ID:', currentUserId);
+            console.log('🔍 Cart key:', cartKey);
+            console.log('🔍 localStorage cart_user:', localStorage.getItem(cartKey));
+            console.log('🔍 localStorage cart:', localStorage.getItem('cart'));
+            console.log('🔍 localStorage cartData:', localStorage.getItem('cartData'));
+            console.log('🔍 localStorage userCart:', localStorage.getItem('userCart'));
 
             // Get cart data from CartManager
             if (window.cartManager) {
@@ -397,12 +418,15 @@
                 console.log('👤 Cart for user:', window.cartManager.currentUserId);
             } else {
                 // Fallback to localStorage - try user-specific cart first
-                const currentUserId = getCurrentUserId();
-                const cartKey = `cart_${currentUserId}`;
                 cartItems = JSON.parse(localStorage.getItem(cartKey)) ||
-                           JSON.parse(localStorage.getItem('cart')) || [];
+                           JSON.parse(localStorage.getItem('cart')) ||
+                           JSON.parse(localStorage.getItem('cartData')) ||
+                           JSON.parse(localStorage.getItem('userCart')) || [];
                 console.log(`✅ Got cart from localStorage for user ${currentUserId}:`, cartItems);
             }
+
+            console.log('🛒 Final cartItems:', cartItems);
+            console.log('🛒 cartItems length:', cartItems.length);
 
             const cartContainer = document.getElementById('cartItems');
             cartContainer.innerHTML = '';
@@ -411,7 +435,7 @@
                 cartContainer.innerHTML = `
                     <div class="text-center py-8 text-gray-500">
                         <i class="fas fa-shopping-cart text-4xl mb-4"></i>
-                        <p>Giỏ hàng trống</p>
+                        <p>Chưa có món ăn nào được chọn</p>
                         <a href="Menu-new.html" class="text-red-600 hover:underline mt-2 inline-block">
                             <i class="fas fa-arrow-left mr-1"></i> Quay lại thực đơn
                         </a>
@@ -504,13 +528,27 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
 
             try {
+                // Debug cart state before checking
+                console.log('🔍 DEBUG submitPayment - cartItems:', cartItems);
+                console.log('🔍 DEBUG submitPayment - cartItems type:', typeof cartItems);
+                console.log('🔍 DEBUG submitPayment - cartItems length:', cartItems ? cartItems.length : 'undefined');
+                console.log('🔍 DEBUG submitPayment - cartItems is array:', Array.isArray(cartItems));
+
+                // Reload cart items to ensure we have latest data
+                loadCartItems();
+                console.log('🔍 DEBUG after reload - cartItems:', cartItems);
+                console.log('🔍 DEBUG after reload - cartItems length:', cartItems ? cartItems.length : 'undefined');
+
                 // Check if cart has items
                 if (!cartItems || cartItems.length === 0) {
-                    alert('⚠️ Giỏ hàng trống!\n\nVui lòng thêm món ăn vào giỏ hàng trước khi thanh toán.');
+                    console.log('❌ Cart is empty, showing alert');
+                    alert('⚠️ Chưa có món ăn nào!\n\nVui lòng chọn món ăn từ thực đơn trước khi thanh toán.');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Xác Nhận Thanh Toán';
                     return;
                 }
+
+                console.log('✅ Cart has items, proceeding with payment');
 
                 const formData = new FormData(this);
                 const orderType = formData.get('orderType');
@@ -788,13 +826,22 @@
         // Initialize with real data
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🔍 Payment page initializing...');
+            console.log('🔍 CartManager available:', typeof CartManager !== 'undefined');
 
             // Wait for CartManager to be available
             if (typeof CartManager !== 'undefined') {
                 if (!window.cartManager) {
                     window.cartManager = new CartManager();
                     console.log('✅ CartManager initialized');
+                    console.log('✅ CartManager current user:', window.cartManager.currentUserId);
+                    console.log('✅ CartManager cart:', window.cartManager.getCart());
+                } else {
+                    console.log('✅ CartManager already exists');
+                    console.log('✅ Existing CartManager user:', window.cartManager.currentUserId);
+                    console.log('✅ Existing CartManager cart:', window.cartManager.getCart());
                 }
+            } else {
+                console.log('❌ CartManager not available, using localStorage fallback');
             }
 
             // Load real data
@@ -839,16 +886,73 @@
         function debugReloadCart() {
             console.log('🔄 Debug: Reloading cart...');
             console.log('📋 Current localStorage keys:', Object.keys(localStorage));
+
+            // Check all possible cart keys
+            const currentUserId = getCurrentUserId();
+            const cartKey = `cart_${currentUserId}`;
+            console.log('🛒 User cart key:', cartKey);
+            console.log('🛒 User cart data:', localStorage.getItem(cartKey));
+            console.log('🛒 Legacy cart:', localStorage.getItem('cart'));
             console.log('🛒 cartData:', localStorage.getItem('cartData'));
-            console.log('🛒 cart:', localStorage.getItem('cart'));
             console.log('🛒 userCart:', localStorage.getItem('userCart'));
+
+            // Show all cart_* keys
+            console.log('🔍 All cart keys in localStorage:');
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('cart_')) {
+                    console.log(`  - ${key}: ${localStorage.getItem(key)}`);
+                }
+            }
+
+            // Force reinitialize CartManager
+            if (typeof CartManager !== 'undefined') {
+                window.cartManager = new CartManager();
+                console.log('🔄 CartManager reinitialized');
+                console.log('🔄 CartManager user ID:', window.cartManager.currentUserId);
+                console.log('🔄 New cart data:', window.cartManager.getCart());
+                console.log('🔄 Cart length:', window.cartManager.getCart().length);
+            }
 
             // Reload cart data
             loadCartItems();
             updateTotals();
+        }
 
-            // Reload cart items
-            loadCartItems();
+        // Debug function to show all user carts
+        function debugShowAllCarts() {
+            console.log('👥 Debug: Showing all user carts...');
+
+            const allCarts = {};
+
+            // Find all cart_* keys
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('cart_')) {
+                    const userId = key.replace('cart_', '');
+                    try {
+                        const cartData = JSON.parse(localStorage.getItem(key));
+                        allCarts[userId] = {
+                            items: cartData,
+                            count: cartData.length,
+                            key: key
+                        };
+                        console.log(`👤 User ${userId}: ${cartData.length} items`);
+                        console.log(`   Cart data:`, cartData);
+                    } catch (error) {
+                        console.error(`❌ Error parsing cart for user ${userId}:`, error);
+                    }
+                }
+            }
+
+            console.log('📊 All user carts summary:', allCarts);
+
+            // Show current user info
+            const currentUserId = getCurrentUserId();
+            console.log(`🔍 Current user: ${currentUserId}`);
+            console.log(`🛒 Current user cart: ${allCarts[currentUserId] ? allCarts[currentUserId].count : 0} items`);
+
+            return allCarts;
         }
     </script>
 </body>

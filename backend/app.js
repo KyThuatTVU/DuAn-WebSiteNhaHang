@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
@@ -131,8 +132,39 @@ class App {
     // Request logging
     this.app.use(requestLogger);
 
+    // Image fallback middleware
+    this.app.use('/images', (req, res, next) => {
+      const imagePath = path.join(__dirname, 'images', req.path);
+
+      // Check if file exists
+      if (fs.existsSync(imagePath)) {
+        return express.static(path.join(__dirname, 'images'))(req, res, next);
+      }
+
+      // Try fallback for thumbnail/medium/high variants
+      let fallbackPath = req.path;
+
+      // Remove _thumb, _med, _high suffixes and try original file
+      if (fallbackPath.includes('_thumb.') || fallbackPath.includes('_med.') || fallbackPath.includes('_high.')) {
+        fallbackPath = fallbackPath
+          .replace('_thumb.', '.')
+          .replace('_med.', '.')
+          .replace('_high.', '.');
+
+        const fallbackImagePath = path.join(__dirname, 'images', fallbackPath);
+
+        if (fs.existsSync(fallbackImagePath)) {
+          // Redirect to original image
+          req.url = fallbackPath;
+          return express.static(path.join(__dirname, 'images'))(req, res, next);
+        }
+      }
+
+      // If no fallback found, continue to next middleware (will result in 404)
+      next();
+    });
+
     // Static files
-    this.app.use('/images', express.static(path.join(__dirname, 'images')));
     this.app.use('/public', express.static(path.join(__dirname, 'public')));
 
     // Request info middleware

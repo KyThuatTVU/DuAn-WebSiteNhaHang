@@ -384,8 +384,8 @@ class UserCartIntegration {
             cartItemsContainer.innerHTML = `
                 <div class="text-center py-8">
                     <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-4"></i>
-                    <p class="text-gray-500">Giỏ hàng trống</p>
-                    <p class="text-sm text-gray-400">Hãy thêm món ăn vào giỏ hàng</p>
+                    <p class="text-gray-500">Chưa có món ăn nào</p>
+                    <p class="text-sm text-gray-400">Hãy chọn món ăn yêu thích từ thực đơn</p>
                 </div>
             `;
             
@@ -470,7 +470,7 @@ class UserCartIntegration {
 
     proceedToPayment() {
         if (this.cartData.length === 0) {
-            alert('Giỏ hàng trống! Vui lòng thêm món ăn trước khi thanh toán.');
+            alert('Vui lòng chọn món ăn từ thực đơn trước khi thanh toán!');
             return;
         }
 
