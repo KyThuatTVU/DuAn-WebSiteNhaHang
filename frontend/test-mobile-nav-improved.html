@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Mobile Navigation - Improved</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile-responsive.css">
+    <link rel="stylesheet" href="css/components.css">
+    <style>
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            margin: 4px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-green { background: #10b981; }
+        .status-red { background: #ef4444; }
+        .status-yellow { background: #f59e0b; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header Placeholder -->
+    <div id="header-placeholder"></div>
+    
+    <!-- Main Content -->
+    <main class="pt-20 pb-8">
+        <div class="container mx-auto px-4">
+            <div class="test-section">
+                <h1 class="text-2xl font-bold mb-4">Test Mobile Navigation - Improved Layout</h1>
+                <p class="mb-4">Trang này để test navigation mobile đã được cải thiện. Hãy mở trên điện thoại hoặc thu nhỏ trình duyệt để xem.</p>
+                
+                <div class="mb-4">
+                    <h3 class="font-semibold mb-2">Test Functions:</h3>
+                    <button class="test-button" onclick="toggleMobileNav()">Toggle Mobile Nav</button>
+                    <button class="test-button" onclick="simulateLogin()">Simulate Login</button>
+                    <button class="test-button" onclick="simulateLogout()">Simulate Logout</button>
+                    <button class="test-button" onclick="showCart()">Show Cart</button>
+                    <button class="test-button" onclick="hideCart()">Hide Cart</button>
+                    <button class="test-button" onclick="testLongUserName()">Test Long Name</button>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="font-semibold mb-2">Layout Improvements:</h3>
+                    <ul class="list-disc list-inside text-sm space-y-1">
+                        <li>✅ Tên người dùng hiển thị theo chiều ngang (horizontal)</li>
+                        <li>✅ Compact layout tránh trùng lắp trên màn hình nhỏ</li>
+                        <li>✅ Text truncation cho tên dài</li>
+                        <li>✅ Responsive breakpoints: 360px, 480px, 768px</li>
+                        <li>✅ Không ảnh hưởng đến PC (desktop)</li>
+                        <li>✅ Extra small screen support (≤360px)</li>
+                        <li>✅ Smooth animations và transitions</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-4">
+                    <h3 class="font-semibold mb-2">Current Status:</h3>
+                    <div id="status" class="text-sm bg-white p-3 rounded border">
+                        <div><span class="status-indicator status-red" id="navIndicator"></span>Mobile Nav: <span id="navStatus">Closed</span></div>
+                        <div><span class="status-indicator status-red" id="userIndicator"></span>User: <span id="userStatus">Not logged in</span></div>
+                        <div><span class="status-indicator status-red" id="cartIndicator"></span>Cart: <span id="cartStatus">Hidden</span></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="font-semibold mb-2">Mobile Viewport Test:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div class="bg-blue-50 p-3 rounded">
+                            <strong>Small Mobile (320px)</strong><br>
+                            Compact layout, smaller fonts
+                        </div>
+                        <div class="bg-green-50 p-3 rounded">
+                            <strong>Mobile (480px)</strong><br>
+                            Standard mobile layout
+                        </div>
+                        <div class="bg-purple-50 p-3 rounded">
+                            <strong>Tablet (768px)</strong><br>
+                            Transition to desktop
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/components.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script>
+        // Test functions
+        function toggleMobileNav() {
+            const nav = document.getElementById('mobileNav');
+            if (nav) {
+                nav.classList.toggle('hidden');
+                const isOpen = !nav.classList.contains('hidden');
+                document.getElementById('navStatus').textContent = isOpen ? 'Open' : 'Closed';
+                document.getElementById('navIndicator').className = 
+                    'status-indicator ' + (isOpen ? 'status-green' : 'status-red');
+            }
+        }
+
+        function simulateLogin() {
+            const userDisplay = document.getElementById('mobileUserDisplay');
+            const userName = document.getElementById('mobileUserName');
+            const loginBtn = document.getElementById('mobileLoginBtn');
+            const logoutBtn = document.getElementById('mobileLogoutBtn');
+            const invoiceContainer = document.getElementById('mobileInvoiceHistoryContainer');
+            
+            if (userDisplay && userName && loginBtn && logoutBtn) {
+                userDisplay.classList.remove('hidden');
+                userName.textContent = 'Nguyễn Phương Nam';
+                loginBtn.classList.add('hidden');
+                logoutBtn.classList.remove('hidden');
+                if (invoiceContainer) invoiceContainer.classList.remove('hidden');
+                
+                document.getElementById('userStatus').textContent = 'Logged in as Nguyễn Phương Nam';
+                document.getElementById('userIndicator').className = 'status-indicator status-green';
+            }
+        }
+
+        function simulateLogout() {
+            const userDisplay = document.getElementById('mobileUserDisplay');
+            const loginBtn = document.getElementById('mobileLoginBtn');
+            const logoutBtn = document.getElementById('mobileLogoutBtn');
+            const invoiceContainer = document.getElementById('mobileInvoiceHistoryContainer');
+            
+            if (userDisplay && loginBtn && logoutBtn) {
+                userDisplay.classList.add('hidden');
+                loginBtn.classList.remove('hidden');
+                logoutBtn.classList.add('hidden');
+                if (invoiceContainer) invoiceContainer.classList.add('hidden');
+                
+                document.getElementById('userStatus').textContent = 'Not logged in';
+                document.getElementById('userIndicator').className = 'status-indicator status-red';
+            }
+        }
+
+        function testLongUserName() {
+            const userName = document.getElementById('mobileUserName');
+            if (userName) {
+                userName.textContent = 'Nguyễn Văn Thành Công Danh Dự Phát Tài';
+                document.getElementById('userStatus').textContent = 'Testing long name truncation';
+            }
+        }
+        
+        function showCart() {
+            const cartContainer = document.getElementById('mobileCartContainer');
+            if (cartContainer) {
+                cartContainer.classList.remove('hidden');
+                document.getElementById('cartStatus').textContent = 'Visible';
+                document.getElementById('cartIndicator').className = 'status-indicator status-green';
+            }
+        }
+        
+        function hideCart() {
+            const cartContainer = document.getElementById('mobileCartContainer');
+            if (cartContainer) {
+                cartContainer.classList.add('hidden');
+                document.getElementById('cartStatus').textContent = 'Hidden';
+                document.getElementById('cartIndicator').className = 'status-indicator status-red';
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load header component
+            ComponentLoader.loadComponent('header', '#header-placeholder').then(() => {
+                console.log('Header loaded for improved mobile nav test');
+                
+                // Add viewport size indicator
+                function updateViewportInfo() {
+                    const width = window.innerWidth;
+                    let size = 'Desktop';
+                    if (width <= 320) size = 'Small Mobile';
+                    else if (width <= 480) size = 'Mobile';
+                    else if (width <= 768) size = 'Tablet';
+                    
+                    console.log(`Viewport: ${width}px (${size})`);
+                }
+                
+                window.addEventListener('resize', updateViewportInfo);
+                updateViewportInfo();
+            });
+        });
+    </script>
+</body>
+</html>

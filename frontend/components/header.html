@@ -64,40 +64,70 @@
 
         <!-- Mobile Navigation -->
         <nav id="mobileNav" class="md:hidden hidden mt-4 pb-4">
-            <div class="flex flex-col space-y-3">
-                <a href="Index-new.html" class="mobile-nav-link py-2 px-4 rounded hover:bg-gray-100" data-page="Index">Trang Chủ</a>
-                <a href="gioithieu-new.html" class="mobile-nav-link py-2 px-4 rounded hover:bg-gray-100" data-page="gioithieu">Giới Thiệu</a>
-                <a href="Menu-new.html" class="mobile-nav-link py-2 px-4 rounded hover:bg-gray-100" data-page="Menu">Thực Đơn</a>
-                <a href="lienhe&datban-new.html" class="mobile-nav-link py-2 px-4 rounded hover:bg-gray-100" data-page="lienhe&datban">Đặt Bàn & Liên Hệ</a>
-
-                <!-- Mobile Cart Button - Only visible on menu page -->
-                <div id="mobileCartContainer" class="hidden px-4 py-2">
-                    <button id="mobileCartBtn" class="w-full bg-primary hover:bg-red-700 text-white py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                        <i class="fas fa-shopping-cart mr-2"></i>
-                        Giỏ hàng (<span id="mobileCartCounter">0</span>)
-                    </button>
-                </div>
-
-
-
-                <!-- Mobile Invoice History Button - Only visible when logged in -->
-                <div id="mobileInvoiceHistoryContainer" class="hidden px-4 py-2">
-                    <button onclick="window.location.href='DanhSachHoaDon.html'" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                        <i class="fas fa-receipt mr-2"></i>
-                        Lịch sử đơn hàng
-                    </button>
-                </div>
-
-                <div class="border-t border-gray-200 pt-3">
-                    <div id="mobileUserDisplay" class="hidden mb-2 px-4">
-                        <span class="text-gray-700">Xin chào, </span>
-                        <span id="mobileUserName" class="font-semibold text-primary"></span>
+            <div class="flex flex-col">
+                <!-- User Section - Horizontal Layout -->
+                <div class="mb-3">
+                    <!-- User Greeting - Horizontal -->
+                    <div id="mobileUserDisplay" class="hidden mb-2 px-2 py-1.5 bg-gradient-to-r from-green-50 to-blue-50 rounded-md border border-green-200 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center flex-1 min-w-0">
+                                <i class="fas fa-user-circle text-green-600 mr-2 text-sm flex-shrink-0"></i>
+                                <span class="text-xs text-gray-500 mr-1 flex-shrink-0">Xin chào,</span>
+                                <span id="mobileUserName" class="font-medium text-green-700 text-xs truncate"></span>
+                            </div>
+                        </div>
                     </div>
 
+                    <!-- Auth Buttons - Compact Horizontal -->
+                    <div class="flex space-x-2">
+                        <button id="mobileLoginBtn" class="flex-1 flex items-center justify-center py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-md transition duration-300 border border-gray-200 text-xs">
+                            <i class="fas fa-sign-in-alt mr-1.5 text-xs"></i>
+                            <span class="font-medium">Đăng Nhập</span>
+                        </button>
+                        <button id="mobileLogoutBtn" class="hidden flex-1 flex items-center justify-center py-2 px-3 bg-red-50 hover:bg-red-100 text-red-700 rounded-md transition duration-300 border border-red-200 text-xs">
+                            <i class="fas fa-sign-out-alt mr-1.5 text-xs"></i>
+                            <span class="font-medium">Đăng Xuất</span>
+                        </button>
+                    </div>
+                </div>
 
+                <!-- Main Navigation Links -->
+                <div class="space-y-1 mb-4 border-t border-gray-200 pt-4">
+                    <a href="Index-new.html" class="mobile-nav-link flex items-center py-2.5 px-4 rounded-lg hover:bg-gray-100 transition duration-300" data-page="Index">
+                        <i class="fas fa-home w-5 mr-3 text-gray-600"></i>
+                        <span class="font-medium text-sm">Trang Chủ</span>
+                    </a>
+                    <a href="gioithieu-new.html" class="mobile-nav-link flex items-center py-2.5 px-4 rounded-lg hover:bg-gray-100 transition duration-300" data-page="gioithieu">
+                        <i class="fas fa-info-circle w-5 mr-3 text-gray-600"></i>
+                        <span class="font-medium text-sm">Giới Thiệu</span>
+                    </a>
+                    <a href="Menu-new.html" class="mobile-nav-link flex items-center py-2.5 px-4 rounded-lg hover:bg-gray-100 transition duration-300" data-page="Menu">
+                        <i class="fas fa-utensils w-5 mr-3 text-gray-600"></i>
+                        <span class="font-medium text-sm">Thực Đơn</span>
+                    </a>
+                    <a href="lienhe&datban-new.html" class="mobile-nav-link flex items-center py-2.5 px-4 rounded-lg hover:bg-gray-100 transition duration-300" data-page="lienhe&datban">
+                        <i class="fas fa-phone w-5 mr-3 text-gray-600"></i>
+                        <span class="font-medium text-sm">Đặt Bàn & Liên Hệ</span>
+                    </a>
+                </div>
 
-                    <button id="mobileLoginBtn" class="text-left py-2 px-4 rounded hover:bg-gray-100 w-full">Đăng Nhập</button>
-                    <button id="mobileLogoutBtn" class="hidden text-left py-2 px-4 rounded hover:bg-gray-100 w-full">Đăng Xuất</button>
+                <!-- Action Buttons Section -->
+                <div class="space-y-2">
+                    <!-- Mobile Cart Button - Only visible on menu page -->
+                    <div id="mobileCartContainer" class="hidden">
+                        <button id="mobileCartBtn" class="w-full bg-primary hover:bg-red-700 text-white py-2.5 px-4 rounded-lg transition duration-300 flex items-center justify-center shadow-md text-sm">
+                            <i class="fas fa-shopping-cart mr-2"></i>
+                            <span class="font-medium">Giỏ hàng (<span id="mobileCartCounter">0</span>)</span>
+                        </button>
+                    </div>
+
+                    <!-- Mobile Invoice History Button - Only visible when logged in -->
+                    <div id="mobileInvoiceHistoryContainer" class="hidden">
+                        <button onclick="window.location.href='DanhSachHoaDon.html'" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2.5 px-4 rounded-lg transition duration-300 flex items-center justify-center border border-blue-200 text-sm">
+                            <i class="fas fa-receipt mr-2"></i>
+                            <span class="font-medium">Lịch sử đơn hàng</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </nav>

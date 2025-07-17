@@ -362,9 +362,14 @@ function setupLoginModalEvents() {
         });
     }
 
-    // Logout event
+    // Logout events
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+    if (mobileLogoutBtn) {
+        mobileLogoutBtn.addEventListener('click', handleLogout);
     }
 
     // Close modal event
@@ -552,6 +557,7 @@ function updateUIAfterLogin(user) {
     const loginBtn = document.getElementById('loginBtn');
     const mobileLoginBtn = document.getElementById('mobileLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
+    const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
     const userDisplay = document.getElementById('userDisplay');
     const userName = document.getElementById('userName');
     const mobileUserDisplay = document.getElementById('mobileUserDisplay');
@@ -559,18 +565,16 @@ function updateUIAfterLogin(user) {
     const invoiceHistoryBtn = document.getElementById('invoiceHistoryBtn');
     const mobileInvoiceHistoryContainer = document.getElementById('mobileInvoiceHistoryContainer');
 
-
     if (loginBtn) loginBtn.style.display = 'none';
     if (mobileLoginBtn) mobileLoginBtn.style.display = 'none';
     if (logoutBtn) logoutBtn.style.display = 'block';
+    if (mobileLogoutBtn) mobileLogoutBtn.classList.remove('hidden');
     if (userDisplay) userDisplay.classList.remove('hidden');
     if (userName) userName.textContent = user.full_name;
     if (mobileUserDisplay) mobileUserDisplay.classList.remove('hidden');
     if (mobileUserName) mobileUserName.textContent = user.full_name;
     if (invoiceHistoryBtn) invoiceHistoryBtn.classList.remove('hidden');
     if (mobileInvoiceHistoryContainer) mobileInvoiceHistoryContainer.classList.remove('hidden');
-
-
 }
 
 // Update UI after logout
@@ -578,6 +582,7 @@ function updateUIAfterLogout() {
     const loginBtn = document.getElementById('loginBtn');
     const mobileLoginBtn = document.getElementById('mobileLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
+    const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
     const userDisplay = document.getElementById('userDisplay');
     const mobileUserDisplay = document.getElementById('mobileUserDisplay');
     const userName = document.getElementById('userName');
@@ -585,17 +590,18 @@ function updateUIAfterLogout() {
     const invoiceHistoryBtn = document.getElementById('invoiceHistoryBtn');
     const mobileInvoiceHistoryContainer = document.getElementById('mobileInvoiceHistoryContainer');
 
-
     if (loginBtn) loginBtn.style.display = 'block';
     if (mobileLoginBtn) mobileLoginBtn.style.display = 'block';
     if (logoutBtn) logoutBtn.style.display = 'none';
+    if (mobileLogoutBtn) mobileLogoutBtn.classList.add('hidden');
     if (userDisplay) userDisplay.classList.add('hidden');
     if (mobileUserDisplay) mobileUserDisplay.classList.add('hidden');
     if (invoiceHistoryBtn) invoiceHistoryBtn.classList.add('hidden');
     if (mobileInvoiceHistoryContainer) mobileInvoiceHistoryContainer.classList.add('hidden');
 
-
-
+    // Clear user name text
+    if (userName) userName.textContent = '';
+    if (mobileUserName) mobileUserName.textContent = '';
 }
 
 // Show notification for login/register
