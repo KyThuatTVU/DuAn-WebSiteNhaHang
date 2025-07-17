@@ -241,9 +241,9 @@ router.get('/', async (req, res) => {
     const selectQuery = `
       SELECT * FROM dat_ban ${whereClause}
       ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
+      LIMIT ${limit} OFFSET ${offset}
     `;
-    const selectParams = [...params, limit, offset];
+    const selectParams = [...params];
     const result = await executeQuery(selectQuery, selectParams);
 
     if (result.success) {
