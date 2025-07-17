@@ -47,6 +47,173 @@
     box-sizing: border-box;
 }
 
+/* Mobile Header Responsive Styles */
+@media (max-width: 640px) {
+    /* Extra small screens - phones */
+    header .container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Logo and brand adjustments */
+    header img {
+        height: 2.5rem; /* 40px */
+        margin-right: 0.5rem;
+    }
+
+    /* Brand text adjustments */
+    header .font-cursive {
+        font-size: 0.875rem; /* 14px */
+        line-height: 1.2;
+    }
+
+    /* Button text adjustments */
+    header button {
+        font-size: 0.75rem; /* 12px */
+        padding: 0.375rem 0.5rem;
+        white-space: nowrap;
+    }
+
+    /* Language toggle specific */
+    #language-toggle {
+        min-width: 2.5rem;
+        padding: 0.375rem 0.5rem;
+    }
+
+    /* Menu toggle adjustments */
+    #menuToggle {
+        padding: 0.25rem;
+    }
+
+    #menuToggle i {
+        font-size: 1.25rem;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+    /* Small screens - tablets */
+    header .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    header img {
+        height: 3rem; /* 48px */
+        margin-right: 0.75rem;
+    }
+
+    header .font-cursive {
+        font-size: 1.125rem; /* 18px */
+    }
+
+    header button {
+        font-size: 0.875rem; /* 14px */
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+@media (min-width: 769px) {
+    /* Medium screens and up - desktops */
+    header img {
+        height: 4rem; /* 64px */
+        margin-right: 1rem;
+    }
+
+    header .font-cursive {
+        font-size: 1.5rem; /* 24px */
+    }
+
+    header button {
+        font-size: 0.875rem; /* 14px */
+        padding: 0.5rem 1rem;
+    }
+}
+
+/* Ensure proper text wrapping and overflow handling */
+header .min-w-0 {
+    min-width: 0;
+    overflow: hidden;
+}
+
+header .flex-shrink-0 {
+    flex-shrink: 0;
+}
+
+/* Improve button spacing on mobile */
+@media (max-width: 640px) {
+    header .space-x-1 > * + * {
+        margin-left: 0.25rem;
+    }
+
+    /* Hide text in buttons on very small screens, keep icons */
+    header button span:not(.sm\\:hidden) {
+        display: none;
+    }
+
+    header button .sm\\:hidden {
+        display: inline;
+    }
+
+    /* Ensure minimum touch target size */
+    header button {
+        min-height: 2.5rem;
+        min-width: 2.5rem;
+    }
+
+    /* Compact user display */
+    #userDisplay {
+        display: none !important;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+    header .space-x-2 > * + * {
+        margin-left: 0.5rem;
+    }
+
+    /* Show abbreviated text on tablets */
+    header button .sm\\:hidden {
+        display: none;
+    }
+
+    header button span:not(.sm\\:hidden) {
+        display: inline;
+    }
+}
+
+/* Extra small screens - very compact layout */
+@media (max-width: 480px) {
+    header .container {
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+    }
+
+    header img {
+        height: 2rem; /* 32px */
+        margin-right: 0.25rem;
+    }
+
+    header .font-cursive {
+        font-size: 0.75rem; /* 12px */
+    }
+
+    header .text-xs {
+        font-size: 0.625rem; /* 10px */
+    }
+
+    header button {
+        padding: 0.25rem 0.375rem;
+        font-size: 0.625rem; /* 10px */
+        min-height: 2rem;
+        min-width: 2rem;
+    }
+
+    #language-toggle {
+        min-width: 2rem;
+        padding: 0.25rem 0.375rem;
+    }
+}
+
 body {
     margin: 0;
     padding: 0;
