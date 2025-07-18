@@ -1,0 +1,181 @@
+name: Database Backup
+
+on:
+  schedule:
+    # Backup hàng ngày lúc 2:00 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Cho phép chạy manual
+    inputs:
+      backup_type:
+        description: 'Backup type'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - schema-only
+        - data-only
+
+jobs:
+  backup-database:
+    runs-on: ubuntu-latest
+    name: Database Backup
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup MySQL Client
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mysql-client
+        
+    - name: Create backup directory
+      run: |
+        mkdir -p backups
+        
+    - name: Generate backup filename
+      id: backup-info
+      run: |
+        timestamp=$(date +"%Y%m%d_%H%M%S")
+        backup_type="${{ github.event.inputs.backup_type || 'full' }}"
+        filename="nha_hang_backup_${backup_type}_${timestamp}.sql"
+        echo "filename=$filename" >> $GITHUB_OUTPUT
+        echo "timestamp=$timestamp" >> $GITHUB_OUTPUT
+        
+    - name: Create database backup (if secrets configured)
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_PORT: ${{ secrets.DB_PORT || '3306' }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+      run: |
+        if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_NAME" ]; then
+          echo "⚠️ Database credentials not configured in secrets"
+          echo "Skipping database backup..."
+          
+          # Tạo backup từ file SQL có sẵn
+          if [ -f "QuanLyDBWeb/CNPM_QuanLyNhaHang.sql" ]; then
+            cp "QuanLyDBWeb/CNPM_QuanLyNhaHang.sql" "backups/${{ steps.backup-info.outputs.filename }}"
+            echo "✅ Created backup from existing SQL file"
+          else
+            echo "❌ No SQL file found to backup"
+            exit 1
+          fi
+        else
+          backup_type="${{ github.event.inputs.backup_type || 'full' }}"
+          
+          case $backup_type in
+            "schema-only")
+              mysqldump -h$DB_HOST -P$DB_PORT -u$DB_USER -p$DB_PASSWORD --no-data $DB_NAME > "backups/${{ steps.backup-info.outputs.filename }}"
+              ;;
+            "data-only")
+              mysqldump -h$DB_HOST -P$DB_PORT -u$DB_USER -p$DB_PASSWORD --no-create-info $DB_NAME > "backups/${{ steps.backup-info.outputs.filename }}"
+              ;;
+            *)
+              mysqldump -h$DB_HOST -P$DB_PORT -u$DB_USER -p$DB_PASSWORD $DB_NAME > "backups/${{ steps.backup-info.outputs.filename }}"
+              ;;
+          esac
+          
+          echo "✅ Database backup created successfully"
+        fi
+        
+    - name: Compress backup
+      run: |
+        cd backups
+        gzip "${{ steps.backup-info.outputs.filename }}"
+        echo "✅ Backup compressed"
+        
+    - name: Upload backup artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: database-backup-${{ steps.backup-info.outputs.timestamp }}
+        path: backups/${{ steps.backup-info.outputs.filename }}.gz
+        retention-days: 30
+        
+    - name: Create backup info file
+      run: |
+        cat > backups/backup-info.json << EOF
+        {
+          "timestamp": "${{ steps.backup-info.outputs.timestamp }}",
+          "filename": "${{ steps.backup-info.outputs.filename }}.gz",
+          "backup_type": "${{ github.event.inputs.backup_type || 'full' }}",
+          "repository": "${{ github.repository }}",
+          "commit": "${{ github.sha }}",
+          "branch": "${{ github.ref_name }}"
+        }
+        EOF
+        
+    - name: Upload backup info
+      uses: actions/upload-artifact@v4
+      with:
+        name: backup-info-${{ steps.backup-info.outputs.timestamp }}
+        path: backups/backup-info.json
+        retention-days: 90
+
+  # Job cleanup old backups
+  cleanup-old-backups:
+    runs-on: ubuntu-latest
+    name: Cleanup Old Backups
+    needs: backup-database
+    if: always()
+    
+    steps:
+    - name: Cleanup old artifacts
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { data: artifacts } = await github.rest.actions.listArtifactsForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            per_page: 100
+          });
+          
+          const backupArtifacts = artifacts.artifacts.filter(artifact => 
+            artifact.name.startsWith('database-backup-')
+          );
+          
+          // Giữ lại 7 backup gần nhất, xóa các backup cũ hơn
+          const sortedBackups = backupArtifacts.sort((a, b) => 
+            new Date(b.created_at) - new Date(a.created_at)
+          );
+          
+          const toDelete = sortedBackups.slice(7);
+          
+          for (const artifact of toDelete) {
+            try {
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id
+              });
+              console.log(`Deleted old backup: ${artifact.name}`);
+            } catch (error) {
+              console.log(`Failed to delete ${artifact.name}: ${error.message}`);
+            }
+          }
+          
+          console.log(`Cleanup completed. Kept ${Math.min(7, sortedBackups.length)} backups.`);
+
+  # Job notification
+  backup-notification:
+    runs-on: ubuntu-latest
+    name: Backup Notification
+    needs: [backup-database, cleanup-old-backups]
+    if: always()
+    
+    steps:
+    - name: Notify backup status
+      run: |
+        if [ "${{ needs.backup-database.result }}" = "success" ]; then
+          echo "✅ Database backup completed successfully"
+        else
+          echo "❌ Database backup failed"
+        fi
+        
+        if [ "${{ needs.cleanup-old-backups.result }}" = "success" ]; then
+          echo "✅ Old backup cleanup completed"
+        else
+          echo "⚠️ Old backup cleanup had issues"
+        fi

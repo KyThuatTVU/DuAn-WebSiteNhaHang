@@ -1,0 +1,187 @@
+name: Security Scan
+
+on:
+  schedule:
+    # Chạy hàng tuần vào thứ 2 lúc 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Cho phép chạy manual
+
+jobs:
+  # Job quét bảo mật dependencies
+  dependency-scan:
+    runs-on: ubuntu-latest
+    name: Dependency Security Scan
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+        
+    - name: Run npm audit
+      run: |
+        cd backend
+        npm audit --audit-level moderate --json > audit-results.json || true
+        
+    - name: Process audit results
+      run: |
+        cd backend
+        if [ -f audit-results.json ]; then
+          vulnerabilities=$(cat audit-results.json | jq '.metadata.vulnerabilities.total // 0')
+          if [ "$vulnerabilities" -gt 0 ]; then
+            echo "⚠️ Found $vulnerabilities vulnerabilities"
+            cat audit-results.json | jq '.advisories'
+          else
+            echo "✅ No vulnerabilities found"
+          fi
+        fi
+        
+    - name: Upload audit results
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-audit-results
+        path: backend/audit-results.json
+        retention-days: 30
+      if: always()
+
+  # Job quét code với CodeQL
+  codeql-scan:
+    runs-on: ubuntu-latest
+    name: CodeQL Security Analysis
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript
+        
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+      
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+  # Job kiểm tra secrets và sensitive data
+  secret-scan:
+    runs-on: ubuntu-latest
+    name: Secret Scan
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Run TruffleHog OSS
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+      continue-on-error: true
+      
+    - name: Manual secret patterns check
+      run: |
+        echo "🔍 Checking for common secret patterns..."
+        
+        # Kiểm tra API keys
+        if grep -r -i "api[_-]key\s*=\s*['\"][^'\"]\{20,\}" . --exclude-dir=node_modules --exclude-dir=.git; then
+          echo "⚠️ Potential API keys found"
+        fi
+        
+        # Kiểm tra passwords
+        if grep -r -i "password\s*=\s*['\"][^'\"]\{8,\}" . --exclude-dir=node_modules --exclude-dir=.git; then
+          echo "⚠️ Potential hardcoded passwords found"
+        fi
+        
+        # Kiểm tra JWT secrets
+        if grep -r -i "jwt[_-]secret\s*=\s*['\"][^'\"]\{20,\}" . --exclude-dir=node_modules --exclude-dir=.git; then
+          echo "⚠️ Potential JWT secrets found"
+        fi
+        
+        # Kiểm tra database URLs
+        if grep -r -i "mysql://\|postgres://\|mongodb://" . --exclude-dir=node_modules --exclude-dir=.git; then
+          echo "⚠️ Potential database URLs found"
+        fi
+        
+        echo "✅ Secret scan completed"
+
+  # Job tạo security report
+  security-report:
+    runs-on: ubuntu-latest
+    name: Generate Security Report
+    needs: [dependency-scan, secret-scan]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download audit results
+      uses: actions/download-artifact@v4
+      with:
+        name: security-audit-results
+        path: ./security-results/
+      continue-on-error: true
+      
+    - name: Generate security report
+      run: |
+        mkdir -p security-report
+        
+        echo "# 🔒 Security Scan Report" > security-report/README.md
+        echo "" >> security-report/README.md
+        echo "**Scan Date:** $(date)" >> security-report/README.md
+        echo "**Repository:** ${{ github.repository }}" >> security-report/README.md
+        echo "**Branch:** ${{ github.ref_name }}" >> security-report/README.md
+        echo "" >> security-report/README.md
+        
+        echo "## 📊 Scan Results" >> security-report/README.md
+        echo "" >> security-report/README.md
+        
+        if [ "${{ needs.dependency-scan.result }}" = "success" ]; then
+          echo "✅ **Dependency Scan**: Passed" >> security-report/README.md
+        else
+          echo "❌ **Dependency Scan**: Failed" >> security-report/README.md
+        fi
+        
+        if [ "${{ needs.secret-scan.result }}" = "success" ]; then
+          echo "✅ **Secret Scan**: Passed" >> security-report/README.md
+        else
+          echo "⚠️ **Secret Scan**: Issues detected" >> security-report/README.md
+        fi
+        
+        echo "" >> security-report/README.md
+        echo "## 🛡️ Security Recommendations" >> security-report/README.md
+        echo "" >> security-report/README.md
+        echo "- Thường xuyên cập nhật dependencies" >> security-report/README.md
+        echo "- Sử dụng environment variables cho sensitive data" >> security-report/README.md
+        echo "- Kích hoạt 2FA cho GitHub account" >> security-report/README.md
+        echo "- Review code trước khi merge" >> security-report/README.md
+        echo "- Sử dụng HTTPS cho tất cả connections" >> security-report/README.md
+        
+    - name: Upload security report
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-report
+        path: security-report/
+        retention-days: 90

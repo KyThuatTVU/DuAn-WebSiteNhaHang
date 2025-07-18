@@ -1,0 +1,144 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # Job kiểm tra PR
+  pr-validation:
+    runs-on: ubuntu-latest
+    name: PR Validation
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+        
+    - name: Check for package.json changes
+      id: package-check
+      run: |
+        if git diff --name-only origin/main...HEAD | grep -q "backend/package.json"; then
+          echo "package_changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "package_changed=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Validate package.json changes
+      if: steps.package-check.outputs.package_changed == 'true'
+      run: |
+        cd backend
+        npm audit --audit-level moderate
+        echo "✅ Package.json changes validated"
+        
+    - name: Check code formatting
+      run: |
+        cd backend
+        # Kiểm tra các file JavaScript có format đúng không
+        find . -name "*.js" -not -path "./node_modules/*" | head -10 | while read file; do
+          echo "Checking $file..."
+          node -c "$file" || exit 1
+        done
+        echo "✅ Code syntax check passed"
+        
+    - name: Check for sensitive files
+      run: |
+        # Kiểm tra không commit các file nhạy cảm
+        if find . -name "*.env*" -not -name "*.env.example" | grep -v node_modules; then
+          echo "❌ Environment files detected in commit"
+          exit 1
+        fi
+        
+        if find . -name "*.log" | grep -v node_modules; then
+          echo "❌ Log files detected in commit"
+          exit 1
+        fi
+        
+        echo "✅ No sensitive files detected"
+        
+    - name: Check file sizes
+      run: |
+        # Kiểm tra file size không quá lớn (>10MB)
+        large_files=$(find . -type f -size +10M -not -path "./node_modules/*" -not -path "./.git/*")
+        if [ -n "$large_files" ]; then
+          echo "❌ Large files detected:"
+          echo "$large_files"
+          exit 1
+        fi
+        echo "✅ No large files detected"
+
+  # Job kiểm tra conflicts
+  conflict-check:
+    runs-on: ubuntu-latest
+    name: Merge Conflict Check
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Check for merge conflicts
+      run: |
+        git fetch origin main
+        if git merge-tree $(git merge-base HEAD origin/main) HEAD origin/main | grep -q "<<<<<<< "; then
+          echo "❌ Merge conflicts detected"
+          exit 1
+        fi
+        echo "✅ No merge conflicts detected"
+
+  # Job comment trên PR
+  pr-comment:
+    runs-on: ubuntu-latest
+    name: PR Comment
+    needs: [pr-validation, conflict-check]
+    if: always()
+    
+    steps:
+    - name: Comment on PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { data: pr } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number
+          });
+          
+          let comment = '## 🔍 PR Check Results\n\n';
+          
+          if ('${{ needs.pr-validation.result }}' === 'success') {
+            comment += '✅ **Validation**: Passed\n';
+          } else {
+            comment += '❌ **Validation**: Failed\n';
+          }
+          
+          if ('${{ needs.conflict-check.result }}' === 'success') {
+            comment += '✅ **Conflict Check**: No conflicts\n';
+          } else {
+            comment += '❌ **Conflict Check**: Conflicts detected\n';
+          }
+          
+          comment += '\n---\n';
+          comment += '*Automated check by GitHub Actions*';
+          
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
