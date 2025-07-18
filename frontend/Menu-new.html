@@ -585,8 +585,8 @@
 
                 <!-- Page Title -->
                 <div class="text-center mb-12 fade-in" id="menuTitle">
-                    <h2 class="text-4xl font-bold mb-4">Thực Đơn</h2>
-                    <p class="text-gray-600 text-lg">Khám phá hương vị Nam Bộ đích thực</p>
+                    <h2 class="text-4xl font-bold mb-4" data-i18n="menu_title">Thực Đơn</h2>
+                    <p class="text-gray-600 text-lg" data-i18n="menu_subtitle">Khám phá hương vị Nam Bộ đích thực</p>
 
 
                 </div>
@@ -596,11 +596,12 @@
                     <!-- Search Bar -->
                     <div class="search-container mb-6">
                         <div class="relative">
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 id="searchInput"
                                 class="w-full px-6 py-4 border-2 border-white rounded-full focus:outline-none focus:ring-4 focus:ring-yellow-300 text-lg shadow-lg"
                                 placeholder="🔍 Tìm kiếm món ăn yêu thích..."
+                                data-i18n-placeholder="search_placeholder"
                             >
                             <button 
                                 id="searchButton"
@@ -614,25 +615,25 @@
 
                     <!-- Menu Categories -->
                     <div class="flex flex-wrap justify-center gap-3" id="menuFilter">
-                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="all">
+                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="all" data-i18n="category_all">
                             <i class="fas fa-utensils mr-2"></i>Tất Cả
                         </button>
-                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="appetizers">
+                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="appetizers" data-i18n="category_appetizers">
                             <i class="fas fa-leaf mr-2"></i>Khai Vị
                         </button>
-                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="maindishes">
+                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="maindishes" data-i18n="category_maindishes">
                             <i class="fas fa-drumstick-bite mr-2"></i>Món Chính
                         </button>
-                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="rice">
+                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="rice" data-i18n="category_rice">
                             <i class="fas fa-bowl-rice mr-2"></i>Cơm & Bún
                         </button>
-                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="hotpot">
+                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="hotpot" data-i18n="category_hotpot">
                             <i class="fas fa-fire mr-2"></i>Canh & Lẩu
                         </button>
-                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="desserts">
+                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="desserts" data-i18n="category_desserts">
                             <i class="fas fa-ice-cream mr-2"></i>Tráng Miệng
                         </button>
-                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="drinks">
+                        <button class="menu-category-btn bg-white text-gray-800 px-6 py-3 rounded-full font-semibold shadow-md" data-category="drinks" data-i18n="category_drinks">
                             <i class="fas fa-glass-water mr-2"></i>Đồ Uống
                         </button>
                     </div>
@@ -753,7 +754,7 @@
                 <!-- Ingredients -->
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                        <i class="fas fa-list-ul mr-2 text-green-500"></i>Nguyên liệu
+                        <i class="fas fa-list-ul mr-2 text-green-500"></i><span data-i18n="detail_ingredients">Nguyên liệu</span>
                     </h3>
                     <ul id="detailIngredients" class="grid grid-cols-1 md:grid-cols-2 gap-2"></ul>
                 </div>
@@ -761,7 +762,7 @@
                 <!-- Cooking Method -->
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                        <i class="fas fa-fire mr-2 text-red-500"></i>Cách chế biến
+                        <i class="fas fa-fire mr-2 text-red-500"></i><span data-i18n="detail_cooking_method">Cách chế biến</span>
                     </h3>
                     <p id="detailCookingMethod" class="text-gray-600 leading-relaxed"></p>
                 </div>
@@ -769,7 +770,7 @@
                 <!-- Taste Profile -->
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                        <i class="fas fa-heart mr-2 text-pink-500"></i>Hương vị đặc trưng
+                        <i class="fas fa-heart mr-2 text-pink-500"></i><span data-i18n="detail_taste_profile">Hương vị đặc trưng</span>
                     </h3>
                     <p id="detailTasteProfile" class="text-gray-600 leading-relaxed"></p>
                 </div>
@@ -777,7 +778,7 @@
                 <!-- Serving Suggestion -->
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                        <i class="fas fa-concierge-bell mr-2 text-blue-500"></i>Cách thưởng thức
+                        <i class="fas fa-concierge-bell mr-2 text-blue-500"></i><span data-i18n="detail_serving_suggestion">Cách thưởng thức</span>
                     </h3>
                     <p id="detailServingSuggestion" class="text-gray-600 leading-relaxed"></p>
                 </div>
@@ -785,7 +786,7 @@
                 <!-- Nutritional Info -->
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                        <i class="fas fa-leaf mr-2 text-green-600"></i>Giá trị dinh dưỡng
+                        <i class="fas fa-leaf mr-2 text-green-600"></i><span data-i18n="detail_nutritional_info">Giá trị dinh dưỡng</span>
                     </h3>
                     <p id="detailNutritionalInfo" class="text-gray-600 leading-relaxed"></p>
                 </div>
@@ -793,7 +794,7 @@
                 <!-- Origin -->
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                        <i class="fas fa-map-marker-alt mr-2 text-purple-500"></i>Nguồn gốc
+                        <i class="fas fa-map-marker-alt mr-2 text-purple-500"></i><span data-i18n="detail_origin">Nguồn gốc</span>
                     </h3>
                     <p id="detailOrigin" class="text-gray-600 leading-relaxed"></p>
                 </div>
@@ -802,10 +803,10 @@
                 <div class="flex items-center justify-between pt-6 border-t border-gray-200">
                     <div class="text-2xl font-bold text-orange-600" id="detailPrice"></div>
                     <div class="flex space-x-3">
-                        <button id="detailAddToCart" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                        <button id="detailAddToCart" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors" data-i18n="btn_add_to_cart">
                             <i class="fas fa-cart-plus mr-2"></i>Thêm vào giỏ hàng
                         </button>
-                        <button id="closeDetailModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                        <button id="closeDetailModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors" data-i18n="btn_close">
                             Đóng
                         </button>
                     </div>
@@ -818,6 +819,7 @@
     <script src="js/auth.js"></script>
     <script src="js/components.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/lang.js"></script>
     <script src="js/chatbot.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/user-cart-integration.js"></script>
