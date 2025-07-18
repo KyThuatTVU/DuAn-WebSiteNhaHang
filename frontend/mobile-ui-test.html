@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile UI Test - Nhà Hàng Ẩm Thực Phương Nam</title>
+    <link rel="icon" href="img/logoPN.png" type="image/png">
+    
+    <!-- External CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="css/main.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/animations.css" rel="stylesheet">
+    <link href="css/mobile-responsive.css" rel="stylesheet">
+    
+    <style>
+        /* Demo styles */
+        .demo-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            z-index: 1000;
+        }
+        
+        .demo-indicator::before {
+            content: "XS (< 480px)";
+        }
+        
+        @media (min-width: 480px) {
+            .demo-indicator::before {
+                content: "SM (480px - 640px)";
+            }
+        }
+        
+        @media (min-width: 641px) {
+            .demo-indicator::before {
+                content: "MD (641px - 768px)";
+            }
+        }
+        
+        @media (min-width: 769px) {
+            .demo-indicator::before {
+                content: "LG (769px+)";
+            }
+        }
+        
+        .test-section {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Screen Size Indicator -->
+    <div class="demo-indicator"></div>
+
+    <!-- Header Component -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-2 sm:px-4 py-2">
+            <div class="flex justify-between items-center">           
+                <!-- Logo and Brand Section - Mobile Responsive -->
+                <div class="flex items-center min-w-0 flex-shrink-0">
+                    <img src="./img/logoPN.png" alt="Logo Nhà Hàng" class="h-10 sm:h-12 md:h-16 mr-2 sm:mr-3 md:mr-4 rounded-md border border-gray-300 flex-shrink-0">
+                    <div class="min-w-0">
+                        <div class="text-sm sm:text-lg md:text-2xl font-bold text-primary leading-tight">
+                            <span class="font-cursive">Phương Nam</span>
+                        </div>
+                        <div class="text-xs sm:text-sm text-gray-600 leading-tight">
+                            <div>Ẩm Thực</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side Actions - Mobile Responsive -->
+                <div class="flex items-center space-x-1 sm:space-x-2 md:space-x-3 min-w-0">
+                    <!-- Login Button - Responsive sizing -->
+                    <button class="bg-white text-primary px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg border border-primary hover:bg-primary hover:text-white transition duration-300 text-xs sm:text-sm">
+                        <span class="hidden sm:inline">Đăng Nhập</span>
+                        <span class="sm:hidden">Đăng Nhập</span>
+                    </button>
+                    
+                    <!-- Language Toggle Button - Responsive sizing -->
+                    <button class="bg-white text-yellow-800 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg border border-yellow-500 hover:bg-yellow-100 transition duration-300 text-xs sm:text-sm font-medium">
+                        EN
+                    </button>
+
+                    <!-- Mobile Menu Toggle - Responsive sizing -->
+                    <button class="md:hidden ml-1 sm:ml-2 focus:outline-none p-1">
+                        <i class="fas fa-bars text-xl sm:text-2xl text-gray-600"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-4">
+        <div class="test-section">
+            <h1 class="text-xl font-bold mb-4">Mobile UI Improvements Test</h1>
+            <p class="text-sm text-gray-600 mb-4">This page demonstrates the mobile UI improvements for the restaurant website.</p>
+            
+            <h2 class="text-lg font-semibold mb-3">✅ Implemented Improvements:</h2>
+            <ul class="list-disc list-inside space-y-1 text-sm">
+                <li><strong>Responsive Header:</strong> Logo and buttons adapt to screen size</li>
+                <li><strong>Touch-Friendly:</strong> Minimum 44px touch targets</li>
+                <li><strong>Optimized Typography:</strong> Responsive font sizes</li>
+                <li><strong>Better Spacing:</strong> Adaptive padding and margins</li>
+                <li><strong>Mobile Performance:</strong> Reduced animations, optimized images</li>
+                <li><strong>Hero Banner:</strong> Responsive height and content</li>
+                <li><strong>Menu Cards:</strong> Mobile-optimized layout</li>
+                <li><strong>Image Modal:</strong> Mobile-friendly viewing</li>
+                <li><strong>Testimonials:</strong> Compact mobile layout</li>
+                <li><strong>Promotion Section:</strong> Stacked mobile layout</li>
+            </ul>
+        </div>
+
+        <!-- Hero Banner Demo -->
+        <div class="test-section">
+            <h2 class="text-lg font-semibold mb-3">Hero Banner (Mobile Optimized)</h2>
+            <div class="banner h-80 sm:h-96 md:h-[400px] bg-cover bg-center bg-no-repeat relative rounded-lg overflow-hidden" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('img/LOGO2.jpg');">
+                <div class="h-full flex items-center p-4">
+                    <div class="text-white w-full">
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-cursive mb-3 leading-tight">
+                            Hương Vị Phương Nam
+                        </h1>
+                        <p class="text-sm sm:text-base mb-6 leading-relaxed">
+                            Đắm chìm trong không gian ẩm thực truyền thống Nam Bộ.
+                        </p>
+                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                            <button class="bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg text-center font-medium transition-all duration-300">
+                                <i class="fas fa-calendar-plus mr-2"></i>Đặt Bàn Ngay
+                            </button>
+                            <button class="bg-white hover:bg-gray-100 text-red-600 py-3 px-6 rounded-lg text-center font-medium transition-all duration-300">
+                                <i class="fas fa-utensils mr-2"></i>Đặt Món Ngay
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Card Demo -->
+        <div class="test-section">
+            <h2 class="text-lg font-semibold mb-3">Menu Card (Mobile Optimized)</h2>
+            <div class="bg-white rounded-lg overflow-hidden shadow-lg">
+                <div class="relative h-48 sm:h-56 overflow-hidden">
+                    <img src="img/calocnuongtrui.jpg" alt="Demo Dish" class="w-full h-full object-cover">
+                </div>
+                <div class="p-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2">
+                        <h3 class="font-bold text-lg mb-1 sm:mb-0">Cá Lóc Nướng Trui</h3>
+                        <span class="text-primary font-bold text-lg">185.000đ</span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4 leading-relaxed">Cá lóc tươi nướng trui trên than hoa, phết mỡ hành và ăn kèm với các loại rau thơm đặc trưng miền Nam.</p>
+                    <button class="bg-primary hover:bg-red-700 text-white py-2.5 px-4 rounded-md transition-all duration-300 w-full font-medium">
+                        <i class="fas fa-utensils mr-2"></i>Xem Chi Tiết
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testimonial Demo -->
+        <div class="test-section">
+            <h2 class="text-lg font-semibold mb-3">Testimonial (Mobile Optimized)</h2>
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <div class="flex items-center mb-3">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden mr-3 flex-shrink-0 bg-gray-300">
+                        <div class="w-full h-full flex items-center justify-center text-gray-500">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="font-bold text-sm sm:text-base truncate">Nguyễn Văn A</h4>
+                        <div class="flex text-yellow-400 text-xs sm:text-sm">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-600 italic text-sm sm:text-base leading-relaxed">"Nhà hàng có không gian đẹp, món ăn ngon và phục vụ tận tình. Tôi sẽ quay lại!"</p>
+            </div>
+        </div>
+
+        <!-- Touch Target Demo -->
+        <div class="test-section">
+            <h2 class="text-lg font-semibold mb-3">Touch-Friendly Buttons</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <button class="bg-blue-600 text-white py-3 px-4 rounded-lg text-sm font-medium">
+                    <i class="fas fa-phone mr-2"></i>Gọi Ngay
+                </button>
+                <button class="bg-green-600 text-white py-3 px-4 rounded-lg text-sm font-medium">
+                    <i class="fas fa-map-marker-alt mr-2"></i>Chỉ Đường
+                </button>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="test-section">
+            <h2 class="text-lg font-semibold mb-3">Test Instructions</h2>
+            <ol class="list-decimal list-inside space-y-2 text-sm">
+                <li>Resize your browser window to test different screen sizes</li>
+                <li>Check the screen size indicator in the top right corner</li>
+                <li>Notice how elements adapt at different breakpoints</li>
+                <li>Test touch interactions on mobile devices</li>
+                <li>Verify all text remains readable at small sizes</li>
+                <li>Check that all buttons are easily tappable</li>
+            </ol>
+        </div>
+    </main>
+
+    <!-- JavaScript for interactions -->
+    <script>
+        // Add some basic interactivity
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function() {
+                console.log('Button clicked:', this.textContent.trim());
+            });
+        });
+    </script>
+</body>
+</html>
