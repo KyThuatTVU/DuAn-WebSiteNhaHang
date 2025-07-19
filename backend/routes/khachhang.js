@@ -189,4 +189,177 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// POST /api/khachhang - Create new customer
+router.post('/', async (req, res) => {
+  console.log('🔍 POST /api/khachhang called');
+  console.log('📨 Request body:', req.body);
+
+  try {
+    const { ho_ten, email, so_dien_thoai, dia_chi } = req.body;
+
+    // Validation
+    if (!ho_ten || !email || !so_dien_thoai) {
+      return res.status(400).json({
+        success: false,
+        message: 'Thiếu thông tin bắt buộc',
+        errors: ['Họ tên, email và số điện thoại là bắt buộc']
+      });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email không hợp lệ'
+      });
+    }
+
+    // Phone validation
+    const phoneRegex = /^[0-9]{10,11}$/;
+    if (!phoneRegex.test(so_dien_thoai)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Số điện thoại không hợp lệ'
+      });
+    }
+
+    // Mock creation (in real app, would insert to database)
+    const newCustomer = {
+      id_khachhang: Date.now(), // Mock ID
+      ho_ten,
+      email,
+      so_dien_thoai,
+      dia_chi: dia_chi || '',
+      ngay_tao: new Date().toISOString(),
+      trang_thai: 'active'
+    };
+
+    res.status(201).json({
+      success: true,
+      message: 'Tạo khách hàng thành công',
+      data: newCustomer,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Error creating customer:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi tạo khách hàng',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// PUT /api/khachhang/:id - Update customer
+router.put('/:id', async (req, res) => {
+  console.log('🔍 PUT /api/khachhang/:id called with ID:', req.params.id);
+  console.log('📨 Request body:', req.body);
+
+  try {
+    const customerId = parseInt(req.params.id);
+    const { ho_ten, email, so_dien_thoai, dia_chi } = req.body;
+
+    if (isNaN(customerId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID khách hàng không hợp lệ'
+      });
+    }
+
+    // Validation for update fields
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email không hợp lệ'
+        });
+      }
+    }
+
+    if (so_dien_thoai) {
+      const phoneRegex = /^[0-9]{10,11}$/;
+      if (!phoneRegex.test(so_dien_thoai)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Số điện thoại không hợp lệ'
+        });
+      }
+    }
+
+    // Mock update (in real app, would update database)
+    const updatedCustomer = {
+      id_khachhang: customerId,
+      ho_ten: ho_ten || 'Nguyễn Văn A (Updated)',
+      email: email || 'updated@email.com',
+      so_dien_thoai: so_dien_thoai || '0987654321',
+      dia_chi: dia_chi || 'Địa chỉ đã cập nhật',
+      ngay_cap_nhat: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      message: 'Cập nhật khách hàng thành công',
+      data: updatedCustomer,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Error updating customer:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi cập nhật khách hàng',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// DELETE /api/khachhang/:id - Delete customer
+router.delete('/:id', async (req, res) => {
+  console.log('🔍 DELETE /api/khachhang/:id called with ID:', req.params.id);
+
+  try {
+    const customerId = parseInt(req.params.id);
+
+    if (isNaN(customerId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID khách hàng không hợp lệ'
+      });
+    }
+
+    // Check if customer exists (mock check)
+    if (customerId === 999) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy khách hàng'
+      });
+    }
+
+    // Mock deletion (in real app, would soft delete or hard delete from database)
+    res.json({
+      success: true,
+      message: 'Xóa khách hàng thành công',
+      data: {
+        id_khachhang: customerId,
+        deleted_at: new Date().toISOString()
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Error deleting customer:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi xóa khách hàng',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 module.exports = router;

@@ -436,4 +436,172 @@ router.get('/suggested-questions', ChatController.getSuggestedQuestions);
  */
 router.get('/health', ChatController.healthCheck);
 
+/**
+ * @swagger
+ * /chat/history:
+ *   get:
+ *     summary: Lấy lịch sử chat
+ *     description: Lấy lịch sử các cuộc trò chuyện gần đây
+ *     tags: [Chat]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Số lượng tin nhắn tối đa
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Vị trí bắt đầu
+ *     responses:
+ *       200:
+ *         description: Lịch sử chat
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     history:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           role:
+ *                             type: string
+ *                             enum: [user, assistant]
+ *                           content:
+ *                             type: string
+ *                           timestamp:
+ *                             type: string
+ *                             format: date-time
+ *                     total:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     offset:
+ *                       type: integer
+ */
+router.get('/history', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = parseInt(req.query.offset) || 0;
+
+    // Mock chat history
+    const mockHistory = [
+      {
+        id: '1',
+        role: 'user',
+        content: 'Xin chào! Nhà hàng có những món gì ngon?',
+        timestamp: new Date(Date.now() - 3600000).toISOString()
+      },
+      {
+        id: '2',
+        role: 'assistant',
+        content: 'Xin chào! Nhà hàng chúng tôi có nhiều món ngon như Phở Bò, Bún Bò Huế, Cơm Tấm...',
+        timestamp: new Date(Date.now() - 3500000).toISOString()
+      },
+      {
+        id: '3',
+        role: 'user',
+        content: 'Tôi muốn đặt bàn cho 4 người',
+        timestamp: new Date(Date.now() - 1800000).toISOString()
+      },
+      {
+        id: '4',
+        role: 'assistant',
+        content: 'Tôi sẽ giúp bạn đặt bàn. Bạn muốn đặt vào thời gian nào?',
+        timestamp: new Date(Date.now() - 1700000).toISOString()
+      }
+    ];
+
+    const paginatedHistory = mockHistory.slice(offset, offset + limit);
+
+    res.json({
+      success: true,
+      data: {
+        history: paginatedHistory,
+        total: mockHistory.length,
+        limit,
+        offset
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error getting chat history:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy lịch sử chat',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /chat/history:
+ *   delete:
+ *     summary: Xóa lịch sử chat
+ *     description: Xóa toàn bộ lịch sử chat của người dùng
+ *     tags: [Chat]
+ *     responses:
+ *       200:
+ *         description: Xóa lịch sử thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Xóa lịch sử chat thành công"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     deleted_count:
+ *                       type: integer
+ *                       example: 10
+ *                     deleted_at:
+ *                       type: string
+ *                       format: date-time
+ */
+router.delete('/history', async (req, res) => {
+  try {
+    // Mock deletion
+    const deletedCount = Math.floor(Math.random() * 20) + 1;
+
+    res.json({
+      success: true,
+      message: 'Xóa lịch sử chat thành công',
+      data: {
+        deleted_count: deletedCount,
+        deleted_at: new Date().toISOString()
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error clearing chat history:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi xóa lịch sử chat',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

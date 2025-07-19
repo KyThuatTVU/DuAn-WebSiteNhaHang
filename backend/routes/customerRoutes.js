@@ -208,4 +208,123 @@ router.post('/refresh', authEndpoints.refresh);
  */
 router.get('/profile', authenticateToken, authEndpoints.profile);
 
+/**
+ * @swagger
+ * /api/khach_hang/profile:
+ *   put:
+ *     summary: Cập nhật thông tin profile
+ *     description: Cập nhật thông tin cá nhân của khách hàng đã đăng nhập
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ho_ten:
+ *                 type: string
+ *                 example: "Nguyễn Văn A"
+ *               so_dien_thoai:
+ *                 type: string
+ *                 example: "0987654321"
+ *               dia_chi:
+ *                 type: string
+ *                 example: "123 Đường ABC, TP.HCM"
+ *     responses:
+ *       200:
+ *         description: Cập nhật profile thành công
+ *       401:
+ *         description: Unauthorized - invalid or missing token
+ *       500:
+ *         description: Internal server error
+ */
+router.put('/profile', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { ho_ten, so_dien_thoai, dia_chi } = req.body;
+
+    // Validation
+    if (so_dien_thoai) {
+      const phoneRegex = /^[0-9]{10,11}$/;
+      if (!phoneRegex.test(so_dien_thoai)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Số điện thoại không hợp lệ'
+        });
+      }
+    }
+
+    // Mock update (in real app, would update database)
+    const updatedProfile = {
+      id: userId,
+      ho_ten: ho_ten || req.user.ho_ten,
+      email: req.user.email, // Email không thay đổi
+      so_dien_thoai: so_dien_thoai || req.user.so_dien_thoai,
+      dia_chi: dia_chi || req.user.dia_chi,
+      updated_at: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      message: 'Cập nhật profile thành công',
+      data: updatedProfile,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi cập nhật profile',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/khach_hang/profile:
+ *   delete:
+ *     summary: Xóa tài khoản
+ *     description: Xóa tài khoản khách hàng (soft delete)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Xóa tài khoản thành công
+ *       401:
+ *         description: Unauthorized - invalid or missing token
+ *       500:
+ *         description: Internal server error
+ */
+router.delete('/profile', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Mock deletion (in real app, would soft delete from database)
+    res.json({
+      success: true,
+      message: 'Xóa tài khoản thành công',
+      data: {
+        id: userId,
+        deleted_at: new Date().toISOString(),
+        status: 'deleted'
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi xóa tài khoản',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
