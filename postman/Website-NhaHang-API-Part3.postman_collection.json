@@ -1,0 +1,317 @@
+{
+	"info": {
+		"_postman_id": "restaurant-api-part3",
+		"name": "Website Nhà Hàng - API Collection Part 3",
+		"description": "Chat AI and additional endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "🤖 AI Chat",
+			"item": [
+				{
+					"name": "Send Chat Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Xin chào! Tôi muốn biết thông tin về các món ăn đặc sản của nhà hàng.\"\n    }\n  ],\n  \"options\": {\n    \"useGroq\": false,\n    \"temperature\": 0.7,\n    \"maxTokens\": 500\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Chat with Groq AI",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Tôi muốn đặt bàn cho 4 người vào tối nay. Bạn có thể hướng dẫn tôi không?\"\n    }\n  ],\n  \"options\": {\n    \"useGroq\": true,\n    \"temperature\": 0.8,\n    \"maxTokens\": 300\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Chat Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/chat/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Chat Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/chat/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "status"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Chat Conversation History",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Xin chào!\"\n    },\n    {\n      \"role\": \"assistant\",\n      \"content\": \"Xin chào! Tôi là trợ lý AI của nhà hàng Ẩm Thực Phương Nam. Tôi có thể giúp bạn gì hôm nay?\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Tôi muốn biết giá của món phở bò.\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📁 File Upload",
+			"item": [
+				{
+					"name": "Upload Food Image",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{serverUrl}}/images/upload",
+							"host": ["{{serverUrl}}"],
+							"path": ["images", "upload"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Image",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{serverUrl}}/images/pho-bo.jpg",
+							"host": ["{{serverUrl}}"],
+							"path": ["images", "pho-bo.jpg"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📊 Analytics & Reports",
+			"item": [
+				{
+					"name": "Daily Reservations Report",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/datban?date={{currentDate}}&status=all",
+							"host": ["{{baseUrl}}"],
+							"path": ["datban"],
+							"query": [
+								{
+									"key": "date",
+									"value": "{{currentDate}}"
+								},
+								{
+									"key": "status",
+									"value": "all"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Popular Foods Report",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/foods?limit=10&sort=popular",
+							"host": ["{{baseUrl}}"],
+							"path": ["foods"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "sort",
+									"value": "popular"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🧪 Testing Scenarios",
+			"item": [
+				{
+					"name": "Complete Booking Flow",
+					"item": [
+						{
+							"name": "1. Create Reservation",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Save reservation ID for next requests",
+											"if (pm.response.json().id) {",
+											"    pm.globals.set('reservationId', pm.response.json().id);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"ten_khach\": \"Test User\",\n  \"sdt\": \"0999888777\",\n  \"email\": \"testuser@example.com\",\n  \"ngay\": \"{{futureDate}}\",\n  \"gio\": \"19:30:00\",\n  \"so_luong_khach\": 2,\n  \"ghi_chu\": \"Test booking\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/datban",
+									"host": ["{{baseUrl}}"],
+									"path": ["datban"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "2. Confirm Reservation",
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"trang_thai\": \"da_xac_nhan\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/datban/{{reservationId}}/status",
+									"host": ["{{baseUrl}}"],
+									"path": ["datban", "{{reservationId}}", "status"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "3. Get Confirmed Reservation",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/datban/{{reservationId}}",
+									"host": ["{{baseUrl}}"],
+									"path": ["datban", "{{reservationId}}"]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set current date",
+					"const today = new Date();",
+					"const currentDate = today.toISOString().split('T')[0];",
+					"pm.globals.set('currentDate', currentDate);",
+					"",
+					"// Set future date (tomorrow)",
+					"const tomorrow = new Date(today);",
+					"tomorrow.setDate(tomorrow.getDate() + 1);",
+					"const futureDate = tomorrow.toISOString().split('T')[0];",
+					"pm.globals.set('futureDate', futureDate);"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "serverUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "reservationId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

@@ -1,0 +1,321 @@
+{
+	"info": {
+		"_postman_id": "restaurant-api-part2",
+		"name": "Website Nhà Hàng - API Collection Part 2",
+		"description": "Authentication, Booking, and Chat endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "Register Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ho_ten\": \"Nguyễn Văn Test\",\n  \"email\": \"test@example.com\",\n  \"mat_khau\": \"password123\",\n  \"so_dien_thoai\": \"0987654321\",\n  \"dia_chi\": \"123 Test Street, TP.HCM\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/khach_hang/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["khach_hang", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Customer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Extract and save auth token",
+									"if (pm.response.json().token) {",
+									"    pm.globals.set('authToken', pm.response.json().token);",
+									"    console.log('Auth token saved:', pm.response.json().token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/khach_hang/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["khach_hang", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/khach_hang/profile",
+							"host": ["{{baseUrl}}"],
+							"path": ["khach_hang", "profile"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/khach_hang/refresh",
+							"host": ["{{baseUrl}}"],
+							"path": ["khach_hang", "refresh"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "👥 Customer Management",
+			"item": [
+				{
+					"name": "Get All Customers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/khachhang",
+							"host": ["{{baseUrl}}"],
+							"path": ["khachhang"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/khachhang/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["khachhang", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Simple Customer Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"nguyenvana@email.com\",\n  \"phone\": \"0987654321\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/khachhang/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["khachhang", "login"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📅 Booking Management (Đặt Bàn)",
+			"item": [
+				{
+					"name": "Create Reservation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ten_khach\": \"Nguyễn Văn A\",\n  \"sdt\": \"0987654321\",\n  \"email\": \"nguyenvana@email.com\",\n  \"ngay\": \"2024-12-25\",\n  \"gio\": \"19:00:00\",\n  \"so_luong_khach\": 4,\n  \"ghi_chu\": \"Bàn gần cửa sổ\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/datban",
+							"host": ["{{baseUrl}}"],
+							"path": ["datban"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Reservations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/datban",
+							"host": ["{{baseUrl}}"],
+							"path": ["datban"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "cho_xac_nhan",
+									"disabled": true
+								},
+								{
+									"key": "date",
+									"value": "2024-12-25",
+									"disabled": true
+								},
+								{
+									"key": "phone",
+									"value": "0987654321",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Reservation by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/datban/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["datban", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Reservation",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ten_khach\": \"Nguyễn Văn A (Updated)\",\n  \"sdt\": \"0987654321\",\n  \"email\": \"nguyenvana@email.com\",\n  \"ngay\": \"2024-12-25\",\n  \"gio\": \"20:00:00\",\n  \"so_luong_khach\": 6,\n  \"ghi_chu\": \"Bàn VIP\",\n  \"trang_thai\": \"da_xac_nhan\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/datban/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["datban", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Reservation Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"trang_thai\": \"da_xac_nhan\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/datban/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["datban", "1", "status"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Reservation",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/datban/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["datban", "1"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
