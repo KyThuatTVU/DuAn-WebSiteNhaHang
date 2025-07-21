@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Test Khach Hang Routes - Debug Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .test-section h3 {
+            color: #495057;
+            margin-top: 0;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .success {
+            border-color: #28a745;
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .warning {
+            border-color: #ffc107;
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Khach Hang Routes - Debug Tool</h1>
+        
+        <div class="info">
+            <h3>🔍 Route Debugging</h3>
+            <p><strong>Vấn đề:</strong> Lỗi 404 khi gọi <code>/api/khach_hang/1</code></p>
+            <p><strong>Nguyên nhân:</strong> Nhầm lẫn giữa hai routes:</p>
+            <ul>
+                <li><code>/api/khach_hang</code> - Authentication API (có dấu gạch dưới)</li>
+                <li><code>/api/khachhang</code> - Customer Management API (không có dấu gạch dưới)</li>
+            </ul>
+        </div>
+
+        <div class="grid">
+            <!-- Authentication API Tests -->
+            <div class="test-section">
+                <h3>🔐 Authentication API (/api/khach_hang)</h3>
+                <p><strong>Base URL:</strong> <code>/api/khach_hang</code> (có dấu gạch dưới)</p>
+                
+                <button onclick="testAuthHealth()">🏥 Test Auth Health</button>
+                <button onclick="testAuthProfile()">👤 Test Profile</button>
+                <button onclick="testAuthRegister()">📝 Test Register</button>
+                <div id="authResponse" class="response"></div>
+            </div>
+
+            <!-- Customer Management API Tests -->
+            <div class="test-section">
+                <h3>👥 Customer Management API (/api/khachhang)</h3>
+                <p><strong>Base URL:</strong> <code>/api/khachhang</code> (không có dấu gạch dưới)</p>
+                
+                <button onclick="testCustomerList()">📋 Test Customer List</button>
+                <button onclick="testCustomerById()">🔍 Test Customer by ID</button>
+                <button onclick="testCustomerById2()">🔍 Test Customer ID=2</button>
+                <button onclick="testCustomerById3()">🔍 Test Customer ID=3</button>
+                <div id="customerResponse" class="response"></div>
+            </div>
+        </div>
+
+        <!-- Route Comparison -->
+        <div class="test-section">
+            <h3>⚖️ Route Comparison Test</h3>
+            <p>So sánh response giữa hai URLs để xác định sự khác biệt:</p>
+            
+            <button onclick="compareRoutes()">🔄 Compare Both Routes</button>
+            <div id="comparisonResponse" class="response"></div>
+        </div>
+
+        <!-- Debug Information -->
+        <div class="test-section">
+            <h3>🐛 Debug Information</h3>
+            <button onclick="debugRoutes()">🔍 Debug All Routes</button>
+            <div id="debugResponse" class="response"></div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:3000';
+        
+        const makeRequest = async (url, options = {}) => {
+            try {
+                console.log('Making request to:', url);
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                const data = await response.json();
+                return {
+                    status: response.status,
+                    ok: response.ok,
+                    data,
+                    url
+                };
+            } catch (error) {
+                return {
+                    status: 0,
+                    ok: false,
+                    data: { error: error.message },
+                    url
+                };
+            }
+        };
+
+        const displayResponse = (elementId, result, title = '') => {
+            const element = document.getElementById(elementId);
+            const className = result.ok ? 'success' : 'error';
+            
+            const output = `${title ? title + '\n' : ''}URL: ${result.url}
+Status: ${result.status}
+Response: ${JSON.stringify(result.data, null, 2)}`;
+            
+            element.textContent = output;
+            element.className = `response ${className}`;
+        };
+
+        // Authentication API Tests
+        const testAuthHealth = async () => {
+            const result = await makeRequest(`${baseUrl}/api/khach_hang`);
+            displayResponse('authResponse', result, '🔐 Authentication API Base');
+        };
+
+        const testAuthProfile = async () => {
+            const result = await makeRequest(`${baseUrl}/api/khach_hang/profile`);
+            displayResponse('authResponse', result, '👤 Authentication Profile');
+        };
+
+        const testAuthRegister = async () => {
+            const result = await makeRequest(`${baseUrl}/api/khach_hang/register`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    full_name: 'Test User',
+                    email: 'test@example.com',
+                    phone: '0123456789',
+                    password: 'password123'
+                })
+            });
+            displayResponse('authResponse', result, '📝 Authentication Register');
+        };
+
+        // Customer Management API Tests
+        const testCustomerList = async () => {
+            const result = await makeRequest(`${baseUrl}/api/khachhang`);
+            displayResponse('customerResponse', result, '📋 Customer Management List');
+        };
+
+        const testCustomerById = async () => {
+            const result = await makeRequest(`${baseUrl}/api/khachhang/1`);
+            displayResponse('customerResponse', result, '🔍 Customer Management by ID=1');
+        };
+
+        const testCustomerById2 = async () => {
+            const result = await makeRequest(`${baseUrl}/api/khachhang/2`);
+            displayResponse('customerResponse', result, '🔍 Customer Management by ID=2');
+        };
+
+        const testCustomerById3 = async () => {
+            const result = await makeRequest(`${baseUrl}/api/khachhang/3`);
+            displayResponse('customerResponse', result, '🔍 Customer Management by ID=3');
+        };
+
+        // Route Comparison
+        const compareRoutes = async () => {
+            const [authResult, customerResult] = await Promise.all([
+                makeRequest(`${baseUrl}/api/khach_hang/1`),
+                makeRequest(`${baseUrl}/api/khachhang/1`)
+            ]);
+
+            const comparison = `
+=== ROUTE COMPARISON ===
+
+❌ /api/khach_hang/1 (Authentication route with ID):
+Status: ${authResult.status}
+Response: ${JSON.stringify(authResult.data, null, 2)}
+
+✅ /api/khachhang/1 (Customer Management route):
+Status: ${customerResult.status}
+Response: ${JSON.stringify(customerResult.data, null, 2)}
+
+=== CONCLUSION ===
+${authResult.ok ? '⚠️ Auth route unexpectedly worked' : '✅ Auth route correctly failed (expected)'}
+${customerResult.ok ? '✅ Customer route works correctly' : '❌ Customer route failed (unexpected)'}
+            `;
+
+            const element = document.getElementById('comparisonResponse');
+            element.textContent = comparison;
+            element.className = 'response warning';
+        };
+
+        // Debug All Routes
+        const debugRoutes = async () => {
+            const routes = [
+                '/api/health',
+                '/api/khach_hang',
+                '/api/khachhang',
+                '/api/khach_hang/profile',
+                '/api/khachhang/1',
+                '/api/khachhang/2',
+                '/api/khachhang/3'
+            ];
+
+            const results = [];
+            for (const route of routes) {
+                const result = await makeRequest(`${baseUrl}${route}`);
+                results.push({
+                    route,
+                    status: result.status,
+                    ok: result.ok,
+                    message: result.data.message || result.data.error || 'No message'
+                });
+            }
+
+            const debugOutput = `
+=== ROUTE DEBUG RESULTS ===
+
+${results.map(r => `
+${r.ok ? '✅' : '❌'} ${r.route}
+   Status: ${r.status}
+   Message: ${r.message}
+`).join('')}
+
+=== RECOMMENDATIONS ===
+${results.find(r => r.route === '/api/khachhang/1' && r.ok) ? 
+  '✅ Customer by ID route is working correctly' : 
+  '❌ Customer by ID route needs fixing'}
+
+${results.find(r => r.route === '/api/khach_hang' && r.ok) ? 
+  '✅ Authentication base route is working' : 
+  '❌ Authentication base route needs fixing'}
+            `;
+
+            const element = document.getElementById('debugResponse');
+            element.textContent = debugOutput;
+            element.className = 'response info';
+        };
+
+        // Auto-run basic tests on load
+        window.onload = () => {
+            setTimeout(() => {
+                testCustomerById();
+                setTimeout(() => {
+                    compareRoutes();
+                }, 1000);
+            }, 500);
+        };
+    </script>
+</body>
+</html>

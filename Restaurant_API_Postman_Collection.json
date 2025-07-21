@@ -1,0 +1,1850 @@
+{
+  "info": {
+    "name": "🍽️ Restaurant Management API",
+    "description": "Complete API collection for Restaurant Management System\n\n## Features\n- Authentication & User Management\n- Food & Category Management\n- AI Chat Integration\n- Reservation System\n- Advanced Filtering & Pagination\n\n## Base URL\n`{{baseUrl}}/api`\n\n## Authentication\nMost endpoints require JWT token in Authorization header:\n`Authorization: Bearer {{token}}`",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "description": "User authentication and management endpoints",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Nguyễn Văn A\",\n  \"email\": \"user@example.com\",\n  \"phone\": \"0123456789\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang", "register"]
+            },
+            "description": "Register a new user account"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('token', response.data.token);",
+                  "        pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+                  "        pm.collectionVariables.set('userId', response.data.user.id);",
+                  "        console.log('✅ Registration successful, tokens saved');",
+                  "    }",
+                  "}",
+                  "",
+                  "pm.test('Registration successful', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang", "login"]
+            },
+            "description": "Login with email and password"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('token', response.data.token);",
+                  "        pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+                  "        pm.collectionVariables.set('userId', response.data.user.id);",
+                  "        console.log('✅ Login successful, tokens saved');",
+                  "    }",
+                  "}",
+                  "",
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang", "profile"]
+            },
+            "description": "Get current user profile"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Profile retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang", "refresh"]
+            },
+            "description": "Refresh access token using refresh token"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('token', response.data.token);",
+                  "        console.log('✅ Token refreshed successfully');",
+                  "    }",
+                  "}",
+                  "",
+                  "pm.test('Token refresh successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang?limit=20&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Get all users (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "GET User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang", "1"]
+            },
+            "description": "Get user by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Update Profile Partially",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"so_dien_thoai\": \"0987654321\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang", "profile"]
+            },
+            "description": "Partially update user profile"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang", "logout"]
+            },
+            "description": "Logout user"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('token', '');",
+                  "    pm.collectionVariables.set('refreshToken', '');",
+                  "    pm.collectionVariables.set('userId', '');",
+                  "    console.log('✅ Logged out, tokens cleared');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang", "forgot-password"]
+            },
+            "description": "Request password reset"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang", "2"]
+            },
+            "description": "Delete user (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "HEAD Users Metadata",
+          "request": {
+            "method": "HEAD",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang"]
+            },
+            "description": "Get users metadata"
+          },
+          "response": []
+        },
+        {
+          "name": "OPTIONS Authentication Methods",
+          "request": {
+            "method": "OPTIONS",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/khach_hang",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khach_hang"]
+            },
+            "description": "Get supported methods for authentication"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🍜 Foods Management",
+      "description": "Food items management with advanced filtering",
+      "item": [
+        {
+          "name": "🔍 Test Server Connection",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Test if server is running and accessible"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Server is accessible', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Health check response is valid', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.message).to.include('running');",
+                  "});",
+                  "",
+                  "// Save server status for other requests",
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('serverStatus', 'online');",
+                  "    console.log('✅ Server is online and ready');",
+                  "} else {",
+                  "    pm.collectionVariables.set('serverStatus', 'offline');",
+                  "    console.log('❌ Server is not accessible');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Foods",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/foods?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (max 100)"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Offset for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "phở",
+                  "description": "Search in name and description",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "2",
+                  "description": "Filter by category ID",
+                  "disabled": true
+                },
+                {
+                  "key": "minPrice",
+                  "value": "20000",
+                  "description": "Minimum price filter",
+                  "disabled": true
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "100000",
+                  "description": "Maximum price filter",
+                  "disabled": true
+                },
+                {
+                  "key": "available",
+                  "value": "true",
+                  "description": "Filter by availability",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all foods with pagination, filtering, and sorting"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Debug request",
+                  "console.log('🔍 Testing GET /api/foods');",
+                  "console.log('Base URL:', pm.collectionVariables.get('baseUrl'));",
+                  "console.log('Full URL:', pm.request.url.toString());"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Debug response",
+                  "console.log('Response status:', pm.response.code);",
+                  "console.log('Response body:', pm.response.text());",
+                  "",
+                  "pm.test('Response status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Response has correct structure', function () {",
+                  "        const response = pm.response.json();",
+                  "        pm.expect(response).to.have.property('success');",
+                  "        pm.expect(response).to.have.property('data');",
+                  "        pm.expect(response.data).to.be.an('array');",
+                  "    });",
+                  "",
+                  "    pm.test('Foods data structure is correct', function () {",
+                  "        const response = pm.response.json();",
+                  "        if (response.data.length > 0) {",
+                  "            const food = response.data[0];",
+                  "            pm.expect(food).to.have.property('id_mon');",
+                  "            pm.expect(food).to.have.property('ten_mon');",
+                  "            pm.expect(food).to.have.property('gia');",
+                  "        }",
+                  "    });",
+                  "} else {",
+                  "    pm.test('Error response has message', function () {",
+                  "        const response = pm.response.json();",
+                  "        pm.expect(response).to.have.property('message');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Food by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/foods/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods", "1"]
+            },
+            "description": "Get specific food item by ID"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Food retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('object');",
+                  "    pm.expect(response.data.id).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Food",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "id_loai",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "ten_mon",
+                  "value": "Bún Bò Huế",
+                  "type": "text"
+                },
+                {
+                  "key": "mo_ta",
+                  "value": "Bún bò Huế cay nồng đặc trưng miền Trung",
+                  "type": "text"
+                },
+                {
+                  "key": "gia",
+                  "value": "50000",
+                  "type": "text"
+                },
+                {
+                  "key": "so_luong",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "hinh_anh",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/foods",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods"]
+            },
+            "description": "Create new food item with image upload"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Food created successfully', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data.id).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Food",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "ten_mon",
+                  "value": "Bún Bò Huế Cay",
+                  "type": "text"
+                },
+                {
+                  "key": "gia",
+                  "value": "55000",
+                  "type": "text"
+                },
+                {
+                  "key": "so_luong",
+                  "value": "25",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/foods/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods", "1"]
+            },
+            "description": "Update existing food item"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Food updated successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Food Stock",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"so_luong\": 15\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/foods/1/stock",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods", "1", "stock"]
+            },
+            "description": "Update food stock quantity only"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Stock updated successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Food",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/foods/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods", "1"]
+            },
+            "description": "Delete food item"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Food deleted successfully', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "HEAD Get Foods Metadata",
+          "request": {
+            "method": "HEAD",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/foods?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get foods metadata (headers only, no body)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('HEAD request successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Headers contain metadata', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "",
+                  "pm.test('No response body', function () {",
+                  "    pm.expect(pm.response.text()).to.be.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "OPTIONS Get Supported Methods",
+          "request": {
+            "method": "OPTIONS",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/foods",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods"]
+            },
+            "description": "Get supported HTTP methods for foods API"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('OPTIONS request successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains methods info', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.methods).to.be.an('array');",
+                  "    pm.expect(response.endpoints).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Allow header is present', function () {",
+                  "    pm.expect(pm.response.headers.get('Allow')).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH Update Food Partially",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gia\": 60000,\n  \"so_luong\": 15,\n  \"trang_thai\": \"kha_dung\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/foods/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods", "1"]
+            },
+            "description": "Partially update food item"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('PATCH request successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Food updated successfully', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH Update Food Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trang_thai\": \"het_hang\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/foods/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods", "1", "status"]
+            },
+            "description": "Update food status only"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Multiple Foods",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"foods\": [\n    {\n      \"id_loai\": 2,\n      \"ten_mon\": \"Bún Bò Huế\",\n      \"mo_ta\": \"Bún bò Huế cay nồng\",\n      \"gia\": 50000,\n      \"so_luong\": 20\n    },\n    {\n      \"id_loai\": 2,\n      \"ten_mon\": \"Bún Riêu\",\n      \"mo_ta\": \"Bún riêu cua đồng\",\n      \"gia\": 45000,\n      \"so_luong\": 15\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/foods/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods", "bulk"]
+            },
+            "description": "Create multiple foods at once"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Multiple Foods",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [1, 2, 3]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/foods/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods", "bulk"]
+            },
+            "description": "Delete multiple foods at once"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📂 Categories Management",
+      "description": "Food categories management",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"]
+            },
+            "description": "Get all food categories"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Categories retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", "1"]
+            },
+            "description": "Get specific category by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Foods by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/1/foods?limit=10&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", "1", "foods"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get all foods in a specific category"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ten_loai\": \"Món Tráng Miệng\",\n  \"mo_ta\": \"Các món ăn ngọt kết thúc bữa ăn\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"]
+            },
+            "description": "Create new food category"
+          },
+          "response": []
+        },
+        {
+          "name": "HEAD Get Categories Metadata",
+          "request": {
+            "method": "HEAD",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"]
+            },
+            "description": "Get categories metadata"
+          },
+          "response": []
+        },
+        {
+          "name": "OPTIONS Get Categories Methods",
+          "request": {
+            "method": "OPTIONS",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"]
+            },
+            "description": "Get supported methods for categories"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Update Category Partially",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mo_ta\": \"Mô tả danh mục được cập nhật\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", "1"]
+            },
+            "description": "Partially update category"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Update Category Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trang_thai\": \"inactive\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", "1", "status"]
+            },
+            "description": "Update category status"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🤖 AI Chat",
+      "description": "AI chatbot integration",
+      "item": [
+        {
+          "name": "Send Chat Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Tôi muốn đặt món phở bò\"\n    }\n  ],\n  \"options\": {\n    \"useGroq\": false,\n    \"temperature\": 0.7,\n    \"maxTokens\": 1000\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat"]
+            },
+            "description": "Send message to AI chatbot"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Chat response received', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.message).to.be.a('string');",
+                  "    pm.expect(response.provider).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generate Food Description",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"foodName\": \"Bún Bò Huế\",\n  \"ingredients\": [\"bún\", \"thịt bò\", \"chả cua\", \"ớt\"],\n  \"options\": {\n    \"style\": \"traditional\",\n    \"length\": \"medium\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/generate-description",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "generate-description"]
+            },
+            "description": "Generate food description using AI"
+          },
+          "response": []
+        },
+        {
+          "name": "Get AI Service Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "status"]
+            },
+            "description": "Check AI service availability"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Chat History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat?limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get chat history with pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Chat Conversation by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "1"]
+            },
+            "description": "Get specific chat conversation"
+          },
+          "response": []
+        },
+        {
+          "name": "HEAD Chat Metadata",
+          "request": {
+            "method": "HEAD",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat"]
+            },
+            "description": "Get chat service metadata"
+          },
+          "response": []
+        },
+        {
+          "name": "OPTIONS Chat Methods",
+          "request": {
+            "method": "OPTIONS",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat"]
+            },
+            "description": "Get supported methods for chat"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Update Chat Conversation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Đặt món phở bò\",\n  \"archived\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "1"]
+            },
+            "description": "Update chat conversation info"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Chat Conversation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "1"]
+            },
+            "description": "Delete chat conversation"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📅 Reservations",
+      "description": "Table reservation management",
+      "item": [
+        {
+          "name": "Create Reservation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ten_khach\": \"Nguyễn Văn A\",\n  \"sdt\": \"0123456789\",\n  \"email\": \"user@example.com\",\n  \"ngay\": \"2024-01-15\",\n  \"gio\": \"19:00\",\n  \"so_luong_khach\": 4,\n  \"ghi_chu\": \"Bàn gần cửa sổ\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/datban",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "datban"]
+            },
+            "description": "Create new table reservation"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Reservation created successfully', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Reservations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/datban?page=1&limit=20&status=cho_xac_nhan&date=2024-01-15",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "datban"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "cho_xac_nhan",
+                  "description": "cho_xac_nhan, da_xac_nhan, da_huy"
+                },
+                {
+                  "key": "date",
+                  "value": "2024-01-15",
+                  "description": "Filter by date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "phone",
+                  "value": "0123",
+                  "description": "Search by phone/name/email",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all reservations with filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reservation by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/datban/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "datban", "1"]
+            },
+            "description": "Get specific reservation by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Reservation Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trang_thai\": \"da_xac_nhan\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/datban/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "datban", "1", "status"]
+            },
+            "description": "Update reservation status (cho_xac_nhan, da_xac_nhan, da_huy)"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Reservation by ID",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/datban/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "datban", "1"]
+            },
+            "description": "Delete/cancel specific reservation by ID"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Reservation deleted successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH Update Reservation Partially",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"so_luong_khach\": 6,\n  \"ghi_chu\": \"Cập nhật số lượng khách\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/datban/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "datban", "1"]
+            },
+            "description": "Partially update reservation"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Multiple Reservations",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [1, 2, 3]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/datban/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "datban", "bulk"]
+            },
+            "description": "Delete multiple reservations at once"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Table Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/datban/availability?date=2024-01-15&time=19:00&guests=4",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "datban", "availability"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2024-01-15",
+                  "description": "Date to check (YYYY-MM-DD)"
+                },
+                {
+                  "key": "time",
+                  "value": "19:00",
+                  "description": "Time to check (HH:MM)"
+                },
+                {
+                  "key": "guests",
+                  "value": "4",
+                  "description": "Number of guests"
+                }
+              ]
+            },
+            "description": "Check table availability for specific date and time"
+          },
+          "response": []
+        },
+        {
+          "name": "HEAD Reservations Metadata",
+          "request": {
+            "method": "HEAD",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/datban",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "datban"]
+            },
+            "description": "Get reservations metadata"
+          },
+          "response": []
+        },
+        {
+          "name": "OPTIONS Reservations Methods",
+          "request": {
+            "method": "OPTIONS",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/datban",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "datban"]
+            },
+            "description": "Get supported methods for reservations"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👥 Customer Management",
+      "description": "Customer management for admin",
+      "item": [
+        {
+          "name": "Get All Customers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/khachhang?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khachhang"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of customers to return"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by name, email, or phone",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all customers (admin only) - URL: /api/khachhang (no underscore)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Customers retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Customer by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/khachhang/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "khachhang", "1"]
+            },
+            "description": "Get specific customer by ID - URL: /api/khachhang/1 (no underscore)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Customer retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('object');",
+                  "    pm.expect(response.data.id).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🔧 System",
+      "description": "System health and utility endpoints",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Check API health status"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('API is healthy', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.message).to.include('running');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "API Test",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test"]
+            },
+            "description": "Test API connectivity"
+          },
+          "response": []
+        },
+        {
+          "name": "API Documentation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/docs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "docs"]
+            },
+            "description": "Get API documentation info"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-refresh token if expired",
+          "const token = pm.collectionVariables.get('token');",
+          "if (token) {",
+          "    try {",
+          "        const payload = JSON.parse(atob(token.split('.')[1]));",
+          "        const now = Math.floor(Date.now() / 1000);",
+          "        if (payload.exp && payload.exp < now + 300) { // Refresh if expires in 5 minutes",
+          "            console.log('🔄 Token expiring soon, will refresh...');",
+          "        }",
+          "    } catch (e) {",
+          "        console.log('⚠️ Invalid token format');",
+          "    }",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global response time test",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// Global status code test for non-error responses",
+          "if (pm.response.code < 400) {",
+          "    pm.test('Response has success field', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response).to.have.property('success');",
+          "        pm.expect(response).to.have.property('timestamp');",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ]
+}

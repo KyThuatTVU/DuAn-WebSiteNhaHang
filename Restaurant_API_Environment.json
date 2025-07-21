@@ -1,0 +1,84 @@
+{
+  "id": "restaurant-api-env-updated",
+  "name": "🍽️ Restaurant API Environment - Updated & Fixed",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "Base URL for the Restaurant API",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "JWT access token for authentication",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "description": "JWT refresh token",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "description": "Current user ID",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "description": "Admin JWT token for privileged operations",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "testEmail",
+      "value": "test@restaurant.com",
+      "description": "Test user email",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testPassword",
+      "value": "password123",
+      "description": "Test user password",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "apiVersion",
+      "value": "2.0.0",
+      "description": "API version (updated)",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "timeout",
+      "value": "10000",
+      "description": "Request timeout in milliseconds (increased)",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "serverStatus",
+      "value": "unknown",
+      "description": "Server connection status",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "lastTestTime",
+      "value": "",
+      "description": "Last successful test timestamp",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}
