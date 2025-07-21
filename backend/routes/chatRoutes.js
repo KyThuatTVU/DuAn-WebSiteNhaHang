@@ -1,8 +1,15 @@
-// Chat Routes - AI Chat API Endpoints
+// Chat Routes - AI Chat API Endpoints with Full HTTP Methods
 const express = require('express');
 const router = express.Router();
 const ChatController = require('../controllers/ChatController');
 const { body, validationResult } = require('express-validator');
+const {
+  handleHeadRequest,
+  handleOptionsRequest,
+  createOptionsHandler,
+  createHeadHandler,
+  logHttpMethod
+} = require('../middleware/httpMethods');
 
 // Handle validation errors
 const handleValidationErrors = (req, res, next) => {
@@ -603,5 +610,303 @@ router.delete('/history', async (req, res) => {
     });
   }
 });
+
+// ==================== NEW HTTP METHODS ====================
+
+/**
+ * @swagger
+ * /chat:
+ *   head:
+ *     summary: Get chat metadata
+ *     description: Lấy metadata của chat service
+ *     tags: [Chat]
+ *     responses:
+ *       200:
+ *         description: Chat service metadata
+ *         headers:
+ *           X-Service-Status:
+ *             description: Trạng thái service
+ *             schema:
+ *               type: string
+ */
+router.head('/', createHeadHandler(async (req, res) => {
+  res.json({
+    success: true,
+    data: { status: 'online' },
+    timestamp: new Date().toISOString()
+  });
+}));
+
+/**
+ * @swagger
+ * /chat:
+ *   options:
+ *     summary: Get supported HTTP methods for chat
+ *     description: Trả về các HTTP methods được hỗ trợ cho chat API
+ *     tags: [Chat]
+ *     responses:
+ *       200:
+ *         description: Supported methods information
+ */
+router.options('/', createOptionsHandler('chat', ['GET', 'POST', 'DELETE', 'HEAD', 'OPTIONS']));
+router.options('/status', createOptionsHandler('chat/status', ['GET', 'HEAD', 'OPTIONS']));
+router.options('/generate-description', createOptionsHandler('chat/generate-description', ['POST', 'OPTIONS']));
+
+/**
+ * @swagger
+ * /chat:
+ *   get:
+ *     summary: Get chat history
+ *     description: Lấy lịch sử chat của người dùng
+ *     tags: [Chat]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Số lượng tin nhắn
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Offset cho pagination
+ *     responses:
+ *       200:
+ *         description: Chat history retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       role:
+ *                         type: string
+ *                         enum: [user, assistant]
+ *                       content:
+ *                         type: string
+ *                       timestamp:
+ *                         type: string
+ *                         format: date-time
+ */
+router.get('/', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = parseInt(req.query.offset) || 0;
+
+    // Mock chat history
+    const chatHistory = [
+      {
+        id: 1,
+        role: 'user',
+        content: 'Xin chào, tôi muốn đặt món',
+        timestamp: new Date().toISOString()
+      },
+      {
+        id: 2,
+        role: 'assistant',
+        content: 'Xin chào! Tôi có thể giúp bạn đặt món. Bạn muốn xem menu không?',
+        timestamp: new Date().toISOString()
+      }
+    ];
+
+    res.json({
+      success: true,
+      message: 'Lấy lịch sử chat thành công',
+      data: chatHistory.slice(offset, offset + limit),
+      pagination: {
+        total: chatHistory.length,
+        limit,
+        offset,
+        hasMore: offset + limit < chatHistory.length
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error getting chat history:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy lịch sử chat',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /chat/{id}:
+ *   get:
+ *     summary: Get specific chat conversation
+ *     description: Lấy cuộc trò chuyện cụ thể theo ID
+ *     tags: [Chat]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Chat conversation retrieved
+ *       404:
+ *         description: Chat not found
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const chatId = parseInt(req.params.id);
+
+    // Mock chat conversation
+    const conversation = {
+      id: chatId,
+      messages: [
+        {
+          role: 'user',
+          content: 'Tôi muốn đặt phở bò',
+          timestamp: new Date().toISOString()
+        },
+        {
+          role: 'assistant',
+          content: 'Phở bò là món đặc sản của chúng tôi! Giá 45.000 VNĐ. Bạn có muốn đặt không?',
+          timestamp: new Date().toISOString()
+        }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      message: 'Lấy cuộc trò chuyện thành công',
+      data: conversation,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error getting chat conversation:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy cuộc trò chuyện',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /chat/{id}:
+ *   delete:
+ *     summary: Delete chat conversation
+ *     description: Xóa cuộc trò chuyện theo ID
+ *     tags: [Chat]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Chat deleted successfully
+ *       404:
+ *         description: Chat not found
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const chatId = parseInt(req.params.id);
+
+    // Mock deletion
+    res.json({
+      success: true,
+      message: 'Xóa cuộc trò chuyện thành công',
+      data: { id: chatId },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi xóa cuộc trò chuyện',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /chat/{id}:
+ *   patch:
+ *     summary: Update chat conversation
+ *     description: Cập nhật thông tin cuộc trò chuyện
+ *     tags: [Chat]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "Đặt món phở bò"
+ *               archived:
+ *                 type: boolean
+ *                 example: false
+ *     responses:
+ *       200:
+ *         description: Chat updated successfully
+ *       404:
+ *         description: Chat not found
+ */
+router.patch('/:id', async (req, res) => {
+  try {
+    const chatId = parseInt(req.params.id);
+    const updates = req.body;
+
+    // Mock update
+    const updatedChat = {
+      id: chatId,
+      title: updates.title || 'Cuộc trò chuyện',
+      archived: updates.archived || false,
+      updated_at: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      message: 'Cập nhật cuộc trò chuyện thành công',
+      data: updatedChat,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error updating chat:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi cập nhật cuộc trò chuyện',
+      error: error.message
+    });
+  }
+});
+
+// Add global middleware
+router.use(logHttpMethod);
+router.use(handleHeadRequest);
 
 module.exports = router;

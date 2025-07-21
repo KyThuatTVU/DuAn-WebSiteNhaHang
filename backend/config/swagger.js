@@ -64,9 +64,13 @@ const swaggerDefinition = {
             type: 'string',
             example: 'Có lỗi xảy ra'
           },
-          error: {
+          code: {
             type: 'string',
-            example: 'Chi tiết lỗi'
+            example: 'ERROR_CODE'
+          },
+          details: {
+            type: 'object',
+            description: 'Chi tiết lỗi (chỉ trong development)'
           },
           timestamp: {
             type: 'string',
@@ -90,6 +94,172 @@ const swaggerDefinition = {
           data: {
             type: 'object',
             description: 'Dữ liệu trả về'
+          },
+          pagination: {
+            $ref: '#/components/schemas/Pagination'
+          },
+          timestamp: {
+            type: 'string',
+            format: 'date-time',
+            example: '2024-01-01T00:00:00.000Z'
+          }
+        }
+      },
+      // Pagination Schema
+      Pagination: {
+        type: 'object',
+        properties: {
+          total: {
+            type: 'integer',
+            description: 'Tổng số records',
+            example: 100
+          },
+          page: {
+            type: 'integer',
+            description: 'Trang hiện tại',
+            example: 1
+          },
+          limit: {
+            type: 'integer',
+            description: 'Số items per page',
+            example: 20
+          },
+          totalPages: {
+            type: 'integer',
+            description: 'Tổng số trang',
+            example: 5
+          },
+          hasNext: {
+            type: 'boolean',
+            description: 'Có trang tiếp theo',
+            example: true
+          },
+          hasPrev: {
+            type: 'boolean',
+            description: 'Có trang trước',
+            example: false
+          }
+        }
+      },
+      // User Schema
+      User: {
+        type: 'object',
+        required: ['full_name', 'email', 'password'],
+        properties: {
+          id: {
+            type: 'integer',
+            description: 'ID người dùng',
+            example: 1
+          },
+          full_name: {
+            type: 'string',
+            description: 'Họ tên đầy đủ',
+            example: 'Nguyễn Văn A',
+            minLength: 2,
+            maxLength: 100
+          },
+          email: {
+            type: 'string',
+            format: 'email',
+            description: 'Email',
+            example: 'user@example.com'
+          },
+          phone: {
+            type: 'string',
+            description: 'Số điện thoại',
+            example: '0123456789',
+            pattern: '^[0-9]{10,11}$'
+          },
+          address: {
+            type: 'string',
+            description: 'Địa chỉ',
+            example: 'Trà Vinh, Việt Nam'
+          },
+          created_at: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Thời gian tạo',
+            example: '2024-01-01T00:00:00.000Z'
+          }
+        }
+      },
+      // Auth Request Schemas
+      RegisterRequest: {
+        type: 'object',
+        required: ['full_name', 'email', 'phone', 'password'],
+        properties: {
+          full_name: {
+            type: 'string',
+            description: 'Họ tên đầy đủ',
+            example: 'Nguyễn Văn A',
+            minLength: 2,
+            maxLength: 100
+          },
+          email: {
+            type: 'string',
+            format: 'email',
+            description: 'Email',
+            example: 'user@example.com'
+          },
+          phone: {
+            type: 'string',
+            description: 'Số điện thoại',
+            example: '0123456789',
+            pattern: '^[0-9]{10,11}$'
+          },
+          password: {
+            type: 'string',
+            description: 'Mật khẩu',
+            example: 'password123',
+            minLength: 6
+          }
+        }
+      },
+      LoginRequest: {
+        type: 'object',
+        required: ['email', 'password'],
+        properties: {
+          email: {
+            type: 'string',
+            format: 'email',
+            description: 'Email',
+            example: 'user@example.com'
+          },
+          password: {
+            type: 'string',
+            description: 'Mật khẩu',
+            example: 'password123'
+          }
+        }
+      },
+      AuthResponse: {
+        type: 'object',
+        properties: {
+          success: {
+            type: 'boolean',
+            example: true
+          },
+          message: {
+            type: 'string',
+            example: 'Đăng nhập thành công'
+          },
+          data: {
+            type: 'object',
+            properties: {
+              user: {
+                $ref: '#/components/schemas/User'
+              },
+              token: {
+                type: 'string',
+                description: 'JWT access token',
+                example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+              },
+              refreshToken: {
+                type: 'string',
+                description: 'JWT refresh token',
+                example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+              }
+            }
           },
           timestamp: {
             type: 'string',
@@ -228,6 +398,207 @@ const swaggerDefinition = {
             format: 'date-time',
             description: 'Thời gian cập nhật',
             example: '2024-01-01T00:00:00.000Z'
+          }
+        }
+      },
+      // Reservation Schemas
+      Reservation: {
+        type: 'object',
+        required: ['ten_khach', 'sdt', 'ngay', 'gio', 'so_luong_khach'],
+        properties: {
+          id_datban: {
+            type: 'integer',
+            description: 'ID đặt bàn',
+            example: 1
+          },
+          ten_khach: {
+            type: 'string',
+            description: 'Tên khách hàng',
+            example: 'Nguyễn Văn A',
+            minLength: 2,
+            maxLength: 100
+          },
+          sdt: {
+            type: 'string',
+            description: 'Số điện thoại',
+            example: '0123456789',
+            pattern: '^[0-9]{10,11}$'
+          },
+          email: {
+            type: 'string',
+            format: 'email',
+            description: 'Email (tùy chọn)',
+            example: 'user@example.com'
+          },
+          ngay: {
+            type: 'string',
+            format: 'date',
+            description: 'Ngày đặt bàn',
+            example: '2024-01-15'
+          },
+          gio: {
+            type: 'string',
+            format: 'time',
+            description: 'Giờ đặt bàn',
+            example: '19:00'
+          },
+          so_luong_khach: {
+            type: 'integer',
+            description: 'Số lượng khách',
+            example: 4,
+            minimum: 1,
+            maximum: 20
+          },
+          ghi_chu: {
+            type: 'string',
+            description: 'Ghi chú',
+            example: 'Bàn gần cửa sổ',
+            maxLength: 500
+          },
+          trang_thai: {
+            type: 'string',
+            enum: ['cho_xac_nhan', 'da_xac_nhan', 'da_huy'],
+            description: 'Trạng thái đặt bàn',
+            example: 'cho_xac_nhan'
+          },
+          created_at: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Thời gian tạo',
+            example: '2024-01-01T00:00:00.000Z'
+          },
+          updated_at: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Thời gian cập nhật',
+            example: '2024-01-01T00:00:00.000Z'
+          }
+        }
+      },
+      // Chat Schemas
+      ChatMessage: {
+        type: 'object',
+        required: ['role', 'content'],
+        properties: {
+          role: {
+            type: 'string',
+            enum: ['user', 'assistant', 'system'],
+            description: 'Vai trò trong cuộc trò chuyện',
+            example: 'user'
+          },
+          content: {
+            type: 'string',
+            description: 'Nội dung tin nhắn',
+            example: 'Tôi muốn đặt món phở bò',
+            minLength: 1,
+            maxLength: 2000
+          }
+        }
+      },
+      ChatRequest: {
+        type: 'object',
+        required: ['messages'],
+        properties: {
+          messages: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/ChatMessage'
+            },
+            description: 'Lịch sử cuộc trò chuyện',
+            minItems: 1,
+            maxItems: 20
+          },
+          options: {
+            type: 'object',
+            properties: {
+              useGroq: {
+                type: 'boolean',
+                description: 'Sử dụng Groq AI thay vì Gemini',
+                example: false
+              },
+              temperature: {
+                type: 'number',
+                description: 'Độ sáng tạo của AI (0-2)',
+                example: 0.7,
+                minimum: 0,
+                maximum: 2
+              },
+              maxTokens: {
+                type: 'integer',
+                description: 'Số token tối đa cho response',
+                example: 1000,
+                minimum: 100,
+                maximum: 2000
+              }
+            }
+          }
+        }
+      },
+      ChatResponse: {
+        type: 'object',
+        properties: {
+          success: {
+            type: 'boolean',
+            example: true
+          },
+          message: {
+            type: 'string',
+            description: 'Phản hồi từ AI',
+            example: 'Phở bò là món đặc sản của chúng tôi! Bạn muốn phở bò tái hay phở bò chín?'
+          },
+          provider: {
+            type: 'string',
+            description: 'Nhà cung cấp AI được sử dụng',
+            example: 'gemini'
+          },
+          model: {
+            type: 'string',
+            description: 'Model AI được sử dụng',
+            example: 'gemini-pro'
+          },
+          timestamp: {
+            type: 'string',
+            format: 'date-time',
+            example: '2024-01-01T00:00:00.000Z'
+          }
+        }
+      },
+      // Food Description Generation
+      FoodDescriptionRequest: {
+        type: 'object',
+        required: ['foodName'],
+        properties: {
+          foodName: {
+            type: 'string',
+            description: 'Tên món ăn',
+            example: 'Bún Bò Huế',
+            minLength: 2,
+            maxLength: 100
+          },
+          ingredients: {
+            type: 'array',
+            items: {
+              type: 'string'
+            },
+            description: 'Danh sách nguyên liệu',
+            example: ['bún', 'thịt bò', 'chả cua', 'ớt']
+          },
+          options: {
+            type: 'object',
+            properties: {
+              style: {
+                type: 'string',
+                enum: ['traditional', 'modern', 'poetic'],
+                description: 'Phong cách mô tả',
+                example: 'traditional'
+              },
+              length: {
+                type: 'string',
+                enum: ['short', 'medium', 'long'],
+                description: 'Độ dài mô tả',
+                example: 'medium'
+              }
+            }
           }
         }
       }

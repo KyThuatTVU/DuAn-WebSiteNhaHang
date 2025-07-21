@@ -9,6 +9,7 @@ const chatRoutes = require('./chatRoutes');
 const customerRoutes = require('./customerRoutes');
 const datbanRoutes = require('./datban');
 const khachhangRoutes = require('./khachhang');
+const docsRoutes = require('./docsRoutes');
 
 /**
  * @swagger
@@ -168,11 +169,18 @@ router.use('/foods', foodRoutes);
 console.log('✅ Foods routes mounted');
 router.use('/chat', chatRoutes);
 console.log('✅ Chat routes mounted');
+
+// Mount customer management routes first (more specific)
+router.use('/khachhang', khachhangRoutes);
+console.log('✅ Customer management routes mounted at /api/khachhang');
+
+// Mount authentication routes (less specific)
 router.use('/khach_hang', customerRoutes);
-console.log('✅ Customer routes mounted');
+console.log('✅ Authentication routes mounted at /api/khach_hang');
+
 router.use('/datban', datbanRoutes);
 console.log('✅ Dat ban routes mounted');
-router.use('/khachhang', khachhangRoutes);
-console.log('✅ Khach hang routes mounted');
+router.use('/docs', docsRoutes);
+console.log('✅ Documentation routes mounted');
 
 module.exports = router;

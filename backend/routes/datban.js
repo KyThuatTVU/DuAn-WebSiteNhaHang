@@ -504,4 +504,301 @@ router.patch('/:id/status', async (req, res) => {
   }
 });
 
+// ==================== NEW HTTP METHODS ====================
+
+/**
+ * HEAD /api/datban - Get reservations metadata
+ */
+router.head('/', async (req, res) => {
+  try {
+    // Get count for metadata
+    const countQuery = 'SELECT COUNT(*) as total FROM dat_ban';
+    const countResult = await executeQuery(countQuery, []);
+
+    const total = countResult.success ? countResult.data[0].total : 0;
+
+    // Set metadata headers
+    res.set({
+      'X-Total-Count': total.toString(),
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=300',
+      'Last-Modified': new Date().toUTCString()
+    });
+
+    res.status(200).end();
+  } catch (error) {
+    res.status(500).end();
+  }
+});
+
+/**
+ * OPTIONS /api/datban - Get supported methods
+ */
+router.options('/', (req, res) => {
+  const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
+
+  res.set({
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': methods.join(', '),
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Allow': methods.join(', ')
+  });
+
+  res.json({
+    resource: 'datban',
+    methods: methods,
+    endpoints: [
+      {
+        method: 'GET',
+        url: '/api/datban',
+        description: 'Get all reservations',
+        parameters: ['page', 'limit', 'status', 'date', 'phone']
+      },
+      {
+        method: 'GET',
+        url: '/api/datban/:id',
+        description: 'Get reservation by ID'
+      },
+      {
+        method: 'POST',
+        url: '/api/datban',
+        description: 'Create new reservation'
+      },
+      {
+        method: 'PUT',
+        url: '/api/datban/:id',
+        description: 'Update reservation completely'
+      },
+      {
+        method: 'PATCH',
+        url: '/api/datban/:id',
+        description: 'Update reservation partially'
+      },
+      {
+        method: 'PATCH',
+        url: '/api/datban/:id/status',
+        description: 'Update reservation status'
+      },
+      {
+        method: 'DELETE',
+        url: '/api/datban/:id',
+        description: 'Delete/cancel reservation'
+      },
+      {
+        method: 'DELETE',
+        url: '/api/datban/bulk',
+        description: 'Delete multiple reservations'
+      }
+    ],
+    timestamp: new Date().toISOString()
+  });
+});
+
+/**
+ * PATCH /api/datban/:id - Partially update reservation
+ */
+router.patch('/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const updates = req.body;
+
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID không hợp lệ'
+      });
+    }
+
+    // Check if reservation exists
+    const checkQuery = 'SELECT * FROM dat_ban WHERE id_datban = ?';
+    const checkResult = await executeQuery(checkQuery, [id]);
+
+    if (!checkResult.success || checkResult.data.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đặt bàn'
+      });
+    }
+
+    // Build update query dynamically
+    const allowedFields = ['ten_khach', 'sdt', 'email', 'ngay', 'gio', 'so_luong_khach', 'ghi_chu', 'trang_thai'];
+    const updateFields = [];
+    const updateValues = [];
+
+    Object.keys(updates).forEach(field => {
+      if (allowedFields.includes(field) && updates[field] !== undefined) {
+        updateFields.push(`${field} = ?`);
+        updateValues.push(updates[field]);
+      }
+    });
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không có dữ liệu để cập nhật'
+      });
+    }
+
+    // Add updated_at
+    updateFields.push('updated_at = CURRENT_TIMESTAMP');
+    updateValues.push(id);
+
+    const updateQuery = `UPDATE dat_ban SET ${updateFields.join(', ')} WHERE id_datban = ?`;
+    const result = await executeQuery(updateQuery, updateValues);
+
+    if (result.success) {
+      // Get updated reservation
+      const selectResult = await executeQuery(checkQuery, [id]);
+
+      res.json({
+        success: true,
+        message: 'Cập nhật đặt bàn thành công',
+        data: selectResult.data[0],
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      throw new Error(result.error);
+    }
+
+  } catch (error) {
+    console.error('Error updating reservation:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Có lỗi xảy ra khi cập nhật đặt bàn',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/datban/bulk - Delete multiple reservations
+ */
+router.delete('/bulk', async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Danh sách ID không hợp lệ'
+      });
+    }
+
+    // Validate all IDs are numbers
+    const validIds = ids.filter(id => !isNaN(parseInt(id))).map(id => parseInt(id));
+
+    if (validIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không có ID hợp lệ'
+      });
+    }
+
+    // Check which reservations exist
+    const placeholders = validIds.map(() => '?').join(',');
+    const checkQuery = `SELECT id_datban FROM dat_ban WHERE id_datban IN (${placeholders})`;
+    const checkResult = await executeQuery(checkQuery, validIds);
+
+    if (!checkResult.success) {
+      throw new Error(checkResult.error);
+    }
+
+    const existingIds = checkResult.data.map(row => row.id_datban);
+
+    if (existingIds.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đặt bàn nào'
+      });
+    }
+
+    // Delete reservations
+    const deletePlaceholders = existingIds.map(() => '?').join(',');
+    const deleteQuery = `DELETE FROM dat_ban WHERE id_datban IN (${deletePlaceholders})`;
+    const result = await executeQuery(deleteQuery, existingIds);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: `Xóa thành công ${existingIds.length} đặt bàn`,
+        data: {
+          deletedIds: existingIds,
+          deletedCount: existingIds.length,
+          requestedCount: validIds.length
+        },
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      throw new Error(result.error);
+    }
+
+  } catch (error) {
+    console.error('Error bulk deleting reservations:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Có lỗi xảy ra khi xóa đặt bàn',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/datban/availability - Check table availability
+ */
+router.get('/availability', async (req, res) => {
+  try {
+    const { date, time, guests } = req.query;
+
+    if (!date || !time) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ngày và giờ là bắt buộc'
+      });
+    }
+
+    // Mock availability check (in real app, this would check actual table capacity)
+    const availabilityQuery = `
+      SELECT COUNT(*) as booked_tables
+      FROM dat_ban
+      WHERE ngay = ? AND gio = ? AND trang_thai IN ('cho_xac_nhan', 'da_xac_nhan')
+    `;
+
+    const result = await executeQuery(availabilityQuery, [date, time]);
+
+    if (result.success) {
+      const bookedTables = result.data[0].booked_tables;
+      const totalTables = 20; // Mock total tables
+      const availableTables = totalTables - bookedTables;
+
+      res.json({
+        success: true,
+        message: 'Kiểm tra tình trạng bàn thành công',
+        data: {
+          date,
+          time,
+          requestedGuests: guests ? parseInt(guests) : null,
+          totalTables,
+          bookedTables,
+          availableTables,
+          isAvailable: availableTables > 0,
+          recommendedTimes: availableTables === 0 ? [
+            '18:00', '18:30', '19:30', '20:00', '20:30'
+          ] : null
+        },
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      throw new Error(result.error);
+    }
+
+  } catch (error) {
+    console.error('Error checking availability:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Có lỗi xảy ra khi kiểm tra tình trạng bàn',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

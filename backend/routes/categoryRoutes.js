@@ -1,4 +1,4 @@
-// Category Routes - API Endpoints
+// Category Routes - API Endpoints with Full HTTP Methods Support
 const express = require('express');
 const router = express.Router();
 
@@ -6,7 +6,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   - name: Categories
- *     description: Quản lý danh mục món ăn
+ *     description: Quản lý danh mục món ăn với đầy đủ HTTP methods
  */
 
 // Import controllers and middleware
@@ -16,6 +16,13 @@ const {
   handleValidationErrors
 } = require('../middleware/validation');
 const { body } = require('express-validator');
+const {
+  handleHeadRequest,
+  handleOptionsRequest,
+  createOptionsHandler,
+  createHeadHandler,
+  logHttpMethod
+} = require('../middleware/httpMethods');
 
 // Category validation rules
 const validateCategory = [
@@ -371,5 +378,157 @@ router.post('/', validateCategory, CategoryController.createCategory);
 router.put('/:id', validateId, validateCategoryUpdate, CategoryController.updateCategory);
 
 router.delete('/:id', validateId, CategoryController.deleteCategory);
+
+// ==================== NEW HTTP METHODS ====================
+
+/**
+ * @swagger
+ * /categories:
+ *   head:
+ *     summary: Get categories metadata
+ *     description: Lấy metadata của danh sách danh mục
+ *     tags: [Categories]
+ *     responses:
+ *       200:
+ *         description: Metadata retrieved successfully
+ *         headers:
+ *           X-Total-Count:
+ *             description: Tổng số danh mục
+ *             schema:
+ *               type: integer
+ */
+router.head('/', createHeadHandler(CategoryController.getAllCategories));
+
+/**
+ * @swagger
+ * /categories/{id}:
+ *   head:
+ *     summary: Get category metadata by ID
+ *     description: Lấy metadata của danh mục theo ID
+ *     tags: [Categories]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Category metadata retrieved
+ *       404:
+ *         description: Category not found
+ */
+router.head('/:id', validateId, createHeadHandler(CategoryController.getCategoryById));
+
+/**
+ * @swagger
+ * /categories:
+ *   options:
+ *     summary: Get supported HTTP methods for categories
+ *     description: Trả về các HTTP methods được hỗ trợ cho categories API
+ *     tags: [Categories]
+ *     responses:
+ *       200:
+ *         description: Supported methods information
+ */
+router.options('/', createOptionsHandler('categories', ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']));
+router.options('/:id', createOptionsHandler('categories', ['GET', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']));
+
+/**
+ * @swagger
+ * /categories/{id}:
+ *   patch:
+ *     summary: Partially update category
+ *     description: Cập nhật một phần thông tin danh mục
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ten_loai:
+ *                 type: string
+ *                 example: "Món Chính Mới"
+ *               mo_ta:
+ *                 type: string
+ *                 example: "Các món ăn chính được cập nhật"
+ *               trang_thai:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *                 example: "active"
+ *     responses:
+ *       200:
+ *         description: Category updated successfully
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Category not found
+ */
+router.patch('/:id',
+  validateId,
+  validateCategoryUpdate,
+  CategoryController.updateCategory
+);
+
+/**
+ * @swagger
+ * /categories/{id}/status:
+ *   patch:
+ *     summary: Update category status
+ *     description: Cập nhật trạng thái danh mục
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - trang_thai
+ *             properties:
+ *               trang_thai:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *                 example: "active"
+ *     responses:
+ *       200:
+ *         description: Status updated successfully
+ *       400:
+ *         description: Invalid status
+ *       404:
+ *         description: Category not found
+ */
+router.patch('/:id/status',
+  validateId,
+  [
+    body('trang_thai')
+      .isIn(['active', 'inactive'])
+      .withMessage('Trạng thái không hợp lệ'),
+    handleValidationErrors
+  ],
+  CategoryController.updateCategoryStatus || CategoryController.updateCategory
+);
+
+// Add global middleware
+router.use(logHttpMethod);
+router.use(handleHeadRequest);
 
 module.exports = router;

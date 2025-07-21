@@ -1,14 +1,16 @@
-// Error Handling Middleware
+// Enhanced Error Handling Middleware
 const logger = require('../utils/logger');
+const { errorResponse, ERROR_CODES, HTTP_STATUS } = require('../utils/responseFormatter');
 
 // Custom error class
 class AppError extends Error {
-  constructor(message, statusCode, code = null) {
+  constructor(message, statusCode = 500, code = ERROR_CODES.INTERNAL_ERROR, isOperational = true) {
     super(message);
     this.statusCode = statusCode;
     this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
-    this.isOperational = true;
+    this.isOperational = isOperational;
     this.code = code;
+    this.timestamp = new Date().toISOString();
 
     Error.captureStackTrace(this, this.constructor);
   }

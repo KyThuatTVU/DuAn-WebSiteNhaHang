@@ -1,4 +1,4 @@
-// Food Routes - API Endpoints
+// Food Routes - API Endpoints with Full HTTP Methods Support
 const express = require('express');
 const router = express.Router();
 
@@ -6,7 +6,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   - name: Foods
- *     description: Quản lý món ăn
+ *     description: Quản lý món ăn với đầy đủ HTTP methods
  */
 
 // Import controllers and middleware
@@ -19,6 +19,13 @@ const {
   validateId,
   validateFoodQuery
 } = require('../middleware/validation');
+const {
+  handleHeadRequest,
+  handleOptionsRequest,
+  createOptionsHandler,
+  createHeadHandler,
+  logHttpMethod
+} = require('../middleware/httpMethods');
 
 /**
  * @swagger
@@ -425,5 +432,270 @@ router.delete('/:id',
   validateId,
   FoodController.deleteFood
 );
+
+// ==================== NEW HTTP METHODS ====================
+
+/**
+ * @swagger
+ * /foods:
+ *   head:
+ *     summary: Get foods metadata
+ *     description: Lấy metadata của danh sách món ăn (chỉ headers, không có body)
+ *     tags: [Foods]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Số lượng items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Tìm kiếm món ăn
+ *     responses:
+ *       200:
+ *         description: Metadata retrieved successfully
+ *         headers:
+ *           X-Total-Count:
+ *             description: Tổng số món ăn
+ *             schema:
+ *               type: integer
+ *           X-Total-Records:
+ *             description: Tổng số records
+ *             schema:
+ *               type: integer
+ */
+router.head('/', validateFoodQuery, createHeadHandler(FoodController.getAllFoods));
+
+/**
+ * @swagger
+ * /foods/{id}:
+ *   head:
+ *     summary: Get food metadata by ID
+ *     description: Lấy metadata của món ăn theo ID
+ *     tags: [Foods]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Food metadata retrieved
+ *       404:
+ *         description: Food not found
+ */
+router.head('/:id', validateId, createHeadHandler(FoodController.getFoodById));
+
+/**
+ * @swagger
+ * /foods:
+ *   options:
+ *     summary: Get supported HTTP methods for foods
+ *     description: Trả về các HTTP methods được hỗ trợ cho foods API
+ *     tags: [Foods]
+ *     responses:
+ *       200:
+ *         description: Supported methods information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 resource:
+ *                   type: string
+ *                   example: "foods"
+ *                 methods:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+ *                 endpoints:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ */
+router.options('/', createOptionsHandler('foods', ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']));
+router.options('/:id', createOptionsHandler('foods', ['GET', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']));
+
+/**
+ * @swagger
+ * /foods/{id}:
+ *   patch:
+ *     summary: Partially update food item
+ *     description: Cập nhật một phần thông tin món ăn
+ *     tags: [Foods]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ten_mon:
+ *                 type: string
+ *                 example: "Phở Bò Tái Nạm"
+ *               gia:
+ *                 type: number
+ *                 example: 55000
+ *               so_luong:
+ *                 type: integer
+ *                 example: 20
+ *               trang_thai:
+ *                 type: string
+ *                 enum: [kha_dung, het_hang, ngung_ban]
+ *                 example: "kha_dung"
+ *     responses:
+ *       200:
+ *         description: Food updated successfully
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Food not found
+ */
+router.patch('/:id',
+  validateId,
+  upload.single('hinh_anh'),
+  handleMulterError,
+  validateFoodItemUpdate,
+  FoodController.updateFood
+);
+
+/**
+ * @swagger
+ * /foods/{id}/status:
+ *   patch:
+ *     summary: Update food status
+ *     description: Cập nhật trạng thái món ăn (available, unavailable, discontinued)
+ *     tags: [Foods]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - trang_thai
+ *             properties:
+ *               trang_thai:
+ *                 type: string
+ *                 enum: [kha_dung, het_hang, ngung_ban]
+ *                 example: "kha_dung"
+ *     responses:
+ *       200:
+ *         description: Status updated successfully
+ *       400:
+ *         description: Invalid status
+ *       404:
+ *         description: Food not found
+ */
+router.patch('/:id/status',
+  validateId,
+  [
+    require('express-validator').body('trang_thai')
+      .isIn(['kha_dung', 'het_hang', 'ngung_ban'])
+      .withMessage('Trạng thái không hợp lệ'),
+    require('../middleware/validation').handleValidationErrors
+  ],
+  FoodController.updateFoodStatus || FoodController.updateFood
+);
+
+/**
+ * @swagger
+ * /foods/bulk:
+ *   post:
+ *     summary: Create multiple foods
+ *     description: Tạo nhiều món ăn cùng lúc
+ *     tags: [Foods]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - foods
+ *             properties:
+ *               foods:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - id_loai
+ *                     - ten_mon
+ *                     - gia
+ *                   properties:
+ *                     id_loai:
+ *                       type: integer
+ *                     ten_mon:
+ *                       type: string
+ *                     mo_ta:
+ *                       type: string
+ *                     gia:
+ *                       type: number
+ *                     so_luong:
+ *                       type: integer
+ *     responses:
+ *       201:
+ *         description: Foods created successfully
+ *       400:
+ *         description: Validation error
+ */
+router.post('/bulk', FoodController.createBulkFoods || FoodController.createFood);
+
+/**
+ * @swagger
+ * /foods/bulk:
+ *   delete:
+ *     summary: Delete multiple foods
+ *     description: Xóa nhiều món ăn cùng lúc
+ *     tags: [Foods]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ids
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *     responses:
+ *       200:
+ *         description: Foods deleted successfully
+ *       400:
+ *         description: Invalid IDs
+ */
+router.delete('/bulk', FoodController.deleteBulkFoods || FoodController.deleteFood);
+
+// Add global middleware for all routes
+router.use(logHttpMethod);
+router.use(handleHeadRequest);
 
 module.exports = router;
