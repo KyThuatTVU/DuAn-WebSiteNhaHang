@@ -215,44 +215,73 @@ node postman-test-runner.js folder "Authentication"
 node postman-test-runner.js report
 ```
 
-## 🐳 Docker Deployment
+## 🐳 Docker Deployment (Khuyến Nghị)
 
+### Quick Start với Docker
 ```bash
-# Build and run with Docker Compose
-docker-compose up -d
+# Cách 1: Sử dụng script tự động
+./docker-start.sh
 
-# Or build manually
-docker build -t restaurant-api ./backend
-docker run -p 3000:3000 restaurant-api
+# Cách 2: Chạy thủ công
+docker-compose up --build -d
 ```
+
+### Truy cập ứng dụng
+- 🌐 **Frontend**: http://localhost
+- 🔧 **Backend API**: http://localhost:3000
+- 📚 **API Docs**: http://localhost:3000/api-docs
+- 🗄️ **MySQL**: localhost:3306
+
+### Docker Commands hữu ích
+```bash
+# Xem trạng thái
+docker-compose ps
+
+# Xem logs
+docker-compose logs -f [service_name]
+
+# Restart service
+docker-compose restart [service_name]
+
+# Dừng tất cả
+docker-compose down
+
+# Reset hoàn toàn
+docker-compose down -v && docker system prune -a
+```
+
+📖 **Chi tiết**: Xem [DOCKER_SETUP_GUIDE.md](DOCKER_SETUP_GUIDE.md)
 
 ## 🔧 Configuration
 
 ### Environment Variables
-```env
-# Server
-NODE_ENV=development
-PORT=3000
 
-# Database
-DB_HOST=localhost
+**📁 File `.env` (Đã có sẵn)** - Cấu hình cho Docker:
+```env
+# Database (Docker)
+DB_HOST=mysql              # Service name trong Docker
 DB_USER=root
-DB_PASSWORD=password
+DB_PASSWORD=TVU@842004
 DB_NAME=QuanLyNhaHang
 
+# AI Services (Đã có API key)
+GEMINI_API_KEY=AIzaSyDIFJyixG2eQL_xCu1-nDXWET_yVOUspzE
+GROQ_API_KEY=your-actual-groq-api-key
+
 # JWT
-JWT_SECRET=your-secret-key
-JWT_REFRESH_SECRET=your-refresh-secret
-JWT_EXPIRE=1h
-JWT_REFRESH_EXPIRE=7d
+JWT_SECRET=your-super-secret-jwt-key-change-in-production-restaurant-api-2024
+```
 
-# AI Services
-GEMINI_API_KEY=your-gemini-key
-GROQ_API_KEY=your-groq-key
+**🔄 Chuyển đổi môi trường:**
+```bash
+# Chuyển sang Docker
+./switch-env.sh docker
 
-# File Upload
-MAX_FILE_SIZE=5MB
-ALLOWED_FILE_TYPES=jpg,jpeg,png,webp
+# Chuyển sang Local development
+./switch-env.sh local
+
+# Xem trạng thái hiện tại
+./switch-env.sh status
 ```
 
 ## 📊 Performance & Monitoring
