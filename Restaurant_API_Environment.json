@@ -1,6 +1,6 @@
 {
   "id": "restaurant-api-env-updated",
-  "name": "🍽️ Restaurant API Environment - Updated & Fixed",
+  "name": "🍽️ Restaurant API Environment - Complete v3.0",
   "values": [
     {
       "key": "baseUrl",
@@ -53,8 +53,8 @@
     },
     {
       "key": "apiVersion",
-      "value": "2.0.0",
-      "description": "API version (updated)",
+      "value": "3.0.0",
+      "description": "API version (latest update with Invoice Management)",
       "type": "default",
       "enabled": true
     },
@@ -76,6 +76,34 @@
       "key": "lastTestTime",
       "value": "",
       "description": "Last successful test timestamp",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "currentFoodId",
+      "value": "",
+      "description": "ID of currently selected food item",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "currentReservationId",
+      "value": "",
+      "description": "ID of currently selected reservation",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "currentInvoiceId",
+      "value": "",
+      "description": "ID of currently selected invoice",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "currentCategoryId",
+      "value": "",
+      "description": "ID of currently selected category",
       "type": "default",
       "enabled": true
     }

@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "🍽️ Restaurant API - Updated & Fixed",
-    "description": "Complete API collection with all HTTP methods and fixed endpoints\n\n## ✅ Fixed Issues:\n- Corrected /api/khachhang vs /api/khach_hang routing\n- Added all 7 HTTP methods (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)\n- Fixed reservation DELETE endpoints\n- Added bulk operations and advanced features\n\n## 📊 Coverage:\n- 56+ endpoints across 6 modules\n- Full CRUD operations\n- Authentication & authorization\n- AI chat integration\n- Advanced filtering & pagination\n\n## 🔗 Base URL: {{baseUrl}}/api",
-    "version": "2.0.0",
+    "name": "🍽️ Restaurant Management API - Complete Collection",
+    "description": "## 🎯 Bộ sưu tập API hoàn chỉnh cho Hệ thống Quản lý Nhà hàng\n\n### 📋 Tổng quan:\n- **Base URL:** {{baseUrl}}/api\n- **Version:** 3.0.0 (Cập nhật mới nhất)\n- **Database:** MySQL\n- **Authentication:** JWT Token\n- **Total Endpoints:** 70+ requests\n\n### 🔧 Modules được hỗ trợ:\n- ✅ **System Health** - Kiểm tra trạng thái hệ thống\n- ✅ **Authentication** - Đăng ký, đăng nhập, quản lý phiên\n- ✅ **Customer Management** - Quản lý khách hàng\n- ✅ **Foods Management** - Quản lý món ăn (CRUD đầy đủ)\n- ✅ **Categories** - Quản lý danh mục món ăn\n- ✅ **AI Chat** - Tích hợp chatbot AI\n- ✅ **Reservations** - Hệ thống đặt bàn\n- ✅ **Invoice Management** - Quản lý hóa đơn (Mới)\n- ✅ **Documentation** - API docs và hướng dẫn\n\n### 🛠️ HTTP Methods hỗ trợ:\n- **GET** - Lấy dữ liệu\n- **POST** - Tạo mới\n- **PUT** - Cập nhật toàn bộ\n- **PATCH** - Cập nhật một phần\n- **DELETE** - Xóa\n- **HEAD** - Lấy metadata\n- **OPTIONS** - Kiểm tra methods hỗ trợ\n\n### 🔐 Authentication:\nHầu hết endpoints yêu cầu JWT token:\n```\nAuthorization: Bearer {{token}}\n```\n\n### 🚀 Cách sử dụng:\n1. Import collection và environment\n2. Chạy \"System Health\" để kiểm tra server\n3. Đăng ký/đăng nhập để lấy token\n4. Test các modules khác theo thứ tự\n\n### 📊 Features nâng cao:\n- Auto token management\n- Response validation\n- Error handling\n- Bulk operations\n- Advanced filtering & pagination\n- File upload support",
+    "version": "3.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -16,46 +16,171 @@
       "key": "token",
       "value": "",
       "type": "string",
-      "description": "JWT access token"
+      "description": "JWT access token for authentication"
     },
     {
-      "key": "refreshToken", 
+      "key": "refreshToken",
       "value": "",
       "type": "string",
-      "description": "JWT refresh token"
+      "description": "JWT refresh token for token renewal"
     },
     {
       "key": "userId",
       "value": "",
       "type": "string",
-      "description": "Current user ID"
+      "description": "Current authenticated user ID"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string",
+      "description": "Admin JWT token for privileged operations"
+    },
+    {
+      "key": "testEmail",
+      "value": "test@restaurant.com",
+      "type": "string",
+      "description": "Test user email for authentication"
+    },
+    {
+      "key": "testPassword",
+      "value": "password123",
+      "type": "string",
+      "description": "Test user password"
+    },
+    {
+      "key": "serverStatus",
+      "value": "unknown",
+      "type": "string",
+      "description": "Current server connection status"
+    },
+    {
+      "key": "apiVersion",
+      "value": "3.0.0",
+      "type": "string",
+      "description": "Current API version"
+    },
+    {
+      "key": "lastTestTime",
+      "value": "",
+      "type": "string",
+      "description": "Timestamp of last successful test"
+    },
+    {
+      "key": "currentFoodId",
+      "value": "",
+      "type": "string",
+      "description": "ID of currently selected food item"
+    },
+    {
+      "key": "currentReservationId",
+      "value": "",
+      "type": "string",
+      "description": "ID of currently selected reservation"
     }
   ],
   "item": [
     {
-      "name": "🏥 System Health",
-      "description": "System health and connectivity checks",
+      "name": "🏥 System Health & Monitoring",
+      "description": "Kiểm tra trạng thái hệ thống và kết nối",
       "item": [
         {
-          "name": "API Health Check",
+          "name": "🔍 API Health Check",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/health",
               "host": ["{{baseUrl}}"],
               "path": ["api", "health"]
             },
-            "description": "Check if API server is running"
+            "description": "Kiểm tra trạng thái server và database connection"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "console.log('🔍 Testing API Health...');",
+                  "console.log('Base URL:', pm.collectionVariables.get('baseUrl'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test response status",
+                  "pm.test('✅ Server is running', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Test response structure",
+                  "pm.test('✅ Health check response is valid', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('status');",
+                  "    pm.expect(response).to.have.property('timestamp');",
+                  "    pm.expect(response).to.have.property('uptime');",
+                  "});",
+                  "",
+                  "// Test database connection",
+                  "pm.test('✅ Database is connected', function () {",
+                  "    const response = pm.response.json();",
+                  "    if (response.services && response.services.database) {",
+                  "        pm.expect(response.services.database).to.equal('connected');",
+                  "    }",
+                  "});",
+                  "",
+                  "// Save server status",
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('serverStatus', 'online');",
+                  "    pm.collectionVariables.set('lastTestTime', new Date().toISOString());",
+                  "    console.log('✅ Server is healthy and ready');",
+                  "} else {",
+                  "    pm.collectionVariables.set('serverStatus', 'offline');",
+                  "    console.log('❌ Server health check failed');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🧪 API Test Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test"]
+            },
+            "description": "Test basic API connectivity và response format"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('API is healthy', function () {",
+                  "pm.test('✅ Test endpoint responds', function () {",
                   "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ Response has correct format', function () {",
                   "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response).to.have.property('message');",
+                  "    pm.expect(response).to.have.property('timestamp');",
                   "    pm.expect(response.success).to.be.true;",
                   "});"
                 ]
@@ -64,17 +189,59 @@
           ]
         },
         {
-          "name": "API Test Endpoint",
+          "name": "🔄 Server Readiness Check",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/test",
+              "raw": "{{baseUrl}}/api/ready",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "test"]
+              "path": ["api", "ready"]
             },
-            "description": "Test API connectivity"
-          }
+            "description": "Kiểm tra server đã sẵn sàng phục vụ requests"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Server is ready', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.status).to.equal('READY');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "💓 Server Liveness Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/live",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "live"]
+            },
+            "description": "Kiểm tra server vẫn đang hoạt động (liveness probe)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Server is alive', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.status).to.equal('ALIVE');",
+                  "    pm.expect(response.uptime).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -1394,6 +1561,425 @@
             },
             "description": "Get supported methods for reservations"
           }
+        }
+      ]
+    },
+    {
+      "name": "🧾 Invoice Management",
+      "description": "Quản lý hóa đơn và thanh toán",
+      "item": [
+        {
+          "name": "📋 Get All Invoices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon?page=1&limit=20&status=chua_thanh_toan&date_from=2024-01-01&date_to=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hoadon"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Trang hiện tại"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Số lượng items per page"
+                },
+                {
+                  "key": "status",
+                  "value": "chua_thanh_toan",
+                  "description": "Trạng thái: chua_thanh_toan, da_thanh_toan, da_huy"
+                },
+                {
+                  "key": "date_from",
+                  "value": "2024-01-01",
+                  "description": "Từ ngày (YYYY-MM-DD)"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2024-12-31",
+                  "description": "Đến ngày (YYYY-MM-DD)"
+                },
+                {
+                  "key": "customer_id",
+                  "value": "1",
+                  "description": "Lọc theo ID khách hàng",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lấy danh sách tất cả hóa đơn với filtering và pagination"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Invoices retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('✅ Pagination info present', function () {",
+                  "    const response = pm.response.json();",
+                  "    if (response.pagination) {",
+                  "        pm.expect(response.pagination).to.have.property('total');",
+                  "        pm.expect(response.pagination).to.have.property('page');",
+                  "        pm.expect(response.pagination).to.have.property('limit');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔍 Get Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hoadon", "1"]
+            },
+            "description": "Lấy chi tiết hóa đơn theo ID"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Invoice retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('object');",
+                  "    pm.expect(response.data).to.have.property('id_hoadon');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "➕ Create New Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_khachhang\": 1,\n  \"id_datban\": 1,\n  \"chi_tiet_mon\": [\n    {\n      \"id_mon\": 1,\n      \"so_luong\": 2,\n      \"gia\": 45000,\n      \"ghi_chu\": \"Ít cay\"\n    },\n    {\n      \"id_mon\": 3,\n      \"so_luong\": 1,\n      \"gia\": 35000,\n      \"ghi_chu\": \"Thêm rau\"\n    }\n  ],\n  \"giam_gia\": 10000,\n  \"ghi_chu\": \"Khách VIP\",\n  \"phuong_thuc_thanh_toan\": \"tien_mat\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hoadon"]
+            },
+            "description": "Tạo hóa đơn mới với chi tiết món ăn"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Invoice created successfully', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('id_hoadon');",
+                  "});",
+                  "",
+                  "// Save invoice ID for other requests",
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id_hoadon) {",
+                  "        pm.collectionVariables.set('currentInvoiceId', response.data.id_hoadon);",
+                  "        console.log('✅ Invoice ID saved:', response.data.id_hoadon);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "💳 Update Invoice Payment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trang_thai\": \"da_thanh_toan\",\n  \"phuong_thuc_thanh_toan\": \"the_ngan_hang\",\n  \"so_tien_thanh_toan\": 90000,\n  \"ghi_chu_thanh_toan\": \"Thanh toán qua thẻ Visa\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon/1/payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hoadon", "1", "payment"]
+            },
+            "description": "Cập nhật trạng thái thanh toán hóa đơn"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Payment status updated', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "📊 Get Invoice Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon/statistics?period=month&year=2024&month=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hoadon", "statistics"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "month",
+                  "description": "Kỳ thống kê: day, week, month, year"
+                },
+                {
+                  "key": "year",
+                  "value": "2024",
+                  "description": "Năm thống kê"
+                },
+                {
+                  "key": "month",
+                  "value": "1",
+                  "description": "Tháng thống kê (nếu period=month)"
+                }
+              ]
+            },
+            "description": "Lấy thống kê doanh thu và hóa đơn"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Statistics retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🖨️ Print Invoice",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/pdf"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon/1/print?format=pdf",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hoadon", "1", "print"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "pdf",
+                  "description": "Định dạng: pdf, html"
+                }
+              ]
+            },
+            "description": "In hóa đơn dưới dạng PDF hoặc HTML"
+          }
+        },
+        {
+          "name": "❌ Cancel Invoice",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trang_thai\": \"da_huy\",\n  \"ly_do_huy\": \"Khách hàng yêu cầu hủy\",\n  \"nguoi_huy\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon/1/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hoadon", "1", "cancel"]
+            },
+            "description": "Hủy hóa đơn với lý do"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Invoice cancelled successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🗑️ DELETE Invoice",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hoadon", "1"]
+            },
+            "description": "Xóa hóa đơn (chỉ admin)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Invoice deleted successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "📋 HEAD Invoice Metadata",
+          "request": {
+            "method": "HEAD",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hoadon"]
+            },
+            "description": "Lấy metadata của invoices (headers only)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ HEAD request successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ No response body', function () {",
+                  "    pm.expect(pm.response.text()).to.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "⚙️ OPTIONS Invoice Methods",
+          "request": {
+            "method": "OPTIONS",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hoadon"]
+            },
+            "description": "Lấy danh sách HTTP methods được hỗ trợ cho invoices"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ OPTIONS request successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ Allow header present', function () {",
+                  "    pm.expect(pm.response.headers.get('Allow')).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
