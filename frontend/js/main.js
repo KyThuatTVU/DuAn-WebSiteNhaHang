@@ -7,20 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize Application
 function initializeApp() {
-    // Initialize loading manager first
-    if (typeof LoadingManager !== 'undefined') {
-        window.loadingManager = new LoadingManager();
-    }
-
     setupNavigation();
     setupMobileMenu();
     setupCartFunctionality();
     // Không cần kiểm tra login status nữa
     setupScrollAnimations();
     // Không cần logout handler nữa
-
-    // Setup loading retry handler
-    window.addEventListener('loadingRetry', handleLoadingRetry);
 }
 
 // Navigation Setup
@@ -243,33 +235,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100); // kiểm tra mỗi 100ms
 });
 
-// Handle loading retry
-function handleLoadingRetry() {
-    console.log('🔄 Retrying connection...');
-
-    // Reload current page data
-    if (window.location.pathname.includes('Menu') || window.location.pathname.includes('menu')) {
-        // Reload menu data
-        if (window.menuAPI) {
-            window.menuAPI.searchFoods().then(data => {
-                console.log('✅ Menu data reloaded');
-            }).catch(error => {
-                console.error('❌ Failed to reload menu data:', error);
-            });
-        }
-    }
-}
-
-// Show page loading
-function showPageLoading(message = 'Đang tải trang...') {
-    if (window.loadingManager) {
-        window.loadingManager.show(message, 'Vui lòng đợi trong giây lát');
-    }
-}
-
-// Hide page loading
-function hidePageLoading() {
-    if (window.loadingManager) {
-        window.loadingManager.hide();
-    }
-}

@@ -1,95 +1,211 @@
 #!/bin/bash
 
-# Script to switch between Docker and Local development environments
+# ==============================================
+# ENVIRONMENT SWITCHER SCRIPT
+# Restaurant Management System
+# ==============================================
 
-show_help() {
-    echo "🔧 Environment Switcher for Restaurant Management System"
-    echo ""
-    echo "Usage: $0 [docker|local|status]"
-    echo ""
-    echo "Commands:"
-    echo "  docker  - Switch to Docker environment (DB_HOST=mysql)"
-    echo "  local   - Switch to Local environment (DB_HOST=127.0.0.1)"
-    echo "  status  - Show current environment configuration"
-    echo "  help    - Show this help message"
-    echo ""
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
-show_status() {
-    if [ -f ".env" ]; then
-        echo "📋 Current .env configuration:"
-        echo "================================"
-        grep "DB_HOST=" .env
-        grep "DB_USER=" .env
-        grep "DB_NAME=" .env
-        echo "================================"
-        
-        DB_HOST=$(grep "DB_HOST=" .env | cut -d'=' -f2)
-        if [ "$DB_HOST" = "mysql" ]; then
-            echo "🐳 Currently configured for: DOCKER"
-        elif [ "$DB_HOST" = "127.0.0.1" ] || [ "$DB_HOST" = "localhost" ]; then
-            echo "💻 Currently configured for: LOCAL"
-        else
-            echo "❓ Unknown configuration: $DB_HOST"
-        fi
-    else
-        echo "❌ .env file not found!"
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Function to show usage
+show_usage() {
+    echo "Usage: $0 [dev|prod]"
+    echo ""
+    echo "Commands:"
+    echo "  dev   - Switch to development environment"
+    echo "  prod  - Switch to production environment"
+    echo ""
+    echo "Examples:"
+    echo "  $0 dev    # Switch to development"
+    echo "  $0 prod   # Switch to production"
+}
+
+# Function to backup current env files
+backup_env_files() {
+    local timestamp=$(date +%Y%m%d_%H%M%S)
+    
+    if [[ -f ".env" ]]; then
+        cp .env ".env.backup.$timestamp"
+        print_info "Backed up .env to .env.backup.$timestamp"
+    fi
+    
+    if [[ -f "backend/.env" ]]; then
+        cp backend/.env "backend/.env.backup.$timestamp"
+        print_info "Backed up backend/.env to backend/.env.backup.$timestamp"
     fi
 }
 
-switch_to_docker() {
-    echo "🐳 Switching to Docker environment..."
+# Function to switch to development environment
+switch_to_dev() {
+    print_info "Switching to development environment..."
     
-    # Backup current .env
-    cp .env .env.backup
+    # Backup current files
+    backup_env_files
     
-    # Update DB_HOST to mysql for Docker
-    sed -i 's/DB_HOST=127\.0\.0\.1/DB_HOST=mysql/' .env
-    sed -i 's/DB_HOST=localhost/DB_HOST=mysql/' .env
+    # Copy development environment files
+    if [[ -f ".env.dev" ]]; then
+        cp .env.dev .env
+        print_success "Copied .env.dev to .env"
+    else
+        print_error ".env.dev not found!"
+        exit 1
+    fi
     
-    echo "✅ Switched to Docker environment"
-    echo "📝 Backup saved as .env.backup"
-    echo "🚀 You can now run: docker-compose up --build -d"
+    if [[ -f "backend/.env.dev" ]]; then
+        cp backend/.env.dev backend/.env
+        print_success "Copied backend/.env.dev to backend/.env"
+    else
+        print_error "backend/.env.dev not found!"
+        exit 1
+    fi
+    
+    print_success "✅ Switched to development environment"
+    echo ""
+    echo "Development settings:"
+    echo "- NODE_ENV=development"
+    echo "- Frontend: http://localhost:8080"
+    echo "- Backend: http://localhost:3000"
+    echo "- phpMyAdmin: http://localhost:8081"
+    echo "- Debug mode: enabled"
+    echo "- Swagger docs: enabled"
+    echo ""
+    echo "To start development environment:"
+    echo "  make dev-up"
 }
 
-switch_to_local() {
-    echo "💻 Switching to Local environment..."
+# Function to switch to production environment
+switch_to_prod() {
+    print_info "Switching to production environment..."
     
-    # Backup current .env
-    cp .env .env.backup
+    # Backup current files
+    backup_env_files
     
-    # Update DB_HOST to localhost for local development
-    sed -i 's/DB_HOST=mysql/DB_HOST=127.0.0.1/' .env
+    # Copy production environment files
+    if [[ -f ".env.example" ]]; then
+        cp .env.example .env
+        print_success "Copied .env.example to .env"
+    else
+        print_error ".env.example not found!"
+        exit 1
+    fi
     
-    echo "✅ Switched to Local environment"
-    echo "📝 Backup saved as .env.backup"
-    echo "🚀 Make sure MySQL is running locally on port 3306"
+    if [[ -f "backend/.env.example" ]]; then
+        cp backend/.env.example backend/.env
+        print_success "Copied backend/.env.example to backend/.env"
+    else
+        print_error "backend/.env.example not found!"
+        exit 1
+    fi
+    
+    print_warning "⚠️  IMPORTANT: Please review and update the following in .env files:"
+    echo "- JWT_SECRET (use a strong secret key)"
+    echo "- Database passwords"
+    echo "- API keys"
+    echo "- CORS origins for your domain"
+    
+    print_success "✅ Switched to production environment"
+    echo ""
+    echo "Production settings:"
+    echo "- NODE_ENV=production"
+    echo "- Frontend: http://localhost:80"
+    echo "- Backend: http://localhost:3000"
+    echo "- Debug mode: disabled"
+    echo "- Enhanced security settings"
+    echo ""
+    echo "To start production environment:"
+    echo "  make up"
 }
 
-# Main script logic
-case "$1" in
-    "docker")
-        switch_to_docker
-        show_status
-        ;;
-    "local")
-        switch_to_local
-        show_status
-        ;;
-    "status")
-        show_status
-        ;;
-    "help"|"--help"|"-h")
-        show_help
-        ;;
-    "")
-        echo "❌ No command specified"
-        show_help
-        exit 1
-        ;;
-    *)
-        echo "❌ Unknown command: $1"
-        show_help
-        exit 1
-        ;;
-esac
+# Function to show current environment
+show_current_env() {
+    print_info "Current environment configuration:"
+    echo ""
+    
+    if [[ -f ".env" ]]; then
+        NODE_ENV=$(grep "^NODE_ENV=" .env | cut -d'=' -f2 || echo "not set")
+        FRONTEND_PORT=$(grep "^FRONTEND_PORT=" .env | cut -d'=' -f2 || echo "not set")
+        DEBUG=$(grep "^DEBUG=" .env | cut -d'=' -f2 || echo "not set")
+        
+        echo "Root .env:"
+        echo "  NODE_ENV: $NODE_ENV"
+        echo "  FRONTEND_PORT: $FRONTEND_PORT"
+        echo "  DEBUG: $DEBUG"
+    else
+        print_warning ".env file not found"
+    fi
+    
+    echo ""
+    
+    if [[ -f "backend/.env" ]]; then
+        BACKEND_NODE_ENV=$(grep "^NODE_ENV=" backend/.env | cut -d'=' -f2 || echo "not set")
+        DB_HOST=$(grep "^DB_HOST=" backend/.env | cut -d'=' -f2 || echo "not set")
+        
+        echo "Backend .env:"
+        echo "  NODE_ENV: $BACKEND_NODE_ENV"
+        echo "  DB_HOST: $DB_HOST"
+    else
+        print_warning "backend/.env file not found"
+    fi
+}
+
+# Main function
+main() {
+    echo "=============================================="
+    echo "🔄 Environment Switcher"
+    echo "=============================================="
+    echo ""
+    
+    case "${1:-}" in
+        "dev")
+            switch_to_dev
+            ;;
+        "prod")
+            switch_to_prod
+            ;;
+        "status")
+            show_current_env
+            ;;
+        "help"|"-h"|"--help")
+            show_usage
+            ;;
+        "")
+            print_error "No command specified"
+            echo ""
+            show_usage
+            exit 1
+            ;;
+        *)
+            print_error "Unknown command: $1"
+            echo ""
+            show_usage
+            exit 1
+            ;;
+    esac
+}
+
+# Run main function
+main "$@"

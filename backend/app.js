@@ -62,50 +62,29 @@ class App {
     });
     this.app.use('/api/', limiter);
 
-    // CORS configuration - Simple and permissive for development
-    if (this.env !== 'production') {
-      // Development: Allow everything
-      this.app.use(cors({
-        origin: true,
-        credentials: true,
-        optionsSuccessStatus: 200,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['*']
-      }));
-      console.log('🌐 CORS: Development mode - allowing all origins');
-    } else {
-      // Production: Strict CORS
-      const allowedOrigins = (process.env.CORS_ORIGIN || 'https://yourdomain.com').split(',');
-      this.app.use(cors({
-        origin: allowedOrigins,
-        credentials: true,
-        optionsSuccessStatus: 200,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
-      }));
-      console.log('🔒 CORS: Production mode - restricted origins');
-    }
+    // CORS configuration - Completely disabled for development
+    this.app.use(cors({
+      origin: true, // Allow all origins
+      credentials: true,
+      optionsSuccessStatus: 200,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+      allowedHeaders: ['*'] // Allow all headers
+    }));
 
-    // Additional CORS headers for all requests
+    console.log('🌐 CORS: Disabled - allowing all origins and headers');
+
+    // Additional CORS headers - Completely permissive
     this.app.use((req, res, next) => {
-      const origin = req.headers.origin;
-
-      // Always set CORS headers
-      if (origin) {
-        res.header('Access-Control-Allow-Origin', origin);
-      } else {
-        // For requests without origin (file://, mobile apps, etc.)
-        res.header('Access-Control-Allow-Origin', '*');
-      }
-
-      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+      // Set permissive CORS headers
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', '*');
+      res.header('Access-Control-Allow-Headers', '*');
       res.header('Access-Control-Allow-Credentials', 'true');
-      res.header('Access-Control-Max-Age', '86400'); // 24 hours
+      res.header('Access-Control-Max-Age', '86400');
 
       // Handle preflight requests
       if (req.method === 'OPTIONS') {
-        console.log(`✅ Preflight request from origin: ${origin || 'null'}`);
+        console.log(`✅ Preflight request handled`);
         res.status(200).end();
         return;
       }

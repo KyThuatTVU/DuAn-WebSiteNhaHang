@@ -293,15 +293,9 @@ class ReservationManager {
     }
 
     async handleSubmit() {
-        // Show loading
-        if (window.loadingManager) {
-            window.loadingManager.show('Đang xử lý đặt bàn...', 'Kiểm tra thông tin');
-            window.loadingManager.updateStep(0);
-        }
-
         // Clear previous messages
         this.clearMessages();
-
+        
         // Validate all fields
         let isValid = true;
         Object.values(this.fields).forEach(field => {
@@ -324,60 +318,31 @@ class ReservationManager {
         this.setLoadingState(true);
 
         try {
-            // Update loading step
-            if (window.loadingManager) {
-                window.loadingManager.updateMessage('Đang lưu thông tin...', 'Gửi đến server');
-                window.loadingManager.updateStep(1);
-            }
-
             // Collect form data
             const formData = this.collectFormData();
-
+            
             // Submit to backend
             const response = await this.submitReservation(formData);
             
             if (response.success) {
-                // Update loading step
-                if (window.loadingManager) {
-                    window.loadingManager.updateMessage('Hoàn thành đặt bàn!', 'Chuyển hướng...');
-                    window.loadingManager.updateStep(2);
-                    window.loadingManager.updateProgress(100);
-                }
-
                 this.showMessage(
-                    response.message || 'Đặt bàn thành công! Chúng tôi sẽ liên hệ xác nhận trong vòng 15 phút.',
+                    response.message || 'Đặt bàn thành công! Chúng tôi sẽ liên hệ xác nhận trong vòng 15 phút.', 
                     'success'
                 );
                 this.resetForm();
-
-                // Hide loading after delay
-                if (window.loadingManager) {
-                    await window.loadingManager.delay(1500);
-                    window.loadingManager.hide();
-                }
             } else {
                 this.showMessage(response.message || 'Có lỗi xảy ra, vui lòng thử lại', 'error');
-
+                
                 // Show specific field errors if available
                 if (response.errors && response.errors.length > 0) {
                     response.errors.forEach(error => {
                         console.error('Validation error:', error);
                     });
                 }
-
-                // Hide loading on error
-                if (window.loadingManager) {
-                    window.loadingManager.hide();
-                }
             }
         } catch (error) {
             console.error('Reservation error:', error);
             this.showMessage('Có lỗi xảy ra, vui lòng thử lại sau', 'error');
-
-            // Hide loading on error
-            if (window.loadingManager) {
-                window.loadingManager.hide();
-            }
         } finally {
             this.setLoadingState(false);
         }

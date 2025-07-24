@@ -11,28 +11,11 @@ class MenuAPIService {
      */
     async searchFoods(params = {}) {
         try {
-            // Show loading
-            if (window.loadingManager) {
-                window.loadingManager.show('Đang tải menu...', 'Kết nối đến server');
-                window.loadingManager.updateStep(0);
-            }
-
             // First test connection
             const isConnected = await this.testConnection();
             if (!isConnected) {
                 console.warn('⚠️ API not available, using fallback data');
-                if (window.loadingManager) {
-                    window.loadingManager.showError('Không thể kết nối server', 'Sử dụng dữ liệu offline');
-                    await window.loadingManager.delay(1500);
-                    window.loadingManager.hide();
-                }
                 return this.getFallbackData(params);
-            }
-
-            // Update loading step
-            if (window.loadingManager) {
-                window.loadingManager.updateMessage('Đang tải dữ liệu món ăn...', 'Lấy thông tin từ database');
-                window.loadingManager.updateStep(1);
             }
 
             const queryParams = new URLSearchParams();
@@ -104,13 +87,6 @@ class MenuAPIService {
                 throw new Error('Invalid response format');
             }
 
-            // Update loading step
-            if (window.loadingManager) {
-                window.loadingManager.updateMessage('Đang hiển thị menu...', 'Chuẩn bị giao diện');
-                window.loadingManager.updateStep(2);
-                window.loadingManager.updateProgress(100);
-            }
-
             // Cache the result
             this.cache.set(cacheKey, {
                 data: data,
@@ -118,24 +94,10 @@ class MenuAPIService {
             });
 
             console.log('✅ API response received:', data);
-
-            // Hide loading after delay
-            if (window.loadingManager) {
-                await window.loadingManager.delay(500);
-                window.loadingManager.hide();
-            }
-
             return data;
 
         } catch (error) {
             console.error('❌ Error searching foods:', error);
-
-            // Show error and hide loading
-            if (window.loadingManager) {
-                window.loadingManager.showError('Lỗi tải dữ liệu', 'Sử dụng dữ liệu offline');
-                await window.loadingManager.delay(1500);
-                window.loadingManager.hide();
-            }
 
             // Try fallback data
             console.warn('🔄 Trying fallback data...');

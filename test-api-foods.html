@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍽️ Test API Foods - Restaurant Management</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .test-section h3 {
+            color: #495057;
+            margin-top: 0;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .success {
+            border-color: #28a745;
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .config {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Test API Foods - Restaurant Management</h1>
+        
+        <!-- Configuration -->
+        <div class="config">
+            <h3>⚙️ Cấu hình API</h3>
+            <div class="form-group">
+                <label>Base URL:</label>
+                <input type="text" id="baseUrl" value="http://localhost:3000/api">
+            </div>
+            <div class="form-group">
+                <label>Token (nếu có):</label>
+                <input type="text" id="token" placeholder="Bearer token...">
+            </div>
+            <button onclick="testConnection()">🔍 Test Connection</button>
+            <div id="connectionStatus" class="status offline">Offline</div>
+        </div>
+
+        <div class="grid">
+            <!-- GET All Foods -->
+            <div class="test-section">
+                <h3>📋 GET All Foods</h3>
+                <div class="form-group">
+                    <label>Search:</label>
+                    <input type="text" id="search" placeholder="Tìm kiếm món ăn...">
+                </div>
+                <div class="form-group">
+                    <label>Category ID:</label>
+                    <input type="number" id="category" placeholder="1, 2, 3...">
+                </div>
+                <div class="form-group">
+                    <label>Limit:</label>
+                    <input type="number" id="limit" value="10" min="1" max="100">
+                </div>
+                <button onclick="getAllFoods()">🍜 Get All Foods</button>
+                <div id="getAllResponse" class="response"></div>
+            </div>
+
+            <!-- GET Food by ID -->
+            <div class="test-section">
+                <h3>🔍 GET Food by ID</h3>
+                <div class="form-group">
+                    <label>Food ID:</label>
+                    <input type="number" id="foodId" value="1" min="1">
+                </div>
+                <button onclick="getFoodById()">🍽️ Get Food</button>
+                <div id="getByIdResponse" class="response"></div>
+            </div>
+
+            <!-- POST Create Food -->
+            <div class="test-section">
+                <h3>➕ POST Create Food</h3>
+                <div class="form-group">
+                    <label>Category ID:</label>
+                    <input type="number" id="createCategory" value="2" required>
+                </div>
+                <div class="form-group">
+                    <label>Tên món:</label>
+                    <input type="text" id="createName" value="Test Food" required>
+                </div>
+                <div class="form-group">
+                    <label>Mô tả:</label>
+                    <textarea id="createDescription" rows="3">Món ăn test từ API</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Giá (VNĐ):</label>
+                    <input type="number" id="createPrice" value="50000" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Số lượng:</label>
+                    <input type="number" id="createStock" value="10" min="0">
+                </div>
+                <button onclick="createFood()">➕ Create Food</button>
+                <div id="createResponse" class="response"></div>
+            </div>
+
+            <!-- Categories -->
+            <div class="test-section">
+                <h3>📂 GET Categories</h3>
+                <button onclick="getCategories()">📂 Get Categories</button>
+                <div id="categoriesResponse" class="response"></div>
+            </div>
+        </div>
+
+        <!-- Health Check -->
+        <div class="test-section">
+            <h3>❤️ Health Check & System Info</h3>
+            <button onclick="healthCheck()">❤️ Health Check</button>
+            <button onclick="apiTest()">🧪 API Test</button>
+            <button onclick="apiDocs()">📚 API Docs</button>
+            <div id="healthResponse" class="response"></div>
+        </div>
+    </div>
+
+    <script>
+        const getBaseUrl = () => document.getElementById('baseUrl').value;
+        const getToken = () => document.getElementById('token').value;
+        
+        const getHeaders = () => {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            const token = getToken();
+            if (token) {
+                headers['Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+            }
+            return headers;
+        };
+
+        const displayResponse = (elementId, response, isError = false) => {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(response, null, 2);
+            element.className = `response ${isError ? 'error' : 'success'}`;
+        };
+
+        const makeRequest = async (url, options = {}) => {
+            try {
+                console.log('Making request to:', url);
+                console.log('Options:', options);
+                
+                const response = await fetch(url, {
+                    headers: getHeaders(),
+                    ...options
+                });
+                
+                const data = await response.json();
+                console.log('Response:', data);
+                
+                return {
+                    status: response.status,
+                    ok: response.ok,
+                    data
+                };
+            } catch (error) {
+                console.error('Request error:', error);
+                return {
+                    status: 0,
+                    ok: false,
+                    data: { error: error.message }
+                };
+            }
+        };
+
+        const testConnection = async () => {
+            const statusElement = document.getElementById('connectionStatus');
+            statusElement.textContent = 'Testing...';
+            statusElement.className = 'status';
+            
+            const result = await makeRequest(`${getBaseUrl()}/health`);
+            
+            if (result.ok) {
+                statusElement.textContent = 'Online ✅';
+                statusElement.className = 'status online';
+            } else {
+                statusElement.textContent = 'Offline ❌';
+                statusElement.className = 'status offline';
+            }
+        };
+
+        const getAllFoods = async () => {
+            const search = document.getElementById('search').value;
+            const category = document.getElementById('category').value;
+            const limit = document.getElementById('limit').value;
+            
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (category) params.append('category', category);
+            if (limit) params.append('limit', limit);
+            
+            const url = `${getBaseUrl()}/foods?${params.toString()}`;
+            const result = await makeRequest(url);
+            
+            displayResponse('getAllResponse', result, !result.ok);
+        };
+
+        const getFoodById = async () => {
+            const foodId = document.getElementById('foodId').value;
+            if (!foodId) {
+                alert('Vui lòng nhập Food ID');
+                return;
+            }
+            
+            const url = `${getBaseUrl()}/foods/${foodId}`;
+            const result = await makeRequest(url);
+            
+            displayResponse('getByIdResponse', result, !result.ok);
+        };
+
+        const createFood = async () => {
+            const data = {
+                id_loai: parseInt(document.getElementById('createCategory').value),
+                ten_mon: document.getElementById('createName').value,
+                mo_ta: document.getElementById('createDescription').value,
+                gia: parseFloat(document.getElementById('createPrice').value),
+                so_luong: parseInt(document.getElementById('createStock').value)
+            };
+            
+            if (!data.id_loai || !data.ten_mon || !data.gia) {
+                alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+                return;
+            }
+            
+            const url = `${getBaseUrl()}/foods`;
+            const result = await makeRequest(url, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            
+            displayResponse('createResponse', result, !result.ok);
+        };
+
+        const getCategories = async () => {
+            const url = `${getBaseUrl()}/categories`;
+            const result = await makeRequest(url);
+            
+            displayResponse('categoriesResponse', result, !result.ok);
+        };
+
+        const healthCheck = async () => {
+            const url = `${getBaseUrl()}/health`;
+            const result = await makeRequest(url);
+            
+            displayResponse('healthResponse', result, !result.ok);
+        };
+
+        const apiTest = async () => {
+            const url = `${getBaseUrl()}/test`;
+            const result = await makeRequest(url);
+            
+            displayResponse('healthResponse', result, !result.ok);
+        };
+
+        const apiDocs = async () => {
+            const url = `${getBaseUrl()}/docs`;
+            const result = await makeRequest(url);
+            
+            displayResponse('healthResponse', result, !result.ok);
+        };
+
+        // Auto test connection on load
+        window.onload = () => {
+            testConnection();
+        };
+    </script>
+</body>
+</html>

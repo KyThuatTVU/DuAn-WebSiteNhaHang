@@ -10,6 +10,7 @@ const customerRoutes = require('./customerRoutes');
 const datbanRoutes = require('./datban');
 const khachhangRoutes = require('./khachhang');
 const docsRoutes = require('./docsRoutes');
+const healthRoutes = require('./healthRoutes');
 
 /**
  * @swagger
@@ -182,5 +183,9 @@ router.use('/datban', datbanRoutes);
 console.log('✅ Dat ban routes mounted');
 router.use('/docs', docsRoutes);
 console.log('✅ Documentation routes mounted');
+
+// Mount health routes (this will override the simple health endpoint above)
+router.use('/', healthRoutes);
+console.log('✅ Health routes mounted');
 
 module.exports = router;

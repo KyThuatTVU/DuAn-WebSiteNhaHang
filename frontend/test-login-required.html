@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login Required - Nhà Hàng Ẩm Thực Phương Nam</title>
+    <link rel="icon" href="img/logoPN.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary-color: #e53e3e; }
+        .bg-primary { background-color: var(--primary-color); }
+        .text-primary { color: var(--primary-color); }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">Test Tính Năng Yêu Cầu Đăng Nhập</h1>
+        
+        <!-- Login Status -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Trạng Thái Đăng Nhập</h2>
+            <div id="loginStatus" class="mb-4">
+                <p class="text-gray-600">Đang kiểm tra...</p>
+            </div>
+            <div class="flex space-x-4">
+                <button id="loginBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                    Đăng Nhập Test
+                </button>
+                <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">
+                    Đăng Xuất
+                </button>
+            </div>
+        </div>
+
+        <!-- Test Actions -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Test Các Hành Động</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Test Add to Cart -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-bold mb-2">Test Thêm Món Ăn</h3>
+                    <p class="text-sm text-gray-600 mb-3">Thử thêm món ăn vào giỏ hàng</p>
+                    <button id="testAddToCart" class="w-full bg-primary hover:bg-red-700 text-white py-2 rounded">
+                        <i class="fas fa-cart-plus mr-2"></i>Thêm Món Test
+                    </button>
+                </div>
+
+                <!-- Test View Cart -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-bold mb-2">Test Xem Giỏ Hàng</h3>
+                    <p class="text-sm text-gray-600 mb-3">Thử mở giỏ hàng</p>
+                    <button id="testViewCart" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
+                        <i class="fas fa-shopping-cart mr-2"></i>Xem Giỏ Hàng
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4">Kết Quả Test</h2>
+            <div id="testResults" class="space-y-2">
+                <p class="text-gray-600">Chưa có test nào được thực hiện</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include necessary scripts -->
+    <script>
+        // Mock API base URL
+        const API_BASE_URL = 'http://localhost:3000/api';
+    </script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+
+    <script>
+        // Test functions
+        function updateLoginStatus() {
+            const statusDiv = document.getElementById('loginStatus');
+            const isLoggedIn = window.auth && window.auth.isLoggedIn();
+            
+            if (isLoggedIn) {
+                const user = window.auth.getCurrentUser();
+                statusDiv.innerHTML = `
+                    <div class="flex items-center text-green-600">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        <span>Đã đăng nhập: ${user.full_name || user.email}</span>
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="flex items-center text-red-600">
+                        <i class="fas fa-times-circle mr-2"></i>
+                        <span>Chưa đăng nhập</span>
+                    </div>
+                `;
+            }
+        }
+
+        function addTestResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'success' ? 'text-green-600' : 
+                              type === 'error' ? 'text-red-600' : 'text-blue-600';
+            
+            const resultElement = document.createElement('div');
+            resultElement.className = `p-2 border-l-4 border-${type === 'success' ? 'green' : type === 'error' ? 'red' : 'blue'}-500 bg-gray-50`;
+            resultElement.innerHTML = `
+                <span class="text-xs text-gray-500">[${timestamp}]</span>
+                <span class="${colorClass} ml-2">${message}</span>
+            `;
+            
+            resultsDiv.appendChild(resultElement);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for auth system to load
+            setTimeout(() => {
+                updateLoginStatus();
+                
+                // Listen for auth changes
+                document.addEventListener('authStateChanged', () => {
+                    updateLoginStatus();
+                });
+            }, 500);
+
+            // Test login button
+            document.getElementById('loginBtn').addEventListener('click', () => {
+                // Mock login with test user
+                const testUser = {
+                    id: 999,
+                    full_name: 'Test User',
+                    email: 'test@example.com',
+                    phone: '0123456789'
+                };
+                
+                localStorage.setItem('user', JSON.stringify(testUser));
+                localStorage.setItem('userData', JSON.stringify(testUser));
+                
+                if (window.auth) {
+                    window.auth.isAuthenticated = true;
+                    window.auth.user = testUser;
+                    window.auth.broadcastAuthChange('login', testUser);
+                }
+                
+                updateLoginStatus();
+                addTestResult('Đăng nhập test thành công', 'success');
+            });
+
+            // Test logout button
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('user');
+                localStorage.removeItem('userData');
+                
+                if (window.auth) {
+                    window.auth.logout();
+                }
+                
+                updateLoginStatus();
+                addTestResult('Đăng xuất thành công', 'success');
+            });
+
+            // Test add to cart
+            document.getElementById('testAddToCart').addEventListener('click', () => {
+                addTestResult('Thử thêm món ăn vào giỏ hàng...', 'info');
+                
+                if (window.cartManager) {
+                    const testItem = {
+                        id_mon: 1,
+                        ten_mon: 'Món Test',
+                        gia: 50000,
+                        hinh_anh: 'test.jpg',
+                        mo_ta: 'Món ăn test'
+                    };
+                    
+                    const result = window.cartManager.addToCart(testItem);
+                    if (result !== false) {
+                        addTestResult('Thêm món ăn thành công (user đã đăng nhập)', 'success');
+                    } else {
+                        addTestResult('Không thể thêm món ăn (user chưa đăng nhập)', 'error');
+                    }
+                } else {
+                    addTestResult('CartManager chưa được khởi tạo', 'error');
+                }
+            });
+
+            // Test view cart
+            document.getElementById('testViewCart').addEventListener('click', () => {
+                addTestResult('Thử mở giỏ hàng...', 'info');
+                
+                if (window.cartManager) {
+                    const result = window.cartManager.openCartModal();
+                    if (result !== false) {
+                        addTestResult('Mở giỏ hàng thành công (user đã đăng nhập)', 'success');
+                    } else {
+                        addTestResult('Không thể mở giỏ hàng (user chưa đăng nhập)', 'error');
+                    }
+                } else {
+                    addTestResult('CartManager chưa được khởi tạo', 'error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
